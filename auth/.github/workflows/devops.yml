@@ -1,0 +1,121 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - Develop
+      - QA
+      - master
+    types: [opened, synchronize, closed]
+  push:
+    branches:
+      - fix/devops
+      - QA
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Run Tests
+        run: pnpm test
+
+  integrate_to_qa:
+    needs: test
+    if: always() && !failure() && !cancelled() && github.event.pull_request.merged == true && github.base_ref == 'Develop'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Auto-propagate to QA
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh pr create --base QA --head Develop --title "Auto-merge Develop to QA" --body "Automated promotion" || true
+          gh pr merge Develop --auto --merge || true
+
+  deploy_to_server:
+    needs: test
+    if: always() && !failure() && !cancelled() && ((github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'QA') || (github.event_name == 'push' && (github.ref == 'refs/heads/QA' || github.ref == 'refs/heads/fix/devops')) || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve deploy branch
+        run: echo "TARGET_BRANCH=${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}" >> $GITHUB_ENV
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: server.synsetsolutions.com
+          username: synset_server
+          port: 2222
+          password: "1011"
+          envs: TARGET_BRANCH
+          script: |
+            BRANCH="${TARGET_BRANCH:-QA}"
+
+            if [ -d ~/tu_colmado_auth ]; then
+              cd ~/tu_colmado_auth
+              git fetch origin "$BRANCH"
+              git checkout "$BRANCH"
+              git pull origin "$BRANCH"
+            else
+              git clone https://github.com/ODIMSOM/tu_colmado_auth ~/tu_colmado_auth
+              cd ~/tu_colmado_auth
+              git checkout "$BRANCH"
+            fi
+
+            if [ -d ~/TuColmadoRD ]; then
+              cd ~/TuColmadoRD
+              docker rm -f tucolmadord-auth-1 || true
+              docker compose up -d --build --no-deps auth
+              docker compose ps auth
+              docker system prune -f
+            else
+              echo "ERROR: ~/TuColmadoRD no existe. No se pudo recrear el servicio auth."
+              exit 1
+            fi
+
+  integrate_to_master:
+    needs: deploy_to_server
+    if: always() && !failure() && !cancelled() && github.event.pull_request.merged == true && github.base_ref == 'QA'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Auto-propagate to Master
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh pr create --base master --head QA --title "Auto-merge QA to Master" --body "Automated promotion" || true
+          gh pr merge QA --auto --merge || true

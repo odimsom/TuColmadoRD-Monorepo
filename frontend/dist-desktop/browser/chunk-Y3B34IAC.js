@@ -1,0 +1,1 @@
+import{Ga as e,ab as a,bb as n,sb as s}from"./chunk-KTZU5CF3.js";var p=class o{static \u0275fac=function(t){return new(t||o)};static \u0275cmp=e({type:o,selectors:[["app-pos-layout"]],decls:2,vars:0,template:function(t,l){t&1&&(a(0,"p"),s(1,"pos-layout works!"),n())},encapsulation:2})};export{p as PosLayout};

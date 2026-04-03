@@ -1,0 +1,77 @@
+{
+    "name":  "web-admin",
+    "version":  "0.0.1-test.3",
+    "scripts":  {
+                    "ng":  "ng",
+                    "start":  "ng serve",
+                    "build":  "ng build",
+                    "watch":  "ng build --watch --configuration development",
+                    "test":  "ng test",
+                    "test:selenium:account":  "node ./tests/e2e/account-creation.selenium.mjs",
+                    "test:selenium:task4":  "node ./tests/e2e/task4-auth-suite.selenium.mjs",
+                    "test:e2e:account":  "node ./tests/e2e/run-account-e2e.mjs",
+                    "test:e2e:task4":  "node ./tests/e2e/run-task4-e2e.mjs",
+                    "test:e2e:task4:headed":  "set E2E_HEADLESS=false&& node ./tests/e2e/run-task4-e2e.mjs",
+                    "test:e2e:task4:headed:slow":  "set E2E_HEADLESS=false&& set E2E_STEP_DELAY_MS=1200&& node ./tests/e2e/run-task4-e2e.mjs",
+                    "build:exe":  "npm run build \u0026\u0026 npm run obfuscate \u0026\u0026 Remove-Item -Recurse -Force dist/web-admin/browser \u0026\u0026 Rename-Item secured browser -Path dist/web-admin/ \u0026\u0026 electron-builder --win"
+                },
+    "private":  true,
+    "packageManager":  "npm@11.8.0",
+    "dependencies":  {
+                         "@angular/common":  "^21.2.0",
+                         "@angular/compiler":  "^21.2.0",
+                         "@angular/core":  "^21.2.0",
+                         "@angular/forms":  "^21.2.0",
+                         "@angular/platform-browser":  "^21.2.0",
+                         "@angular/router":  "^21.2.0",
+                         "rxjs":  "~7.8.0",
+                         "tslib":  "^2.3.0"
+                     },
+    "devDependencies":  {
+                            "@angular/build":  "^21.2.6",
+                            "@angular/cli":  "^21.2.6",
+                            "@angular/compiler-cli":  "^21.2.0",
+                            "@iconify-json/ic":  "^1.2.4",
+                            "@iconify/tailwind":  "^1.2.0",
+                            "@tailwindcss/postcss":  "^4.2.2",
+                            "autoprefixer":  "^10.4.27",
+                            "daisyui":  "^4.12.24",
+                            "electron":  "^41.1.1",
+                            "electron-builder":  "^26.8.1",
+                            "javascript-obfuscator":  "^5.4.1",
+                            "jsdom":  "^28.0.0",
+                            "postcss":  "^8.5.8",
+                            "prettier":  "^3.8.1",
+                            "tailwindcss":  "^3.4.19",
+                            "tailwindcss-animate":  "^1.0.7",
+                            "typescript":  "~5.9.2",
+                            "vitest":  "^4.0.8",
+                            "selenium-webdriver":  "^4.34.0"
+                        },
+    "build":  {
+                  "directories":  {
+                                      "output":  "release"
+                                  },
+                  "files":  [
+                                "dist/web-admin/browser/**/*",
+                                "main.js"
+                            ],
+                  "productName":  "TuColmadoRD",
+                  "publish":  [
+                                  {
+                                      "provider":  "github",
+                                      "owner":  "odimsom",
+                                      "repo":  "TuColmadoRD.Frontend"
+                                  }
+                              ],
+                  "win":  {
+                              "target":  "nsis"
+                          },
+                  "appId":  "com.tucolmadord.admin",
+                  "nsis":  {
+                               "oneClick":  false,
+                               "artifactName":  "TuColmadoRD-Setup.exe",
+                               "allowToChangeInstallationDirectory":  true
+                           }
+              }
+}

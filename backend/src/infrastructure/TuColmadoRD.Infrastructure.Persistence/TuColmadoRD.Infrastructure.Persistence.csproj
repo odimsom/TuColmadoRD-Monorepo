@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Contexts\" />
+    <Folder Include="EntitiesConfigurations\" />
+    <Folder Include="EntitiesConfigurations\Audit\" />
+    <Folder Include="EntitiesConfigurations\Customers\" />
+    <Folder Include="EntitiesConfigurations\Fiscal\" />
+    <Folder Include="EntitiesConfigurations\HumanResources\" />
+    <Folder Include="EntitiesConfigurations\Inventory\" />
+    <Folder Include="EntitiesConfigurations\Logistics\" />
+    <Folder Include="EntitiesConfigurations\Purchasing\" />
+    <Folder Include="EntitiesConfigurations\Sales\" />
+    <Folder Include="EntitiesConfigurations\Treasury\" />
+    <Folder Include="Repositories\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.3.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\core\TuColmadoRD.Core.Domain\TuColmadoRD.Core.Domain.csproj" />
+    <ProjectReference Include="..\..\core\TuColmadoRD.Core.Application\TuColmadoRD.Core.Application.csproj" />
+  </ItemGroup>
+
+</Project>

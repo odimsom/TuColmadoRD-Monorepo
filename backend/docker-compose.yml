@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
+      POSTGRES_DB: TuColmadoDb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tucolmadord-network
+    restart: always
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - GatewayOptions__AuthApiUrl=http://auth:3000
+      - GatewayOptions__CoreApiUrl=http://api:8080
+      - GatewayOptions__JwtSecret=${JWT_SECRET}
+    depends_on:
+      - auth
+      - api
+    restart: always
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=db;Database=TuColmadoDb;Username=postgres;Password=${DB_PASSWORD:-1234}
+    networks:
+      - tucolmadord-network
+    depends_on:
+      - db
+    restart: always
+
+  auth:
+    build:
+      context: ../tu_colmado_auth
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1d}
+    networks:
+      - tucolmadord-network
+    restart: always
+
+networks:
+  tucolmadord-network:
+    driver: bridge
+  dokploy-network:
+    external: true
+
+volumes:
+  postgres_data:

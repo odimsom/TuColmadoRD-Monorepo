@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TuColmadoRD API</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #050810;
+      --s1: #0d1117;
+      --s2: #161b27;
+      --border: rgba(255,255,255,0.06);
+      --accent: #818cf8;
+      --green: #34d399;
+      --blue: #60a5fa;
+      --text: #e2e8f0;
+      --muted: #475569;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .glow {
+      position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 600px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 65%);
+      pointer-events: none; z-index: 0;
+    }
+    header {
+      position: relative; z-index: 1;
+      padding: 4rem 1.5rem 3rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      margin-bottom: 1.5rem;
+    }
+    .logo-icon {
+      width: 40px; height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-icon svg {
+      width: 40px;
+      height: 40px;
+    }
+    .logo-name { font-size: 0.8rem; font-weight: 600; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      background: linear-gradient(160deg, #fff 30%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1.1;
+    }
+    .tagline { margin-top: 0.75rem; color: var(--muted); font-size: 1rem; }
+    .services {
+      display: inline-flex; gap: 0.5rem; margin-top: 1.5rem;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .svc-pill {
+      display: flex; align-items: center; gap: 0.4rem;
+      background: var(--s1); border: 1px solid var(--border);
+      border-radius: 9999px; padding: 0.3rem 0.8rem;
+      font-size: 0.72rem; color: var(--muted);
+    }
+    .svc-pill .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    .svc-pill i { color: var(--blue); font-size: 0.72rem; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }
+    main { flex: 1; position: relative; z-index: 1; max-width: 700px; margin: 3rem auto; padding: 0 1.5rem; width: 100%; }
+    .base-url {
+      background: var(--s1); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.85rem 1.2rem;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 2.5rem;
+    }
+    .base-url span { font-size: 0.72rem; color: var(--muted); }
+    .base-url code { font-family: 'Courier New', monospace; font-size: 0.82rem; color: var(--green); }
+    .section-label {
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); padding-left: 0.25rem; display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; user-select: none;
+    }
+    .accordion summary::-webkit-details-marker { display: none; }
+    .accordion summary { list-style: none; margin-bottom: 1rem; }
+    .accordion .arrow { font-size: 0.5rem; transition: transform 0.2s; }
+    .accordion[open] .arrow { transform: rotate(-180deg); }
+    .group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2.5rem; animation: slideDown 0.2s ease-out; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    .card {
+      background: var(--s1); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1rem 1.25rem;
+      display: flex; align-items: center; gap: 1rem;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .card:hover { background: var(--s2); border-color: rgba(129,140,248,0.25); transform: translateY(-1px); }
+    .method {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em;
+      border-radius: 6px; padding: 0.3rem 0.65rem;
+      min-width: 52px; text-align: center; flex-shrink: 0;
+    }
+    .POST { background: rgba(96,165,250,0.1); color: var(--blue); border: 1px solid rgba(96,165,250,0.2); }
+    .ep { flex: 1; }
+    .ep-path { font-family: 'Courier New', monospace; font-size: 0.88rem; color: var(--text); }
+    .ep-desc { font-size: 0.76rem; color: var(--muted); margin-top: 0.2rem; }
+    .svc-tag {
+      font-size: 0.65rem; background: rgba(129,140,248,0.08);
+      color: var(--accent); border: 1px solid rgba(129,140,248,0.15);
+      border-radius: 5px; padding: 0.2rem 0.5rem; flex-shrink: 0;
+    }
+    .svc-tag i { margin-right: 0.25rem; }
+    footer {
+      position: relative; z-index: 1;
+      text-align: center; padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.72rem; color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="4" y="8" width="19" height="19" rx="4" fill="#2563EB"/>
+          <rect x="17" y="8" width="19" height="19" rx="4" fill="#DC2626"/>
+        </svg>
+      </div>
+      <span class="logo-name">TuColmadoRD</span>
+    </div>
+    <h1>API Gateway</h1>
+    <p class="tagline">Sistema unificado de punto de venta para colmados dominicanos</p>
+    <div class="services">
+      <div class="svc-pill"><span class="dot"></span><i class="fa-solid fa-shield-halved"></i>Autenticación · Node.js</div>
+      <div class="svc-pill"><span class="dot"></span><i class="fa-solid fa-layer-group"></i>Sistema · .NET 10</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="base-url">
+      <span>Base URL</span>
+      <code>tucolmadord.synsetsolutions.com</code>
+    </div>
+
+    <details class="accordion" open>
+      <summary class="section-label">Autenticación <span class="arrow">▼</span></summary>
+      <div class="group">
+        <div class="card">
+          <span class="method POST">POST</span>
+          <div class="ep">
+            <div class="ep-path">/api/auth/register</div>
+            <div class="ep-desc">Registrar un nuevo usuario en el sistema</div>
+          </div>
+          <span class="svc-tag"><i class="fa-solid fa-key"></i>auth</span>
+        </div>
+        <div class="card">
+          <span class="method POST">POST</span>
+          <div class="ep">
+            <div class="ep-path">/api/auth/login</div>
+            <div class="ep-desc">Iniciar sesión y obtener token JWT</div>
+          </div>
+          <span class="svc-tag"><i class="fa-solid fa-user-lock"></i>auth</span>
+        </div>
+        <div class="card">
+          <span class="method POST">POST</span>
+          <div class="ep">
+            <div class="ep-path">/api/auth/pair-device</div>
+            <div class="ep-desc">Vincular una nueva terminal a un colmado</div>
+          </div>
+          <span class="svc-tag"><i class="fa-solid fa-link"></i>auth</span>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion">
+      <summary class="section-label">Sistema · En desarrollo <span class="arrow">▼</span></summary>
+      <div class="group">
+        <div class="card" style="opacity:0.4;pointer-events:none">
+          <span class="method POST" style="background:rgba(100,116,139,0.1);color:#334155;border-color:rgba(100,116,139,0.1)">···</span>
+          <div class="ep">
+            <div class="ep-path" style="color:#334155">/api/…</div>
+            <div class="ep-desc">Inventario, ventas, clientes — próximamente</div>
+          </div>
+        </div>
+      </div>
+    </details>
+  </main>
+
+  <footer>TuColmadoRD &copy; 2026 &mdash; Francisco Daniel Castro Borrome</footer>
+</body>
+</html>

@@ -1,0 +1,156 @@
+@if (visible()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-6">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300"></div>
+    
+    <!-- Modal -->
+    <div class="relative w-full max-w-2xl bg-[#0F172A] border border-white/10 rounded-[2.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden animate-in zoom-in-95 duration-500">
+      
+      <!-- Header: Progress Bar -->
+      <div class="p-8 border-b border-white/5 bg-white/[0.02]">
+        <div class="flex justify-between items-center mb-4">
+          <span class="text-[0.65rem] font-black uppercase tracking-[0.2em] text-blue-500">Paso {{ step() }} de 3</span>
+          <span class="text-xs font-bold text-white uppercase tracking-widest">{{ stepInfo() }}</span>
+        </div>
+        <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+          <div class="h-full bg-blue-600 transition-all duration-500" [style.width]="(step() / 3 * 100) + '%'"></div>
+        </div>
+      </div>
+
+      <!-- Steps -->
+      <div class="p-10 min-h-[400px] flex flex-col justify-center">
+        
+        <!-- STEP 1: CUÉNTANOS DE TU COLMADO -->
+        @if (step() === 1) {
+          <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div class="text-center mb-12">
+              <h2 class="text-4xl font-bebas mb-3 uppercase tracking-tight">Cuéntanos de tu colmado</h2>
+              <p class="text-slate-500 text-sm">Personalizaremos tu experiencia según el tamaño de tu negocio.</p>
+            </div>
+
+            <div class="space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                @for (type of ['Colmado barrial', 'Minimarket', 'Supermercado pequeño']; track type) {
+                  <button 
+                    (click)="typeSelected.set(type)"
+                    [class]="typeSelected() === type ? 'bg-blue-600 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'"
+                    class="p-6 rounded-2xl border text-[0.65rem] font-black uppercase tracking-widest transition-all"
+                  >
+                    {{ type }}
+                  </button>
+                }
+              </div>
+
+              <div class="p-8 bg-blue-600/5 border border-blue-500/20 rounded-3xl">
+                <label class="block text-[0.65rem] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">¿Cuántos empleados manejan la caja?</label>
+                <div class="flex gap-4">
+                  @for (count of ['1', '2-3', '4+']; track count) {
+                    <button 
+                      (click)="empCount.set(count)"
+                      [class]="empCount() === count ? 'bg-white text-[#0f172a]' : 'bg-white/10 text-white hover:bg-white/20'"
+                      class="flex-1 py-3 rounded-xl text-xs font-black transition-all"
+                    >
+                      {{ count }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-6 bg-white/5 rounded-2xl">
+                <div class="flex items-center gap-4">
+                  <span class="icon-[ic--baseline-menu-book] text-2xl text-blue-500"></span>
+                  <div>
+                    <p class="text-xs font-bold text-white">¿Usas libreta de fiados actualmente?</p>
+                    <p class="text-[0.6rem] text-slate-500">Módulo 'Adiós a la Libreta'</p>
+                  </div>
+                </div>
+                <button 
+                  (click)="useFiados.update(v => !v)"
+                  [class]="useFiados() ? 'bg-green-600' : 'bg-slate-700'"
+                  class="w-12 h-6 rounded-full relative p-1 transition-all"
+                >
+                  <div class="w-4 h-4 bg-white rounded-full transition-transform duration-300" [style.transform]="useFiados() ? 'translateX(24px)' : 'translateX(0)'"></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 2: AGREGA TUS PRIMEROS PRODUCTOS -->
+        @if (step() === 2) {
+          <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div class="text-center mb-12">
+              <h2 class="text-4xl font-bebas mb-3 uppercase tracking-tight">Agrega tus productos</h2>
+              <p class="text-slate-500 text-sm">Empieza con los artículos más vendidos de una vez.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="p-8 rounded-3xl border-2 border-dashed border-white/10 hover:border-blue-500/50 flex flex-col items-center justify-center text-center group transition-all cursor-pointer">
+                <span class="icon-[ic--baseline-cloud-upload] text-5xl text-slate-700 mb-4 group-hover:text-blue-500 transition-colors"></span>
+                <p class="text-xs font-black uppercase tracking-widest text-white mb-1">Importar desde Excel</p>
+                <p class="text-[0.6rem] text-slate-500">Sube tu lista actual en segundos</p>
+              </div>
+
+              <div class="p-8 rounded-3xl bg-blue-600/5 border border-blue-500/20 max-h-[200px] overflow-y-auto custom-scrollbar">
+                <p class="text-[0.65rem] font-black uppercase tracking-widest text-blue-500 mb-6">Productos Rápidos</p>
+                <div class="grid grid-cols-2 gap-3">
+                  @for (p of ['Arroz', 'Aceite', 'Pollo', 'Pan', 'Habichuelas', 'Salami', 'Huevos', 'Leche']; track p) {
+                    <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 group hover:border-blue-500/30 transition-all cursor-pointer">
+                      <input type="checkbox" checked class="checkbox checkbox-xs rounded border-white/20 checkbox-primary">
+                      <span class="text-[0.65rem] text-slate-300">{{ p }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+            <div class="text-center">
+                <button class="text-[0.65rem] font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-widest underline decoration-blue-500/30 underline-offset-4">Lo hago después</button>
+            </div>
+          </div>
+        }
+
+        <!-- STEP 3: LISTO -->
+        @if (step() === 3) {
+          <div class="space-y-8 animate-in zoom-in-95 duration-500 flex flex-col items-center justify-center text-center">
+            <div class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mb-8 shadow-[0_0_80px_rgba(34,197,94,0.3)] animate-bounce">
+                <span class="icon-[ic--baseline-check] text-6xl text-white"></span>
+            </div>
+            <h2 class="text-5xl font-bebas mb-4 uppercase tracking-tight">¡LISTO! TU COLMADO ESTÁ EN EL SISTEMA</h2>
+            <div class="flex gap-4 mb-12">
+                <div class="px-5 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[0.6rem] font-black uppercase tracking-widest">12 productos cargados</div>
+                <div class="px-5 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-[0.6rem] font-black uppercase tracking-widest">Plan Avanzado activo</div>
+            </div>
+            <p class="text-slate-400 text-sm max-w-md mx-auto mb-10 leading-relaxed italic">
+                "Para un colmadero, el tiempo es dinero. Ya te ahorramos el papeleo, ahora a vender."
+            </p>
+          </div>
+        }
+
+      </div>
+
+      <!-- Footer: Nav Buttons -->
+      <div class="p-10 border-t border-white/5 flex gap-4 bg-white/[0.02]">
+        @if (step() > 1 && step() < 3) {
+          <button 
+            (click)="prev()"
+            class="flex-1 py-4 border-2 border-white/10 rounded-2xl text-white font-black uppercase tracking-widest text-[0.65rem] transition-all flex items-center justify-center gap-2"
+          >
+            <span class="icon-[ic--baseline-arrow-back] text-lg"></span> Anterior
+          </button>
+        }
+        
+        <button 
+          (click)="next()"
+          class="flex-1 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl transition-all shadow-[0_10px_30px_rgba(37,99,235,0.3)] text-[0.65rem] uppercase tracking-widest flex items-center justify-center gap-2"
+        >
+          @if (step() === 3) {
+            Abrir turno y empezar a vender <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
+          } @else {
+            Siguiente <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

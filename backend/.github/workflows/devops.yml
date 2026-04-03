@@ -1,0 +1,122 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - Develop
+      - QA
+      - master
+    types: [opened, synchronize, closed]
+  push:
+    branches:
+      - Develop
+      - QA
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore TuColmadoRD.slnx -p:EnableWindowsTargeting=true
+
+      - name: Build
+        run: dotnet build TuColmadoRD.slnx --no-restore -p:EnableWindowsTargeting=true
+
+      - name: Test
+        run: dotnet test TuColmadoRD.slnx --no-build --verbosity normal -p:EnableWindowsTargeting=true
+
+  integrate_to_qa:
+    needs: test
+    if: always() && !failure() && !cancelled() && github.event.pull_request.merged == true && github.base_ref == 'Develop'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Auto-propagate to QA
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh pr create --base QA --head Develop --title "Auto-merge Develop to QA" --body "Automated promotion" || true
+          gh pr merge Develop --auto --merge || true
+
+  deploy_to_server:
+    needs: test
+    if: always() && !failure() && !cancelled() && ((github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'QA') || (github.event_name == 'push' && github.ref == 'refs/heads/QA') || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: server.synsetsolutions.com
+          username: synset_server
+          port: 2222
+          password: "1011"
+          envs: MONGODB_URI,JWT_SECRET,JWT_EXPIRES_IN
+          script: |
+            export COMPOSE_PROJECT_NAME=tucolmadord
+            cat > ~/TuColmadoRD/.env <<EOF
+            MONGODB_URI=$MONGODB_URI
+            JWT_SECRET=$JWT_SECRET
+            JWT_EXPIRES_IN=$JWT_EXPIRES_IN
+            EOF
+            cleanup_stack() {
+              docker compose down --remove-orphans --volumes || true
+              docker rm -f tucolmadord-auth-1 tucolmadord-api-1 tucolmadord-gateway-1 tucolmadord-db-1 || true
+              docker network rm tucolmadord_tucolmadord-network tucolmadord_default || true
+            }
+            if [ -d ~/TuColmadoRD ]; then
+              cd ~/TuColmadoRD
+              git fetch origin QA
+              git checkout QA
+              git pull origin QA
+              cleanup_stack
+              docker compose up -d --build --remove-orphans
+            else
+              git clone https://github.com/ODIMSOM/TuColmadoRD ~/TuColmadoRD
+              cd ~/TuColmadoRD
+              git checkout QA
+              cleanup_stack
+              docker compose up -d --build --remove-orphans
+            fi
+            docker system prune -f
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
+
+  integrate_to_master:
+    needs: deploy_to_server
+    if: always() && !failure() && !cancelled() && github.event.pull_request.merged == true && github.base_ref == 'QA'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Promote to Master only after successful deploy
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          gh pr create --base master --head QA --title "Auto-merge QA to Master" --body "Automated promotion after successful deploy" || true
+          gh pr merge QA --auto --merge || true

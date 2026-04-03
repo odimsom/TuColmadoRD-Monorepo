@@ -1,0 +1,80 @@
+<div class="min-h-screen flex flex-col bg-base-100 relative overflow-hidden text-base-content transition-colors duration-300">
+  <div class="absolute top-[-20%] left-[-10%] w-96 h-96 bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+  <div class="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-secondary/5 rounded-full blur-[100px] pointer-events-none z-0"></div>
+  <nav class="navbar bg-base-100/80 backdrop-blur-xl border-b border-white/5 px-8 fixed top-0 w-full z-50">
+    <div class="flex-1">
+      <div class="flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-10 h-10" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="12" height="12" rx="2" class="stroke-primary" />
+          <rect x="9" y="9" width="12" height="12" rx="2" class="stroke-secondary" />
+        </svg>
+        <div class="flex flex-col justify-center">
+          <span class="text-2xl font-bold text-base-content tracking-tight leading-none">TuColmado</span>
+          <span class="text-[0.65rem] font-bold text-primary uppercase tracking-[0.4em] mt-0.5">RD</span>
+        </div>
+      </div>
+    </div>
+    <div class="flex-none gap-4">
+      <button class="btn btn-ghost btn-circle" (click)="themeService.toggleTheme()">
+        @if (themeService.currentTheme() === 'tucolmadodark') {
+          <span class="icon-[ic--baseline-light-mode] text-xl text-yellow-400"></span>
+        } @else {
+          <span class="icon-[ic--baseline-dark-mode] text-xl text-slate-800"></span>
+        }
+      </button>
+      <a (click)="scrollToHero($event)" href="#hero-form" class="hover:text-primary text-base-content flex items-center gap-2 group transition-all font-bold text-xs uppercase tracking-widest pl-4 border-l border-white/10">
+        <span class="icon-[ic--baseline-account-circle] text-2xl lg:hidden"></span>
+        <span class="hidden lg:inline">Acceder <span class="group-hover:translate-x-1 transition-transform inline-block icon-[ic--baseline-arrow-forward] text-sm"></span></span>
+      </a>
+    </div>
+  </nav>
+  <main class="flex-grow flex flex-col pt-24"> 
+    <router-outlet></router-outlet> 
+  </main>
+
+  <footer class="bg-[#0b1222] border-t border-white/5 pt-16 pb-8 relative z-10">
+    <div class="max-w-7xl mx-auto px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12 text-left">
+        <div class="col-span-1 md:col-span-2">
+          <div class="flex items-center gap-3 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="12" height="12" rx="2" class="stroke-primary" />
+              <rect x="9" y="9" width="12" height="12" rx="2" class="stroke-secondary" />
+            </svg>
+            <span class="text-xl font-bold text-base-content tracking-tight">TuColmado <span class="text-primary">RD</span></span>
+          </div>
+          <p class="text-base-content/70 text-sm leading-relaxed max-w-sm">
+            La plataforma definitiva para la digitalización de colmados en República Dominicana. Control de fiados, inventario y ventas en la palma de tu mano.
+          </p>
+        </div>
+        <div>
+          <h4 class="text-base-content font-semibold mb-6 text-sm uppercase tracking-widest">Producto</h4>
+          <ul class="space-y-4 text-slate-400 text-sm">
+            <li><a href="#" class="hover:text-blue-500 transition-colors">Funcionalidades</a></li>
+            <li><a href="#" class="hover:text-blue-500 transition-colors">Precios</a></li>
+            <li><a href="#" class="hover:text-blue-500 transition-colors">Testimonios</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-base-content font-semibold mb-6 text-sm uppercase tracking-widest">Soporte</h4>
+          <ul class="space-y-4 text-slate-400 text-sm">
+            <li><a href="#" class="hover:text-blue-500 transition-colors">Centro de ayuda</a></li>
+            <li><a href="#" class="hover:text-blue-500 transition-colors">Contacto</a></li>
+            <li><a href="#" class="hover:text-blue-500 transition-colors">Privacidad</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-slate-500 text-xs text-center">
+          © 2026 TuColmado RD. Todos los derechos reservados.
+        </p>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-600 text-xs italic">Diseñado con ❤️ por</span>
+          <a href="https://synsetsolutions.com" target="_blank" class="flex items-center gap-2 group">
+            <span class="text-slate-400 text-xs font-bold group-hover:text-blue-500 transition-colors">Synset Solutions</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>

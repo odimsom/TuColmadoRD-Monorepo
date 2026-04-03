@@ -1,0 +1,119 @@
+name: Build & Release Test
+
+on:
+  push:
+    tags:
+      - 'v*-test'
+
+permissions:
+  contents: write
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Frontend
+        uses: actions/checkout@v5
+        with:
+          path: frontend
+
+      - name: Checkout Backend (TuColmadoRD)
+        uses: actions/checkout@v5
+        with:
+          repository: odimsom/TuColmadoRD
+          path: backend
+          # Dynamic branch: mapping tag -> Develop, or branch -> branch
+          ref: ${{ contains(github.ref, 'refs/tags/') && 'Develop' || github.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install Angular CLI
+        run: npm install -g @angular/cli
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend/web-admin
+        run: npm ci
+
+      - name: Set version from tag
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+          echo "APP_VERSION=$version" >> $env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Build Angular + .exe + Installer
+        run: |
+          $env:RELEASE_TYPE = "test"
+          $env:APP_VERSION = "${{ env.APP_VERSION }}"
+          $env:TU_COLMADORD_ROOT = "${{ github.workspace }}"
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE "frontend/scripts/build-desktop.ps1"
+          Write-Host "Workspace: $env:GITHUB_WORKSPACE"
+          Write-Host "Script path: $scriptPath"
+          if (-not (Test-Path $scriptPath)) {
+            Write-Error "build-desktop.ps1 not found at $scriptPath"
+            exit 1
+          }
+          & $scriptPath
+        shell: pwsh
+
+      - name: Verify installer output
+        run: |
+          $installerDir = Join-Path $env:GITHUB_WORKSPACE "backend/publish/installer"
+          Write-Host "Installer directory: $installerDir"
+          if (-not (Test-Path $installerDir)) {
+            Write-Error "Installer directory not found: $installerDir"
+            exit 1
+          }
+
+          Get-ChildItem -Path $installerDir -File | Format-Table Name, Length, LastWriteTime -AutoSize
+
+          $exe = Get-ChildItem -Path $installerDir -Filter "*.exe" -File | Select-Object -First 1
+          if (-not $exe) {
+            Write-Error "No installer .exe found in $installerDir"
+            exit 1
+          }
+
+          Write-Host "Installer found: $($exe.FullName)"
+        shell: pwsh
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ env.APP_VERSION }}
+          path: backend/publish/installer/*.exe
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "TuColmadoRD ${{ github.ref_name }} - Test Release"
+          prerelease: true
+          body: |
+            ## ⚠️ Versión de Prueba — NO para producción
+            
+            ### Qué incluye esta versión
+            - Build automatizado con assets correctos (.exe)
+            
+            ### Cómo instalar
+            1. Descargar el archivo `.exe` de abajo
+            2. Ejecutar como administrador
+            3. Vincular con tu cuenta al abrir
+            
+            **Soporte:** https://wa.me/18296932458
+          files: |
+            backend/publish/installer/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

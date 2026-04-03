@@ -1,0 +1,1 @@
+import{Ga as i,ab as n,bb as o,sb as s}from"./chunk-KTZU5CF3.js";var p=class e{static \u0275fac=function(t){return new(t||e)};static \u0275cmp=i({type:e,selectors:[["app-subscription"]],decls:2,vars:0,template:function(t,a){t&1&&(n(0,"p"),s(1,"subscription works!"),o())},encapsulation:2})};export{p as Subscription};

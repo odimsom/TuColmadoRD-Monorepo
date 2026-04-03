@@ -1,0 +1,21 @@
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+WORKDIR /source
+
+COPY TuColmadoRD.slnx .
+COPY src/core/TuColmadoRD.Core.Domain/TuColmadoRD.Core.Domain.csproj src/core/TuColmadoRD.Core.Domain/
+COPY src/core/TuColmadoRD.Core.Application/TuColmadoRD.Core.Application.csproj src/core/TuColmadoRD.Core.Application/
+COPY src/infrastructure/TuColmadoRD.Infrastructure.Persistence/TuColmadoRD.Infrastructure.Persistence.csproj src/infrastructure/TuColmadoRD.Infrastructure.Persistence/
+COPY src/infrastructure/TuColmadoRD.Infrastructure.CrossCutting/TuColmadoRD.Infrastructure.CrossCutting.csproj src/infrastructure/TuColmadoRD.Infrastructure.CrossCutting/
+COPY src/infrastructure/TuColmadoRD.Infrastructure.IOC/TuColmadoRD.Infrastructure.IOC.csproj src/infrastructure/TuColmadoRD.Infrastructure.IOC/
+COPY src/Presentations/TuColmadoRD.Presentation.API/TuColmadoRD.Presentation.API.csproj src/Presentations/TuColmadoRD.Presentation.API/
+RUN dotnet restore src/Presentations/TuColmadoRD.Presentation.API/TuColmadoRD.Presentation.API.csproj
+
+COPY src/ src/
+RUN dotnet publish src/Presentations/TuColmadoRD.Presentation.API/TuColmadoRD.Presentation.API.csproj -c Release -o /app
+
+# Serve stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview
+WORKDIR /app
+COPY --from=build /app .
+ENTRYPOINT ["dotnet", "TuColmadoRD.Presentation.API.dll"]

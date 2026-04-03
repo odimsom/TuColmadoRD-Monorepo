@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Entities\Audit&amp;Analytics\**" />
+    <Compile Remove="Entities\Expenses&amp;Treasury\**" />
+    <EmbeddedResource Remove="Entities\Audit&amp;Analytics\**" />
+    <EmbeddedResource Remove="Entities\Expenses&amp;Treasury\**" />
+    <None Remove="Entities\Audit&amp;Analytics\**" />
+    <None Remove="Entities\Expenses&amp;Treasury\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Entities\Customers\" />
+    <Folder Include="Entities\Fiscal\" />
+    <Folder Include="Entities\HumanResources\" />
+    <Folder Include="Entities\Purchasing\" />
+    <Folder Include="Entities\Sales\" />
+    <Folder Include="Interfaces\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR.Contracts" Version="2.0.1" />
+  </ItemGroup>
+
+</Project>

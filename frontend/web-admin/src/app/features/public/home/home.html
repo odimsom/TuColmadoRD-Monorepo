@@ -1,0 +1,465 @@
+<div class="min-h-screen bg-base-100 text-base-content overflow-x-hidden transition-colors duration-300">
+  
+  <!-- SPLIT-SCREEN HERO -->
+  <div class="flex flex-col lg:flex-row min-h-[90vh] border-b border-white/5">
+    
+    <!-- LEFT: Brand Info (40%) -->
+    <div class="lg:w-[40%] bg-base-100 p-12 lg:p-20 flex flex-col justify-center border-r border-base-content/5 relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
+        <svg width="100%" height="100%"><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/></pattern><rect width="100%" height="100%" fill="url(#grid)" /></svg>
+      </div>
+      
+      <div class="relative z-10">
+        <div class="flex items-center gap-3 mb-16">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-10 h-10" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="12" height="12" rx="2" class="stroke-primary" />
+            <rect x="9" y="9" width="12" height="12" rx="2" class="stroke-secondary" />
+          </svg>
+          <span class="text-3xl font-bebas tracking-wider uppercase">TuColmado<span class="text-blue-500">RD</span></span>
+        </div>
+
+        <h1 class="text-6xl font-bebas mb-8 leading-none tracking-tight">14 DÍAS GRATIS.<br/><span class="text-primary">SIN TARJETA.</span></h1>
+        
+        <ul class="space-y-6 mb-16 text-slate-400 font-medium tracking-wide">
+          <li class="flex items-center gap-4">
+            <span class="icon-[ic--baseline-check-circle] text-blue-500 text-xl"></span>
+            Funciona sin internet
+          </li>
+          <li class="flex items-center gap-4">
+            <span class="icon-[ic--baseline-check-circle] text-blue-500 text-xl"></span>
+            Soporte dominicano 24/7
+          </li>
+          <li class="flex items-center gap-4">
+            <span class="icon-[ic--baseline-check-circle] text-blue-500 text-xl"></span>
+            Cancela cuando quieras
+          </li>
+        </ul>
+
+        <div class="p-8 rounded-3xl bg-base-200/60 border border-base-content/5 backdrop-blur-sm relative">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center font-black text-white">JP</div>
+            <div>
+              <p class="text-sm font-bold text-white">Juan Pérez</p>
+              <p class="text-[0.6rem] uppercase tracking-widest text-slate-500">Colmado El Buen Precio, SDO</p>
+            </div>
+          </div>
+          <p class="italic text-slate-300 text-sm leading-relaxed">"Antes perdía RD$3,000 al mes en errores de suma. Ahora todo me cuadra al centavo."</p>
+          <div class="flex gap-1 mt-4">
+            @for (i of [1,2,3,4,5]; track $index) {
+              <span class="icon-[ic--baseline-star] text-amber-500 text-sm"></span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Auth Experience (60%) -->
+    <div id="hero-form" class="lg:w-[60%] bg-base-200 p-8 lg:p-20 flex flex-col items-center justify-center relative">
+      <div class="w-full max-w-md">
+        
+        <div class="mb-12 text-center lg:text-left bg-base-200">
+          @if (!desktopApp) {
+            <h2 class="text-3xl font-bebas text-white tracking-widest uppercase mb-2">Crear cuenta gratis</h2>
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Empieza tu prueba de 14 días sin compromiso</p>
+          } @else {
+            <h2 class="text-3xl font-bebas text-white tracking-widest uppercase mb-2">Acceso con licencia</h2>
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">La versión instalada no permite crear cuentas</p>
+          }
+        </div>
+
+        <!-- Forms Container -->
+        <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          
+          @if (!desktopApp) {
+          <!-- REGISTER FLOW -->
+          <!-- STEP 1: FORM -->
+            @if (registerState() === 'form') {
+              <div class="space-y-6">
+                <div>
+                  <label class="block text-[0.65rem] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Nombre Completo</label>
+                  <input type="text" placeholder="Ej. Pedro Martínez" class="w-full bg-base-100 border border-base-content/10 rounded-xl px-5 py-4 text-base-content focus:outline-none focus:border-primary transition-colors">
+                </div>
+                <div>
+                  <label class="block text-[0.65rem] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Nombre del Colmado</label>
+                  <input type="text" placeholder="Ej. Colmado Los Primos" class="w-full bg-base-100 border border-base-content/10 rounded-xl px-5 py-4 text-base-content focus:outline-none focus:border-primary transition-colors">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-[0.65rem] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">WhatsApp</label>
+                    <input type="tel" placeholder="829-000-0000" class="w-full bg-base-100 border border-base-content/10 rounded-xl px-5 py-4 text-base-content focus:outline-none focus:border-primary transition-colors">
+                  </div>
+                  <div>
+                    <label class="block text-[0.65rem] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Contraseña</label>
+                    <input type="password" placeholder="••••••••" class="w-full bg-base-100 border border-base-content/10 rounded-xl px-5 py-4 text-base-content focus:outline-none focus:border-primary transition-colors">
+                  </div>
+                </div>
+                <button (click)="startRegistration()" class="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl transition-all shadow-[0_10px_30px_rgba(37,99,235,0.3)] text-sm uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
+                  Crear mi cuenta gratis <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
+                </button>
+              </div>
+            }
+
+            <!-- STEP 2: TERMS MODAL -->
+            @if (registerState() === 'terms') {
+              <div class="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                <div class="absolute inset-0 bg-black/85 backdrop-blur-sm"></div>
+                <div class="relative w-full max-w-lg bg-base-100 border border-base-content/10 rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-300">
+                  <h3 class="text-3xl font-bebas mb-6 uppercase tracking-tight">Antes de continuar</h3>
+                  <p class="text-slate-400 text-sm leading-relaxed mb-8">
+                    Al crear tu cuenta aceptas nuestros <a href="#" target="_blank" class="text-blue-500 underline">Términos y Condiciones</a> y Política de Privacidad. Tu cuenta requiere conexión a internet para la activación inicial.
+                  </p>
+                  
+                  <div class="flex items-start gap-3 mb-10">
+                    <input type="checkbox" [checked]="acceptedTerms()" (change)="acceptedTerms.set(!acceptedTerms())" class="checkbox checkbox-primary rounded border-white/20 mt-1">
+                    <span class="text-xs text-slate-300">He leído y acepto los Términos y Condiciones de uso del sistema.</span>
+                  </div>
+
+                  <div class="flex flex-col gap-4">
+                    <button 
+                      (click)="finalizeRegistration()"
+                      [disabled]="!acceptedTerms()"
+                      class="w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all"
+                      [class]="acceptedTerms() ? 'bg-blue-600 text-white shadow-xl hover:bg-blue-500' : 'bg-white/5 text-slate-500 cursor-not-allowed'"
+                    >
+                      Continuar y crear cuenta <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
+                    </button>
+                    <button (click)="registerState.set('form')" class="w-full py-4 text-slate-500 hover:text-white font-bold text-xs uppercase tracking-widest transition-colors">
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- STEP 3: SUCCESS -->
+            @if (registerState() === 'success') {
+              <div class="text-center animate-in zoom-in-95 duration-500">
+                <div class="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
+                  <span class="icon-[ic--baseline-check] text-4xl text-green-500"></span>
+                </div>
+                <h3 class="text-4xl font-bebas mb-2 uppercase tracking-tight">¡Tu cuenta está lista!</h3>
+                <p class="text-slate-500 text-sm mb-12">Bienvenido a TuColmadoRD. Tienes 14 días gratis para probarlo todo.</p>
+
+                <div class="grid grid-cols-1 gap-6 mb-12">
+                  <!-- WEB ACCESS -->
+                  <div class="p-6 rounded-3xl bg-white/5 border border-white/5 hover:border-blue-500/30 transition-all text-left group">
+                    <div class="flex items-center gap-4 mb-4">
+                      <div class="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                        <span class="icon-[ic--baseline-language] text-2xl text-blue-500"></span>
+                      </div>
+                      <h4 class="font-bold text-white">Acceso Web</h4>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-6 leading-relaxed">Gestiona reportes, fiados y configuración desde cualquier dispositivo.</p>
+                    <button (click)="enterPortal()" class="w-full py-3 border border-blue-500/50 hover:bg-blue-500/10 text-blue-500 rounded-xl font-black text-[0.65rem] uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                      Entrar al sistema <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
+                    </button>
+                  </div>
+
+                  <!-- DESKTOP APP -->
+                  <div class="p-6 rounded-3xl bg-blue-600/5 border border-blue-500/40 relative overflow-hidden text-left">
+                    <div class="absolute top-4 right-4 px-3 py-1 bg-blue-600 rounded-full text-[8px] font-black text-white uppercase tracking-widest">Recomendado</div>
+                    <div class="flex items-center gap-4 mb-4">
+                      <div class="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                        <span class="icon-[ic--baseline-desktop-windows] text-2xl text-blue-500"></span>
+                      </div>
+                      <h4 class="font-bold text-white">App para Windows</h4>
+                    </div>
+                    <p class="text-xs text-slate-300 mb-6 leading-relaxed italic">"El POS completo en tu PC. Funciona sin internet y sincroniza solo."</p>
+                    
+                    <ul class="space-y-2 mb-8">
+                       <li class="flex items-center gap-2 text-[0.65rem] text-slate-400"><span class="icon-[ic--baseline-check] text-green-500"></span> Funciona aunque se vaya el WIFI</li>
+                       <li class="flex items-center gap-2 text-[0.65rem] text-slate-400"><span class="icon-[ic--baseline-check] text-green-500"></span> Más rápido para cobrar</li>
+                    </ul>
+
+                    @if (downloadInfo(); as info) {
+                      <a [href]="info.downloadUrl" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs text-center uppercase tracking-widest transition-all block">
+                        DESCARGAR v{{ info.version }} ({{ info.fileSize }}) <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
+                      </a>
+                    } @else {
+                      <button class="w-full py-4 bg-white/5 text-slate-500 rounded-xl font-black text-xs uppercase tracking-widest cursor-disabled tooltip" data-tip="La descarga estará disponible muy pronto.">
+                        PRÓXIMAMENTE
+                      </button>
+                    }
+                    <p class="text-center text-[10px] text-slate-500 mt-3">Requiere Windows 10+ · ~85MB</p>
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <p class="text-[10px] text-slate-600 uppercase tracking-widest">Tu cuenta ya está activa. La app se conectará automáticamente.</p>
+                  <a href="https://wa.me/18296932458" target="_blank" class="text-xs font-bold text-blue-500 hover:underline flex items-center justify-center gap-2">
+                    <span class="icon-[ic--baseline-whatsapp]"></span> ¿Necesitas ayuda? Escríbenos
+                  </a>
+                </div>
+              </div>
+            }
+          <!-- Google Auth -->
+          @if (registerState() !== 'success' && registerState() !== 'terms') {
+            <div class="relative my-10 text-center">
+              <span class="relative z-10 px-4 bg-[#080E1A] text-slate-500 text-[10px] font-black uppercase tracking-widest">O continúa con</span>
+              <div class="absolute top-1/2 left-0 w-full h-px bg-white/5"></div>
+            </div>
+
+            <button class="w-full py-4 border border-white/10 hover:bg-white/5 text-white font-bold rounded-xl flex items-center justify-center gap-3 transition-all">
+              <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              Entrar con Google
+            </button>
+          }
+          } @else {
+            <div class="p-8 rounded-3xl bg-white/5 border border-white/10 text-center">
+              <p class="text-sm text-slate-300 mb-4">La versión instalada funciona solo con acceso autorizado y licencia activa.</p>
+              <a routerLink="/auth/login" class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest transition-all">Ir al login</a>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOCIAL PROOF BAR -->
+  <div id="stats-bar" class="bg-base-200 border-y border-base-content/5 py-8 lg:py-12">
+    <div class="max-w-7xl mx-auto px-8 grid grid-cols-2 lg:flex lg:justify-between gap-8 lg:gap-12 text-center lg:text-left">
+      @for (stat of stats; track $index) {
+        <div class="flex-1 min-w-[140px] lg:min-w-[200px] relative">
+          <div class="text-4xl lg:text-[44px] font-bebas text-white mb-1 flex items-center justify-center lg:justify-start gap-1 leading-none">
+            {{ stat.current }}<span class="text-blue-500 text-[32px]">@if(stat.suffix === '★') { <span class="icon-[ic--baseline-star] text-2xl -mt-1 inline-block"></span> } @else { {{ stat.suffix }} }</span>
+          </div>
+          <p class="text-[11px] font-bold text-[#64748B] uppercase tracking-[2px]">{{ stat.label }}</p>
+          @if (!$last && $index % 2 !== 1) {
+            <div class="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 w-px h-10 bg-[#1E3A8A55]"></div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- LO QUE CAMBIA DESDE EL PRIMER DÍA -->
+  <section class="max-w-7xl mx-auto px-8 py-32">
+    <h2 class="text-center text-4xl lg:text-6xl font-bebas mb-4 uppercase tracking-tight">Lo que cambia desde el primer día</h2>
+    <p class="text-center text-slate-500 font-medium mb-20 uppercase tracking-widest text-xs">Colmaderos que usaron TuColmadoRD nos cuentan:</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+      <!-- Card 1 -->
+      <div class="p-10 rounded-3xl bg-base-200 border border-base-content/5 hover:border-primary/50 hover:-translate-y-2 transition-all group relative overflow-hidden">
+        <div class="absolute -top-4 -left-2 text-[120px] font-serif text-primary/15 pointer-events-none select-none leading-none">❝</div>
+        <div class="flex gap-1 mb-8 relative z-10">
+          @for (i of [1,2,3,4,5]; track $index) { <span class="icon-[ic--baseline-star] text-amber-500 text-sm"></span> }
+        </div>
+        <p class="text-lg text-base-content/80 italic mb-8 relative z-10 leading-relaxed">"Cerré el turno y tenía exactamente RD$12,450 en la gaveta. Primera vez que me cuadra."</p>
+        <div class="flex items-center gap-4 relative z-10">
+          <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-black text-primary text-xs">ML</div>
+          <div>
+            <p class="text-sm font-bold text-base-content leading-none">María L.</p>
+            <p class="text-[0.6rem] text-base-content/50 uppercase tracking-widest mt-1">Colmado La Esperanza</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="p-10 rounded-3xl bg-base-200 border border-base-content/5 hover:border-primary/50 hover:-translate-y-2 transition-all group relative overflow-hidden">
+        <div class="absolute -top-4 -left-2 text-[120px] font-serif text-primary/15 pointer-events-none select-none leading-none">❝</div>
+        <div class="flex gap-1 mb-8 relative z-10">
+          @for (i of [1,2,3,4,5]; track $index) { <span class="icon-[ic--baseline-star] text-amber-500 text-sm"></span> }
+        </div>
+        <p class="text-lg text-base-content/80 italic mb-8 relative z-10 leading-relaxed">"Me llegó la alerta que el aceite se estaba acabando antes de quedarme sin. Ya no pierdo ventas."</p>
+        <div class="flex items-center gap-4 relative z-10">
+          <div class="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center font-black text-success text-xs">CM</div>
+          <div>
+            <p class="text-sm font-bold text-base-content leading-none">Carlos M.</p>
+            <p class="text-[0.6rem] text-base-content/50 uppercase tracking-widest mt-1">El Colmado del Barrio</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="p-10 rounded-3xl bg-base-200 border border-base-content/5 hover:border-primary/50 hover:-translate-y-2 transition-all group relative overflow-hidden">
+        <div class="absolute -top-4 -left-2 text-[120px] font-serif text-primary/15 pointer-events-none select-none leading-none">❝</div>
+        <div class="flex gap-1 mb-8 relative z-10">
+          @for (i of [1,2,3,4,5]; track $index) { <span class="icon-[ic--baseline-star] text-amber-500 text-sm"></span> }
+        </div>
+        <p class="text-lg text-base-content/80 italic mb-8 relative z-10 leading-relaxed">"Lo reviso desde el celular antes de dormir. Sé exactamente cuánto gané hoy."</p>
+        <div class="flex items-center gap-4 relative z-10">
+          <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center font-black text-purple-500 text-xs">RP</div>
+          <div>
+            <p class="text-sm font-bold text-base-content leading-none">Rosa P.</p>
+            <p class="text-[0.6rem] text-base-content/50 uppercase tracking-widest mt-1">Mini Market Familia</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CÓMO FUNCIONA SECTION -->
+  <section class="max-w-7xl mx-auto px-8 py-32 border-t border-white/5 bg-[#080E1A]/50">
+    <div class="text-center mb-20">
+      <h2 class="text-6xl lg:text-[72px] font-bebas mb-6 uppercase tracking-tight text-white leading-none">
+        CÓMO FUNCIONA
+      </h2>
+      <div class="w-24 h-1 bg-blue-600 mx-auto"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <!-- Step 01 -->
+      <div class="p-10 rounded-3xl bg-[#0D1B2E] border border-white/5 hover:border-blue-500/30 transition-all group flex flex-col items-center text-center">
+        <div class="text-3xl font-bebas text-blue-500 mb-6 group-hover:scale-110 transition-transform">01</div>
+        <div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-8">
+          <span class="icon-[ic--baseline-how-to-reg] text-4xl text-blue-500"></span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-4">Regístrate en 2 minutos</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          Crea tu cuenta con tu nombre y el nombre de tu colmado. Sin papeleos, sin tarjeta de crédito para empezar.
+        </p>
+      </div>
+
+      <!-- Step 02 -->
+      <div class="p-10 rounded-3xl bg-[#0D1B2E] border border-white/5 hover:border-blue-500/30 transition-all group flex flex-col items-center text-center">
+        <div class="text-3xl font-bebas text-blue-500 mb-6 group-hover:scale-110 transition-transform">02</div>
+        <div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-8">
+          <span class="icon-[ic--baseline-inventory-2] text-4xl text-blue-500"></span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-4">Carga tu inventario</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          Agrega tus productos con precio y cantidad. Puedes importar desde Excel. Sencillo como anotar en la libreta.
+        </p>
+      </div>
+
+      <!-- Step 03 -->
+      <div class="p-10 rounded-3xl bg-[#0D1B2E] border border-white/5 hover:border-blue-500/30 transition-all group flex flex-col items-center text-center">
+        <div class="text-3xl font-bebas text-blue-500 mb-6 group-hover:scale-110 transition-transform">03</div>
+        <div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-8">
+          <span class="icon-[ic--baseline-point-of-sale] text-4xl text-blue-500"></span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-4">Empieza a vender</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          Abre el POS, selecciona productos y cobra. El sistema registra ventas, fiados y cuadre automáticamente.
+        </p>
+      </div>
+
+      <!-- Step 04 -->
+      <div class="p-10 rounded-3xl bg-[#0D1B2E] border border-white/5 hover:border-blue-500/30 transition-all group flex flex-col items-center text-center">
+        <div class="text-3xl font-bebas text-blue-500 mb-6 group-hover:scale-110 transition-transform">04</div>
+        <div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-8">
+          <span class="icon-[ic--baseline-analytics] text-4xl text-blue-500"></span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-4">Ve tus reportes</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          Al final del turno el sistema te dice exactamente cuánto dinero debe haber en la gaveta. Sin sorpresas.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING SECTION -->
+  <section class="max-w-7xl mx-auto px-8 py-32 border-t border-white/5">
+    <div class="text-center mb-20">
+      <span class="px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/5 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-6 inline-block">PRECIOS TRANSPARENTES</span>
+      <h2 class="text-6xl font-bebas mb-12 uppercase tracking-wide">Elige tu plan</h2>
+      
+      <!-- Toggle Mensual/Anual -->
+      <div class="flex items-center justify-center gap-6">
+        <span class="text-xs font-black uppercase tracking-widest" [class.text-white]="billingCycle() === 'monthly'" [class.text-slate-500]="billingCycle() === 'annual'">Mensual</span>
+        <button 
+          (click)="toggleBilling()"
+          class="w-14 h-7 rounded-full bg-blue-900/40 border border-white/10 relative p-1 flex items-center transition-all"
+        >
+          <div class="w-5 h-5 bg-blue-500 rounded-full shadow-lg transition-transform duration-300" [style.transform]="billingCycle() === 'annual' ? 'translateX(28px)' : 'translateX(0)'"></div>
+        </button>
+        <div class="flex items-center gap-3 relative">
+          <span class="text-xs font-black uppercase tracking-widest" [class.text-white]="billingCycle() === 'annual'" [class.text-slate-500]="billingCycle() === 'monthly'">Anual</span>
+          <span class="absolute left-full ml-3 px-2 py-1 bg-green-500 text-[#0f172a] text-[10px] font-black rounded whitespace-nowrap -top-4 animate-bounce">-20% AHORRO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 items-stretch">
+      <!-- Básico -->
+      <div class="p-12 rounded-[2.5rem] bg-[#0D1B2E] border border-white/5 flex flex-col hover:-translate-y-2 transition-all duration-300">
+        <h3 class="text-3xl font-bebas mb-2 uppercase tracking-wide">Básico</h3>
+        <p class="text-slate-500 text-sm font-medium mb-10">Para colmados pequeños</p>
+        <div class="flex items-baseline mb-12">
+          <span class="text-5xl font-bebas">RD${{ billingCycle() === 'monthly' ? '990' : '790' }}</span>
+          <span class="text-slate-500 font-bold text-xs uppercase tracking-widest ml-1">/mes</span>
+        </div>
+        <ul class="space-y-5 mb-12 flex-grow">
+          <li class="flex items-center gap-3 text-slate-400 text-sm font-medium"><span class="icon-[ic--baseline-check-circle] text-blue-500"></span> 1 caja registradora</li>
+          <li class="flex items-center gap-3 text-slate-400 text-sm font-medium"><span class="icon-[ic--baseline-check-circle] text-blue-500"></span> Hasta 500 productos</li>
+          <li class="flex items-center gap-3 text-slate-400 text-sm font-medium"><span class="icon-[ic--baseline-check-circle] text-blue-500"></span> Control de ventas</li>
+          <li class="flex items-center gap-3 text-slate-400 text-sm font-medium"><span class="icon-[ic--baseline-check-circle] text-blue-500"></span> Cuadre de caja diario</li>
+          <li class="flex items-center gap-3 text-slate-400 text-sm font-medium"><span class="icon-[ic--baseline-check-circle] text-blue-500"></span> Soporte por WhatsApp</li>
+        </ul>
+        <button class="w-full py-4 text-center border-2 border-white/10 hover:border-blue-500 hover:bg-blue-500/10 rounded-2xl text-white font-black uppercase tracking-widest text-[10px] transition-all">Empezar gratis 14 días</button>
+      </div>
+
+      <!-- Avanzado (DESTAQUADO) -->
+      <div class="p-12 rounded-[2.5rem] bg-[#0F172A] border-2 border-blue-600 shadow-[0_0_40px_rgba(37,99,235,0.2)] lg:scale-105 z-10 flex flex-col relative transition-all duration-300 hover:-translate-y-2">
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-600 rounded text-[10px] font-black text-white uppercase tracking-[0.2em] shadow-xl">MÁS POPULAR</div>
+        <h3 class="text-3xl font-bebas mb-2 uppercase tracking-wide">Avanzado</h3>
+        <p class="text-blue-500 text-sm font-bold mb-10">Control total del negocio</p>
+        <div class="flex items-baseline mb-12 text-white">
+          <span class="text-5xl font-bebas">RD${{ billingCycle() === 'monthly' ? '1,990' : '1,590' }}</span>
+          <span class="text-slate-500 font-bold text-xs uppercase tracking-widest ml-1">/mes</span>
+        </div>
+        <ul class="space-y-5 mb-12 flex-grow">
+          <li class="flex items-center gap-3 text-slate-300 text-sm font-bold"><span class="icon-[ic--baseline-check-circle] text-blue-500 text-lg"></span> Hasta 3 cajas</li>
+          <li class="flex items-center gap-3 text-slate-300 text-sm font-bold"><span class="icon-[ic--baseline-check-circle] text-blue-500 text-lg"></span> Productos ilimitados</li>
+          <li class="flex items-center gap-3 text-slate-300 text-sm font-bold"><span class="icon-[ic--baseline-check-circle] text-blue-500 text-lg"></span> Control de fiados (la libreta)</li>
+          <li class="flex items-center gap-3 text-slate-300 text-sm font-bold"><span class="icon-[ic--baseline-check-circle] text-blue-500 text-lg"></span> Reportes por turno y por empleado</li>
+          <li class="flex items-center gap-3 text-slate-300 text-sm font-bold"><span class="icon-[ic--baseline-check-circle] text-blue-500 text-lg"></span> Alertas de stock bajo</li>
+          <li class="flex items-center gap-3 text-slate-300 text-sm font-bold"><span class="icon-[ic--baseline-check-circle] text-blue-500 text-lg"></span> Soporte prioritario 24/7</li>
+        </ul>
+        <button class="w-full py-5 bg-blue-600 hover:bg-blue-500 rounded-2xl text-white font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-blue-600/30">Empezar gratis 14 días</button>
+      </div>
+
+      <!-- Premium -->
+      <div class="p-12 rounded-[2.5rem] bg-[#0D1B2E] border border-white/5 flex flex-col hover:-translate-y-2 transition-all duration-300">
+        <h3 class="text-3xl font-bebas mb-2 uppercase tracking-wide">Premium</h3>
+        <p class="text-slate-500 text-sm font-medium mb-10">Para minimarkets y cadenas</p>
+        <div class="flex items-baseline mb-12">
+          <span class="text-5xl font-bebas">RD${{ billingCycle() === 'monthly' ? '3,490' : '2,790' }}</span>
+          <span class="text-slate-500 font-bold text-xs uppercase tracking-widest ml-1">/mes</span>
+        </div>
+        <ul class="space-y-5 mb-12 flex-grow">
+          <li class="flex items-center gap-3 text-slate-400 text-sm font-medium"><span class="icon-[ic--baseline-check-circle] text-blue-500"></span> Cajas ilimitadas</li>
+          <li class="flex items-center gap-3 text-slate-400 text-sm font-medium"><span class="icon-[ic--baseline-check-circle] text-blue-500"></span> Multi-sucursal</li>
+          <li class="flex items-center gap-3 text-slate-400 text-sm font-medium"><span class="icon-[ic--baseline-check-circle] text-blue-500"></span> App móvil para dueños</li>
+          <li class="flex items-center gap-3 text-slate-400 text-sm font-medium"><span class="icon-[ic--baseline-check-circle] text-blue-500"></span> Reportes avanzados y exportación</li>
+          <li class="flex items-center gap-3 text-slate-400 text-sm font-medium"><span class="icon-[ic--baseline-check-circle] text-blue-500"></span> Gerente de cuenta dedicado</li>
+        </ul>
+        <button class="w-full py-4 text-center border-2 border-blue-600/50 hover:border-blue-500 hover:bg-blue-500/10 rounded-2xl text-blue-500 font-black uppercase tracking-widest text-[10px] transition-all">Contactar ventas</button>
+      </div>
+    </div>
+
+    <div class="mt-20 flex flex-wrap justify-center gap-8 text-green-400 font-black text-[10px] uppercase tracking-[0.2em]">
+      <span class="flex items-center gap-2"><span class="icon-[ic--baseline-check-circle] text-green-500"></span> 14 días gratis en cualquier plan</span>
+      <span class="flex items-center gap-2"><span class="icon-[ic--baseline-check-circle] text-green-500"></span> Sin tarjeta de crédito</span>
+    </div>
+  </section>
+
+  <!-- FINAL CTA SECTION -->
+  <section class="border-t border-base-content/5 bg-base-200 py-32 px-8">
+    <div class="max-w-[640px] mx-auto text-center">
+      <h2 class="text-5xl lg:text-[48px] font-bebas mb-6 uppercase tracking-tight text-white leading-none">
+        ¿LISTO PARA CUADRAR TU COLMADO?
+      </h2>
+      <p class="text-[#94A3B8] text-base lg:text-lg mb-10 leading-relaxed">
+        Únete a los primeros colmaderos en RD que digitalizan su negocio. 
+        14 días gratis, sin compromiso ni tarjeta.
+      </p>
+      
+      <button 
+        (click)="scrollToHero($event)"
+        class="w-full lg:w-auto px-12 py-5 bg-[#2563EB] hover:bg-blue-500 text-white font-bebas text-xl uppercase tracking-widest rounded-xl transition-all shadow-[0_20px_50px_rgba(37,99,235,0.3)] hover:-translate-y-1 mb-8"
+      >
+        CREAR MI CUENTA GRATIS <span class="icon-[ic--baseline-arrow-forward] text-2xl"></span>
+      </button>
+
+      <div class="flex flex-wrap justify-center gap-6 text-[#4ADE80] font-bold text-[13px] uppercase tracking-wide">
+        <span class="flex items-center gap-2"><span class="icon-[ic--baseline-check-circle]"></span> Sin tarjeta</span>
+        <span class="flex items-center gap-2"><span class="icon-[ic--baseline-check-circle]"></span> Funciona sin internet</span>
+        <span class="flex items-center gap-2"><span class="icon-[ic--baseline-check-circle]"></span> Soporte en español</span>
+      </div>
+    </div>
+  </section>
+
+  <app-onboarding-wizard></app-onboarding-wizard>
+
+</div>

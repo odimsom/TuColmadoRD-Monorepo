@@ -1,0 +1,27 @@
+# Dependencies
+**/node_modules/
+
+# Build outputs
+**/dist/
+**/release/
+**/publish/
+**/.angular/
+**/.cache/
+**/.vite/
+**/coverage/
+**/bin/
+**/obj/
+**/artifacts/
+
+# Logs and local env files
+*.log
+*.tmp
+**/.env
+**/.env.*
+!**/.env.example
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+*.user
+*.suo

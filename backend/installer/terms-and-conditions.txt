@@ -1,0 +1,88 @@
+CONTRATO DE LICENCIA DE USO DE SOFTWARE (EULA)
+Producto: TuColmado RD
+
+Proveedor: Synset Solutions
+
+Fecha de actualizacion: 02 de abril de 2026
+
+AVISO LEGAL IMPORTANTE
+Este documento constituye un acuerdo legal vinculante entre usted (en adelante,
+el "Cliente" o "Usuario") y Synset Solutions. Le rogamos leer detenidamente
+las siguientes clausulas antes de instalar, copiar o utilizar el software.
+Al hacer clic en "Aceptar", instalar o utilizar el sistema, usted declara que
+tiene la capacidad legal para representar a su negocio y acepta someterse a la
+totalidad de este contrato. Si no esta de acuerdo, cancele la instalacion y no
+utilice el producto.
+
+CLAUSULA PRIMERA: DEL OBJETO Y CONCESION DE LA LICENCIA
+Synset Solutions concede al Cliente una licencia de uso estrictamente operativa,
+no exclusiva, intransferible y revocable del software TuColmado RD. Esta licencia
+se otorga con el unico fin de gestionar la operacion interna del establecimiento
+comercial del Cliente, y de ninguna manera constituye una venta del codigo fuente
+o de los derechos de propiedad intelectual del sistema.
+
+CLAUSULA SEGUNDA: RESTRICCIONES DE USO Y PROPIEDAD INTELECTUAL
+Todo el codigo, diseno y arquitectura del software son propiedad exclusiva de
+Synset Solutions. Queda terminantemente prohibido al Cliente:
+
+- Revender, sublicenciar, alquilar o distribuir el software a terceros.
+- Descompilar, realizar ingenieria inversa, desensamblar o intentar extraer el
+	codigo fuente.
+- Modificar, alterar o crear trabajos derivados basados en este sistema sin la
+	autorizacion expresa y por escrito del proveedor.
+
+CLAUSULA TERCERA: ACTIVACION, SEGURIDAD Y HARDWARE
+Para garantizar la integridad del sistema, TuColmado RD requiere autenticacion y
+puede vincularse especificamente al hardware (dispositivo fisico) autorizado por
+el Cliente. El Cliente es el unico y exclusivo responsable de salvaguardar sus
+credenciales de acceso (usuarios y contrasenas) y de restringir el acceso fisico
+a los equipos donde opera el sistema.
+
+CLAUSULA CUARTA: RESPONSABILIDAD SOBRE DATOS OPERATIVOS
+Synset Solutions provee la herramienta para el manejo de la informacion, pero los
+datos financieros, inventarios y registros de fiados ingresados son propiedad y
+responsabilidad exclusiva del Cliente. Es obligacion del Cliente realizar los
+respaldos y exportaciones periodicas necesarias. Synset Solutions no se hace
+responsable por la perdida de datos derivada de danos fisicos en el equipo del
+Cliente o negligencia operativa.
+
+CLAUSULA QUINTA: ACTUALIZACIONES Y MANTENIMIENTO
+Con el fin de mejorar el rendimiento y la seguridad, Synset Solutions se reserva
+el derecho de desplegar actualizaciones, parches y mejoras. El Cliente reconoce
+que la aplicacion de ciertas actualizaciones de caracter critico puede requerir el
+reinicio del sistema o breves ventanas de mantenimiento, las cuales seran
+notificadas con antelacion cuando sea posible.
+
+CLAUSULA SEXTA: CANALES OFICIALES DE SOPORTE TECNICO
+Cualquier solicitud de asistencia tecnica, reporte de incidencias o consultas
+sobre el uso del sistema debera canalizarse unica y exclusivamente a traves de la
+via oficial:
+
+WhatsApp de Soporte: https://wa.me/18296932458
+
+El tiempo de respuesta y los horarios de cobertura estaran sujetos al plan de
+servicio comercial que el Cliente haya contratado.
+
+CLAUSULA SEPTIMA: EXENCION Y LIMITACION DE RESPONSABILIDAD
+El software se suministra "en el estado en que se encuentra" (As-Is). En la
+maxima medida permitida por la ley aplicable, Synset Solutions rechaza cualquier
+garantia implicita. En ningun caso el proveedor sera responsable ante el Cliente
+o terceros por danos indirectos, lucro cesante, perdida de ingresos,
+interrupciones del negocio o perdida de datos que resulten de fallas electricas,
+cortes de red, mal estado del hardware del Cliente o uso indebido de la
+plataforma.
+
+CLAUSULA OCTAVA: CAUSALES DE TERMINACION
+Synset Solutions se reserva el derecho de suspender o revocar permanentemente la
+presente licencia, sin previo aviso ni derecho a reembolso, si el Cliente incurre
+en una violacion a las restricciones de uso establecidas en la Clausula Segunda,
+o si se detecta un uso fraudulento del sistema.
+
+CLAUSULA NOVENA: JURISDICCION Y LEYES APLICABLES
+Este acuerdo se regira, interpretara y ejecutara en estricto apego a las leyes de
+la Republica Dominicana. Cualquier controversia derivada del uso de este software
+se sometera a los tribunales competentes del Distrito Nacional.
+
+Copyright 2026 TuColmado RD.
+Un producto desarrollado por Synset Solutions.
+https://tucolmadord.com

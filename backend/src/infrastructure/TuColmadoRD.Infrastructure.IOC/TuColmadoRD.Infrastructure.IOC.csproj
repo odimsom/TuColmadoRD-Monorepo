@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TuColmadoRD.Infrastructure.Persistence\TuColmadoRD.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\..\core\TuColmadoRD.Core.Application\TuColmadoRD.Core.Application.csproj" />
+    <ProjectReference Include="..\TuColmadoRD.Infrastructure.CrossCutting\TuColmadoRD.Infrastructure.CrossCutting.csproj" />
+  </ItemGroup>
+
+</Project>

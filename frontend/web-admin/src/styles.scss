@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  cursor: default;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 10px;
+    &:hover {
+      background: #334155;
+    }
+  }
+}
+
+/* Synset Toast System */
+.synset-toast {
+  @apply fixed bottom-8 right-8 z-[100] flex flex-col gap-3;
+  
+  &-item {
+    @apply flex items-center gap-4 px-6 py-4 rounded-2xl bg-pos-surface border border-white/5 shadow-2xl animate-in slide-in-from-right-8 duration-300;
+    
+    &.info { @apply border-blue-500/30; .icon { @apply text-blue-500; } }
+    &.success { @apply border-green-500/30; .icon { @apply text-green-500; } }
+    &.error { @apply border-red-500/30; .icon { @apply text-red-500; } }
+  }
+}

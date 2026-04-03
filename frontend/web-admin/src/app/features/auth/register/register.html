@@ -1,0 +1,152 @@
+<div class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-4xl">
+    
+    <!-- STATE: FORM -->
+    <div *ngIf="state() === 'form'" class="card bg-base-200/80 backdrop-blur-xl border border-white/10 shadow-2xl max-w-md mx-auto">
+      <div class="card-body">
+        <div class="text-center mb-6">
+          <h2 class="text-3xl font-bold text-white tracking-tight">Nuevo Colmado</h2>
+          <p class="text-slate-400 text-sm mt-1">Registra tu negocio en segundos</p>
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onTrySubmit()" class="space-y-4" data-testid="register-form">
+          <div class="form-control w-full">
+            <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Nombre Completo</span></label>
+            <input type="text" formControlName="fullName" placeholder="Tu nombre" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-full-name" />
+          </div>
+
+          <div class="form-control w-full">
+            <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Nombre del Negocio</span></label>
+            <input type="text" formControlName="businessName" placeholder="Ej: Colmado La Bendición" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-business-name" />
+          </div>
+
+          <div class="form-control w-full">
+            <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Correo Electrónico</span></label>
+            <input type="email" formControlName="email" placeholder="tu@colmado.com" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-email" />
+          </div>
+
+          <div class="form-control w-full">
+            <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">WhatsApp / Celular</span></label>
+            <input type="text" formControlName="whatsapp" placeholder="809-555-5555" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-whatsapp" />
+          </div>
+
+          <div class="form-control w-full">
+            <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Contraseña</span></label>
+            <input type="password" formControlName="password" placeholder="Mínimo 6 caracteres" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-password" />
+          </div>
+
+          <div class="card-actions mt-8">
+            <button type="submit" [disabled]="registerForm.invalid" class="btn btn-primary w-full border-none shadow-lg shadow-blue-500/20" data-testid="register-continue-btn">
+              Continuar
+            </button>
+          </div>
+        </form>
+
+        <div class="text-center mt-6">
+          <p class="text-sm text-slate-400">¿Ya tienes cuenta? <a routerLink="/auth/login" class="text-blue-500 hover:text-blue-400 font-medium transition-colors">Inicia Sesión</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE: TERMS MODAL -->
+    <div *ngIf="state() === 'terms-modal'" class="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50 animate-in fade-in zoom-in duration-300" data-testid="terms-modal">
+      <div class="bg-[#0D1B2E] border border-[#1E3A8A55] rounded-2xl p-8 max-w-lg shadow-2xl">
+        <h3 class="text-2xl font-bold text-white mb-4">Términos del Servicio</h3>
+        <div class="prose prose-sm prose-invert max-h-60 overflow-y-auto mb-6 text-slate-300">
+          <p>Al unirte a TuColmadoRD, aceptas nuestras políticas de uso justo y privacidad...</p>
+          <p>Tu información comercial está protegida y nunca será compartida con terceros sin tu consentimiento.</p>
+        </div>
+        
+        <label class="flex items-center gap-3 mb-8 p-3 bg-white/5 rounded-lg border border-white/5 cursor-pointer hover:bg-white/10 transition-colors">
+          <input type="checkbox" [checked]="termsAccepted()" (change)="termsAccepted.set(!termsAccepted())" class="checkbox checkbox-primary" data-testid="terms-checkbox" />
+          <span class="text-sm text-slate-200">Acepto los términos y condiciones de uso.</span>
+        </label>
+
+        <div class="flex gap-4">
+          <button (click)="cancelTerms()" class="btn btn-ghost flex-1 text-slate-400">Cancelar</button>
+          <button (click)="confirmRegistration()" [disabled]="!termsAccepted()" class="btn btn-primary flex-1" data-testid="create-account-btn">Crear Mi Cuenta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE: LOADING -->
+    <div *ngIf="state() === 'loading'" class="flex flex-col items-center justify-center py-20">
+      <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
+      <p class="text-white font-medium animate-pulse">Configurando tu colmado...</p>
+    </div>
+
+    <!-- STATE: ERROR -->
+    <div *ngIf="state() === 'error'" class="card bg-base-200 border border-red-500/30 p-8 max-w-md mx-auto text-center" data-testid="register-error-state">
+      <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+        <span class="text-3xl">⚠️</span>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-2">¡Ups! Algo salió mal</h3>
+      <p class="text-slate-400 mb-6" data-testid="register-error-message">{{ error() }}</p>
+      <button (click)="retry()" class="btn btn-outline btn-sm">Volver a intentar</button>
+    </div>
+
+    <!-- STATE: SUCCESS -->
+    <div *ngIf="state() === 'success'" class="animate-in slide-in-from-bottom-8 duration-700" data-testid="register-success-state">
+      <div class="text-center mb-10">
+        <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500 border border-green-500/20">
+          <span class="text-4xl">✓</span>
+        </div>
+        <h2 class="text-4xl font-bold text-white mb-2" data-testid="register-success-title">¡Todo listo!</h2>
+        <p class="text-slate-400">Tu cuenta ha sido activada con éxito.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <!-- CARD A: WEB PORTAL -->
+        <div class="card bg-slate-900/50 border border-white/5 hover:border-blue-500/30 transition-all p-8 group">
+          <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Úsalo desde el navegador</h3>
+          <p class="text-slate-400 text-sm mb-8">Reportes, fiados y configuración desde cualquier dispositivo.</p>
+          <a routerLink="/portal/dashboard" class="btn btn-outline btn-primary capitalize mt-auto">Entrar al sistema →</a>
+        </div>
+
+        <!-- CARD B: DESKTOP APP -->
+        <div class="card bg-[#0F172A] border-2 border-primary p-8 relative overflow-hidden group shadow-2xl shadow-primary/10">
+          <div class="absolute top-0 right-0 p-4">
+            <span class="bg-primary text-primary-content text-[10px] font-black px-2 py-1 rounded bg-blue-600">RECOMENDADO</span>
+          </div>
+          <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform">
+            <svg class="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Instala en tu caja registradora</h3>
+          <p class="text-slate-400 text-sm mb-6">Funciona sin internet. Sincroniza cuando hay conexión.</p>
+          
+          <ul class="space-y-3 mb-8">
+            <li class="flex items-center gap-2 text-sm text-slate-300"><span class="text-green-500">✓</span> Funciona sin WIFI</li>
+            <li class="flex items-center gap-2 text-sm text-slate-300"><span class="text-green-500">✓</span> Impresión térmica</li>
+            <li class="flex items-center gap-2 text-sm text-slate-300"><span class="text-green-500">✓</span> Más rápido en caja</li>
+          </ul>
+
+          <ng-container *ngIf="downloadInfo(); let info; else comingSoon">
+            <a [href]="info.downloadUrl" class="btn btn-primary w-full shadow-lg shadow-primary/20">
+              DESCARGAR v{{ info.version }} ({{ info.fileSize }}) →
+            </a>
+          </ng-container>
+          <ng-template #comingSoon>
+            <button disabled class="btn btn-ghost bg-white/5 text-slate-500 w-full cursor-not-allowed uppercase tracking-widest font-black">PRÓXIMAMENTE</button>
+          </ng-template>
+          
+          <p class="text-[10px] text-slate-500 text-center mt-4">Tu cuenta ya está activa. La app se conectará automáticamente.</p>
+          <div class="text-center mt-4">
+            <a href="https://wa.me/18296932458" target="_blank" class="text-xs text-blue-400 hover:underline">¿Necesitas ayuda? →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,16 @@
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+WORKDIR /source
+
+COPY TuColmadoRD.slnx .
+COPY src/Presentations/TuColmadoRD.ApiGateway/TuColmadoRD.ApiGateway.csproj src/Presentations/TuColmadoRD.ApiGateway/
+RUN dotnet restore src/Presentations/TuColmadoRD.ApiGateway/TuColmadoRD.ApiGateway.csproj
+
+COPY src/Presentations/TuColmadoRD.ApiGateway/ src/Presentations/TuColmadoRD.ApiGateway/
+RUN dotnet publish src/Presentations/TuColmadoRD.ApiGateway/TuColmadoRD.ApiGateway.csproj -c Release -o /app
+
+# Serve stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview
+WORKDIR /app
+COPY --from=build /app .
+ENTRYPOINT ["dotnet", "TuColmadoRD.ApiGateway.dll"]
