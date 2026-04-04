@@ -29,10 +29,13 @@ interface GithubRelease {
 export class DownloadService {
   private http = inject(HttpClient);
   // GitHub API — no requiere token para repos públicos
-  private readonly releasesUrl = 'https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases';
+  private readonly releasesUrls = [
+    'https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases',
+    'https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases'
+  ];
 
   getLatestTestRelease(): Observable<DownloadInfo | null> {
-    return this.http.get<GithubRelease[]>(this.releasesUrl).pipe(
+    return this.http.get<GithubRelease[]>(this.releasesUrls[0]).pipe(
       map(releases => {
         // Filtrar solo pre-releases con tag -test
         const testReleases = releases.filter(r => 
@@ -54,7 +57,28 @@ export class DownloadService {
           publishedAt: latest.published_at
         };
       }),
-      catchError(() => of(this.getFallbackDownloadInfo()))
+      catchError(() => this.http.get<GithubRelease[]>(this.releasesUrls[1]).pipe(
+        map(releases => {
+          const testReleases = releases.filter(r =>
+            r.prerelease && r.tag_name.includes('-test')
+          );
+
+          if (!testReleases.length) return this.getFallbackDownloadInfo();
+
+          const latest = testReleases[0];
+          const asset = latest.assets.find(a => a.name.endsWith('.exe'));
+
+          if (!asset) return this.getFallbackDownloadInfo();
+
+          return {
+            version: latest.tag_name,
+            downloadUrl: asset.browser_download_url,
+            fileSize: this.formatBytes(asset.size),
+            publishedAt: latest.published_at
+          };
+        }),
+        catchError(() => of(this.getFallbackDownloadInfo()))
+      ))
     );
   }
 

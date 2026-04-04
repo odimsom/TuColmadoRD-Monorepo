@@ -8,7 +8,11 @@ namespace TuColmadoRD.Desktop;
 internal static class UpdateService
 {
     private const string LocalLatestInstallerApi = "http://localhost:5100/gateway/updates/latest-installer";
-    private const string ReleasesUrl = "https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases";
+    private static readonly string[] ReleasesUrls =
+    {
+        "https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases",
+        "https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases"
+    };
 
     public static async Task<UpdateCheckResult> CheckForUpdateAsync()
     {
@@ -35,14 +39,39 @@ internal static class UpdateService
         using var http = new HttpClient();
         http.DefaultRequestHeaders.UserAgent.ParseAdd("TuColmadoRD-Desktop-Updater/1.0");
 
-        using var response = await http.GetAsync(ReleasesUrl);
-        response.EnsureSuccessStatusCode();
+        List<GitHubRelease>? releases = null;
+        Exception? lastError = null;
 
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        var releases = await JsonSerializer.DeserializeAsync<List<GitHubRelease>>(stream, new JsonSerializerOptions
+        foreach (var releasesUrl in ReleasesUrls)
         {
-            PropertyNameCaseInsensitive = true
-        }) ?? new List<GitHubRelease>();
+            try
+            {
+                using var response = await http.GetAsync(releasesUrl);
+                response.EnsureSuccessStatusCode();
+
+                await using var stream = await response.Content.ReadAsStreamAsync();
+                releases = await JsonSerializer.DeserializeAsync<List<GitHubRelease>>(stream, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                }) ?? new List<GitHubRelease>();
+
+                if (releases.Count > 0)
+                {
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                lastError = ex;
+            }
+        }
+
+        if (releases == null)
+        {
+            throw new InvalidOperationException(
+                "No se pudo consultar actualizaciones desde GitHub para ninguno de los repositorios configurados.",
+                lastError);
+        }
 
         var latest = releases
             .Where(r => !string.IsNullOrWhiteSpace(r.TagName))
