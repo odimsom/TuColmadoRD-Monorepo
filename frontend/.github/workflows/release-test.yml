@@ -23,7 +23,7 @@ jobs:
       - name: Checkout Backend (TuColmadoRD)
         uses: actions/checkout@v5
         with:
-          repository: odimsom/TuColmadoRD
+          repository: synsetsolutions/TuColmadoRD
           path: backend
           # Dynamic branch: mapping tag -> Develop, or branch -> branch
           ref: ${{ contains(github.ref, 'refs/tags/') && 'Develop' || github.ref_name }}

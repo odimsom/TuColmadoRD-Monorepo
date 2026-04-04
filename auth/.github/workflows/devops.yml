@@ -85,7 +85,7 @@ jobs:
               git checkout "$BRANCH"
               git pull origin "$BRANCH"
             else
-              git clone https://github.com/ODIMSOM/tu_colmado_auth ~/tu_colmado_auth
+              git clone https://github.com/synsetsolutions/tu_colmado_auth ~/tu_colmado_auth
               cd ~/tu_colmado_auth
               git checkout "$BRANCH"
             fi
