@@ -29,7 +29,7 @@ interface GithubRelease {
 export class DownloadService {
   private http = inject(HttpClient);
   // GitHub API — no requiere token para repos públicos
-  private readonly releasesUrl = 'https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases';
+  private readonly releasesUrl = 'https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases';
 
   getLatestTestRelease(): Observable<DownloadInfo | null> {
     return this.http.get<GithubRelease[]>(this.releasesUrl).pipe(

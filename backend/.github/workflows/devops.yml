@@ -90,7 +90,7 @@ jobs:
               cleanup_stack
               docker compose up -d --build --remove-orphans
             else
-              git clone https://github.com/ODIMSOM/TuColmadoRD ~/TuColmadoRD
+              git clone https://github.com/synsetsolutions/TuColmadoRD ~/TuColmadoRD
               cd ~/TuColmadoRD
               git checkout QA
               cleanup_stack
