@@ -88,6 +88,50 @@ jobs:
           Write-Host "Installer found: $($exe.FullName)"
         shell: pwsh
 
+      - name: Sign installer (code signing)
+        if: ${{ secrets.WINDOWS_CERT_PFX_BASE64 != '' && secrets.WINDOWS_CERT_PASSWORD != '' }}
+        env:
+          WINDOWS_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: |
+          $certPath = Join-Path $env:RUNNER_TEMP "tucolmadord-codesign.pfx"
+          [System.IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($env:WINDOWS_CERT_PFX_BASE64))
+
+          $signTool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter "signtool.exe" |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
+
+          if (-not $signTool) {
+            throw "signtool.exe not found on runner"
+          }
+
+          $installerDir = Join-Path $env:GITHUB_WORKSPACE "backend/publish/installer"
+          $installerFiles = Get-ChildItem -Path $installerDir -Filter "*.exe" -File
+          if (-not $installerFiles) {
+            throw "No installer .exe found to sign"
+          }
+
+          foreach ($file in $installerFiles) {
+            & $signTool sign /fd SHA256 /f $certPath /p $env:WINDOWS_CERT_PASSWORD /tr http://timestamp.digicert.com /td SHA256 "$($file.FullName)"
+            if ($LASTEXITCODE -ne 0) {
+              throw "Signing failed for $($file.FullName)"
+            }
+
+            & $signTool verify /pa /v "$($file.FullName)"
+            if ($LASTEXITCODE -ne 0) {
+              throw "Signature verification failed for $($file.FullName)"
+            }
+          }
+
+          Remove-Item -Path $certPath -Force -ErrorAction SilentlyContinue
+        shell: pwsh
+
+      - name: Code signing not configured
+        if: ${{ secrets.WINDOWS_CERT_PFX_BASE64 == '' || secrets.WINDOWS_CERT_PASSWORD == '' }}
+        run: |
+          Write-Host "Code signing skipped: configure WINDOWS_CERT_PFX_BASE64 and WINDOWS_CERT_PASSWORD repository secrets."
+        shell: pwsh
+
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
