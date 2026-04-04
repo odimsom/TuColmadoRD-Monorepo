@@ -4,7 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { DownloadService, DownloadInfo } from '../../../core/services/download.service';
-import { environment } from '../../../../environments/environment';
+import { RegisterRequest } from '../../../core/models/auth.models';
 
 type RegisterState = 'form' | 'terms-modal' | 'loading' | 'success' | 'error';
 
@@ -26,12 +26,10 @@ export class Register implements OnInit {
   termsAccepted = signal(false);
   downloadInfo = signal<DownloadInfo | null>(null);
 
-  registerForm = this.fb.group({
-    fullName: ['', [Validators.required, Validators.minLength(3)]],
-    businessName: ['', [Validators.required, Validators.minLength(3)]],
-    email: ['', [Validators.required, Validators.email]],
-    whatsapp: ['', [Validators.required, Validators.pattern(/^\+?[1-9]\d{1,14}$/)]],
-    password: ['', [Validators.required, Validators.minLength(6)]]
+  registerForm = this.fb.nonNullable.group({
+    businessName: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(160)]],
+    password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]]
   });
 
   ngOnInit(): void {
@@ -54,19 +52,24 @@ export class Register implements OnInit {
 
   confirmRegistration(): void {
     if (!this.termsAccepted()) return;
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
+      this.state.set('form');
+      return;
+    }
 
     this.state.set('loading');
     this.error.set(null);
 
-    const payload = {
-      tenantName: this.registerForm.value.businessName?.trim() ?? '',
-      email: this.registerForm.value.email?.trim().toLowerCase() ?? '',
-      password: this.registerForm.value.password ?? '',
+    const payload: RegisterRequest = {
+      tenantName: this.registerForm.controls.businessName.value.trim(),
+      email: this.registerForm.controls.email.value.trim().toLowerCase(),
+      password: this.registerForm.controls.password.value,
     };
 
     this.authService.register(payload).subscribe({
       next: () => {
-        this.state.set('success');
+        this.router.navigate(['/portal/welcome']);
       },
       error: (err) => {
         this.state.set('error');

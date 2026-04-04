@@ -34,6 +34,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: 'welcome',
+        loadComponent: () => import('./features/portal/welcome/welcome').then(m => m.Welcome)
+      },
+      {
         path: 'dashboard',
         loadComponent: () => import('./features/portal/dashboard/dashboard').then(m => m.Dashboard)
       },

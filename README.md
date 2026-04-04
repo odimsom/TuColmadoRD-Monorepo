@@ -39,6 +39,29 @@ docker compose up --build -d
 - El frontend web-admin apunta al gateway público en `api.tucolmadord.synsetsolutions.com`.
 - El auth service queda detrás del compose y del gateway.
 
+## Flujo de ramas
+
+- `main`: producción estable.
+- `qa`: rama de validación funcional y pruebas.
+- `develop`: integración continua de desarrollo.
+- `feature/<area>-<descripcion>`: nuevas funcionalidades.
+- `fix/<area>-<descripcion>`: correcciones puntuales.
+- `hotfix/<area>-<descripcion>`: correcciones urgentes sobre producción.
+
+### Flujo recomendado
+
+1. Crear rama desde `develop`:
+
+```bash
+git checkout develop
+git pull
+git checkout -b feature/web-admin-registro-real
+```
+
+2. Abrir PR hacia `develop`.
+3. Promover `develop` a `qa` mediante PR para validación.
+4. Promover `qa` a `main` cuando QA apruebe.
+
 ## Release de prueba (Desktop)
 
 Para publicar la primera versión de prueba y habilitar la descarga desde web-admin:
