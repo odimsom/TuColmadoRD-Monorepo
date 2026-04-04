@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { isDesktopApp } from '../../../core/utils/runtime';
+import { LoginRequest } from '../../../core/models/auth.models';
 
 @Component({
   selector: 'app-login',
@@ -32,7 +33,12 @@ export class Login {
     this.loading = true;
     this.error = null;
 
-    this.authService.login(this.loginForm.value).subscribe({
+    const payload: LoginRequest = {
+      email: this.loginForm.controls.email.value?.trim().toLowerCase() ?? '',
+      password: this.loginForm.controls.password.value ?? ''
+    };
+
+    this.authService.login(payload).subscribe({
       next: () => {
         this.router.navigate(['/portal/dashboard']);
       },

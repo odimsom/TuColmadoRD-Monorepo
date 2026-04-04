@@ -11,28 +11,27 @@
 
         <form [formGroup]="registerForm" (ngSubmit)="onTrySubmit()" class="space-y-4" data-testid="register-form">
           <div class="form-control w-full">
-            <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Nombre Completo</span></label>
-            <input type="text" formControlName="fullName" placeholder="Tu nombre" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-full-name" />
-          </div>
-
-          <div class="form-control w-full">
             <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Nombre del Negocio</span></label>
             <input type="text" formControlName="businessName" placeholder="Ej: Colmado La Bendición" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-business-name" />
+            <label class="label" *ngIf="registerForm.controls.businessName.touched && registerForm.controls.businessName.invalid">
+              <span class="label-text-alt text-red-400">Ingresa un nombre de colmado valido (3-120 caracteres).</span>
+            </label>
           </div>
 
           <div class="form-control w-full">
             <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Correo Electrónico</span></label>
             <input type="email" formControlName="email" placeholder="tu@colmado.com" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-email" />
-          </div>
-
-          <div class="form-control w-full">
-            <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">WhatsApp / Celular</span></label>
-            <input type="text" formControlName="whatsapp" placeholder="809-555-5555" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-whatsapp" />
+            <label class="label" *ngIf="registerForm.controls.email.touched && registerForm.controls.email.invalid">
+              <span class="label-text-alt text-red-400">Ingresa un correo valido.</span>
+            </label>
           </div>
 
           <div class="form-control w-full">
             <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Contraseña</span></label>
-            <input type="password" formControlName="password" placeholder="Mínimo 6 caracteres" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-password" />
+            <input type="password" formControlName="password" placeholder="Minimo 8 caracteres" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-password" />
+            <label class="label" *ngIf="registerForm.controls.password.touched && registerForm.controls.password.invalid">
+              <span class="label-text-alt text-red-400">La contraseña debe tener entre 8 y 128 caracteres.</span>
+            </label>
           </div>
 
           <div class="card-actions mt-8">
