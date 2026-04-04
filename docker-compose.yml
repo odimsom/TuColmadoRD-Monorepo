@@ -87,6 +87,8 @@ services:
     build:
       context: ./frontend/landing-page
       dockerfile: Dockerfile
+      args:
+        VITE_WEB_ADMIN_URL: ${PUBLIC_WEB_URL:-https://tucolmadord.synsetsolutions.com}
     restart: unless-stopped
     ports:
       - "${LANDING_PORT:-5199}:80"
