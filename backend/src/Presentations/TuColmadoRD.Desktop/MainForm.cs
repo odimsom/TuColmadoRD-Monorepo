@@ -188,7 +188,11 @@ public partial class MainForm : Form
         catch (Exception ex)
         {
             AppLogger.Error("Error while updating desktop app", ex);
-            MessageBox.Show("No se pudo completar la actualización automática. Inténtalo de nuevo más tarde.", "Error de actualización", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            var message =
+                "No se pudo completar la actualización automática.\n\n" +
+                $"Detalle: {ex.Message}\n\n" +
+                $"Log: {AppLogger.LogFilePath}";
+            MessageBox.Show(message, "Error de actualización", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
         {

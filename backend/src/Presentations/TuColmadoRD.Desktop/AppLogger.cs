@@ -11,6 +11,8 @@ internal static class AppLogger
         "logs",
         "desktop-startup.log");
 
+    public static string LogFilePath => LogPath;
+
     public static void Info(string message) => Write("INFO", message, null);
 
     public static void Error(string message, Exception? exception = null) => Write("ERROR", message, exception);

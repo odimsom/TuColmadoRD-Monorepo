@@ -110,20 +110,48 @@ public static class GatewayHostBuilder
         app.MapGet("/gateway/updates/latest-installer", async (string? channel) =>
         {
             var selectedChannel = string.Equals(channel, "production", StringComparison.OrdinalIgnoreCase) ? "production" : "test";
+            var releasesUrls = new[]
+            {
+                "https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases",
+                "https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases"
+            };
 
             try
             {
                 using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
                 http.DefaultRequestHeaders.UserAgent.ParseAdd("TuColmadoRD-Gateway/1.0");
 
-                using var response = await http.GetAsync("https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases");
-                response.EnsureSuccessStatusCode();
+                List<GitHubRelease>? releases = null;
+                Exception? lastError = null;
 
-                await using var stream = await response.Content.ReadAsStreamAsync();
-                var releases = await JsonSerializer.DeserializeAsync<List<GitHubRelease>>(stream, new JsonSerializerOptions
+                foreach (var releasesUrl in releasesUrls)
                 {
-                    PropertyNameCaseInsensitive = true
-                }) ?? new List<GitHubRelease>();
+                    try
+                    {
+                        using var response = await http.GetAsync(releasesUrl);
+                        response.EnsureSuccessStatusCode();
+
+                        await using var stream = await response.Content.ReadAsStreamAsync();
+                        releases = await JsonSerializer.DeserializeAsync<List<GitHubRelease>>(stream, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        }) ?? new List<GitHubRelease>();
+
+                        if (releases.Count > 0)
+                        {
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        lastError = ex;
+                    }
+                }
+
+                if (releases == null)
+                {
+                    throw new InvalidOperationException("No se pudo consultar releases en los repositorios configurados.", lastError);
+                }
 
                 static Version? ParseVersion(string? tag)
                 {
