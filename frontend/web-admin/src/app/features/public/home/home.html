@@ -69,145 +69,33 @@
 
         <!-- Forms Container -->
         <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          
           @if (!desktopApp) {
-          <!-- REGISTER FLOW -->
-          <!-- STEP 1: FORM -->
-            @if (registerState() === 'form') {
-              <div class="space-y-6">
-                <div>
-                  <label class="block text-[0.65rem] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Nombre Completo</label>
-                  <input type="text" placeholder="Ej. Pedro Martínez" class="w-full bg-base-100 border border-base-content/10 rounded-xl px-5 py-4 text-base-content focus:outline-none focus:border-primary transition-colors">
-                </div>
-                <div>
-                  <label class="block text-[0.65rem] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Nombre del Colmado</label>
-                  <input type="text" placeholder="Ej. Colmado Los Primos" class="w-full bg-base-100 border border-base-content/10 rounded-xl px-5 py-4 text-base-content focus:outline-none focus:border-primary transition-colors">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-[0.65rem] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">WhatsApp</label>
-                    <input type="tel" placeholder="829-000-0000" class="w-full bg-base-100 border border-base-content/10 rounded-xl px-5 py-4 text-base-content focus:outline-none focus:border-primary transition-colors">
-                  </div>
-                  <div>
-                    <label class="block text-[0.65rem] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Contraseña</label>
-                    <input type="password" placeholder="••••••••" class="w-full bg-base-100 border border-base-content/10 rounded-xl px-5 py-4 text-base-content focus:outline-none focus:border-primary transition-colors">
-                  </div>
-                </div>
-                <button (click)="startRegistration()" class="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl transition-all shadow-[0_10px_30px_rgba(37,99,235,0.3)] text-sm uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
-                  Crear mi cuenta gratis <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
-                </button>
+            <div class="space-y-6">
+              <div class="p-6 rounded-2xl bg-base-100 border border-base-content/10">
+                <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Registro real</p>
+                <p class="text-sm text-slate-300 leading-relaxed">
+                  El registro oficial usa <strong>correo y contraseña</strong>. No se crean cuentas desde esta pantalla para evitar estados falsos.
+                </p>
               </div>
-            }
 
-            <!-- STEP 2: TERMS MODAL -->
-            @if (registerState() === 'terms') {
-              <div class="fixed inset-0 z-[100] flex items-center justify-center p-6">
-                <div class="absolute inset-0 bg-black/85 backdrop-blur-sm"></div>
-                <div class="relative w-full max-w-lg bg-base-100 border border-base-content/10 rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-300">
-                  <h3 class="text-3xl font-bebas mb-6 uppercase tracking-tight">Antes de continuar</h3>
-                  <p class="text-slate-400 text-sm leading-relaxed mb-8">
-                    Al crear tu cuenta aceptas nuestros <a href="#" target="_blank" class="text-blue-500 underline">Términos y Condiciones</a> y Política de Privacidad. Tu cuenta requiere conexión a internet para la activación inicial.
-                  </p>
-                  
-                  <div class="flex items-start gap-3 mb-10">
-                    <input type="checkbox" [checked]="acceptedTerms()" (change)="acceptedTerms.set(!acceptedTerms())" class="checkbox checkbox-primary rounded border-white/20 mt-1">
-                    <span class="text-xs text-slate-300">He leído y acepto los Términos y Condiciones de uso del sistema.</span>
-                  </div>
+              <button
+                (click)="goToRegister()"
+                class="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl transition-all shadow-[0_10px_30px_rgba(37,99,235,0.3)] text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                Ir a registro <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
+              </button>
 
-                  <div class="flex flex-col gap-4">
-                    <button 
-                      (click)="finalizeRegistration()"
-                      [disabled]="!acceptedTerms()"
-                      class="w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all"
-                      [class]="acceptedTerms() ? 'bg-blue-600 text-white shadow-xl hover:bg-blue-500' : 'bg-white/5 text-slate-500 cursor-not-allowed'"
-                    >
-                      Continuar y crear cuenta <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
-                    </button>
-                    <button (click)="registerState.set('form')" class="w-full py-4 text-slate-500 hover:text-white font-bold text-xs uppercase tracking-widest transition-colors">
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            }
-
-            <!-- STEP 3: SUCCESS -->
-            @if (registerState() === 'success') {
-              <div class="text-center animate-in zoom-in-95 duration-500">
-                <div class="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
-                  <span class="icon-[ic--baseline-check] text-4xl text-green-500"></span>
-                </div>
-                <h3 class="text-4xl font-bebas mb-2 uppercase tracking-tight">¡Tu cuenta está lista!</h3>
-                <p class="text-slate-500 text-sm mb-12">Bienvenido a TuColmadoRD. Tienes 14 días gratis para probarlo todo.</p>
-
-                <div class="grid grid-cols-1 gap-6 mb-12">
-                  <!-- WEB ACCESS -->
-                  <div class="p-6 rounded-3xl bg-white/5 border border-white/5 hover:border-blue-500/30 transition-all text-left group">
-                    <div class="flex items-center gap-4 mb-4">
-                      <div class="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                        <span class="icon-[ic--baseline-language] text-2xl text-blue-500"></span>
-                      </div>
-                      <h4 class="font-bold text-white">Acceso Web</h4>
-                    </div>
-                    <p class="text-xs text-slate-400 mb-6 leading-relaxed">Gestiona reportes, fiados y configuración desde cualquier dispositivo.</p>
-                    <button (click)="enterPortal()" class="w-full py-3 border border-blue-500/50 hover:bg-blue-500/10 text-blue-500 rounded-xl font-black text-[0.65rem] uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-                      Entrar al sistema <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
-                    </button>
-                  </div>
-
-                  <!-- DESKTOP APP -->
-                  <div class="p-6 rounded-3xl bg-blue-600/5 border border-blue-500/40 relative overflow-hidden text-left">
-                    <div class="absolute top-4 right-4 px-3 py-1 bg-blue-600 rounded-full text-[8px] font-black text-white uppercase tracking-widest">Recomendado</div>
-                    <div class="flex items-center gap-4 mb-4">
-                      <div class="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                        <span class="icon-[ic--baseline-desktop-windows] text-2xl text-blue-500"></span>
-                      </div>
-                      <h4 class="font-bold text-white">App para Windows</h4>
-                    </div>
-                    <p class="text-xs text-slate-300 mb-6 leading-relaxed italic">"El POS completo en tu PC. Funciona sin internet y sincroniza solo."</p>
-                    
-                    <ul class="space-y-2 mb-8">
-                       <li class="flex items-center gap-2 text-[0.65rem] text-slate-400"><span class="icon-[ic--baseline-check] text-green-500"></span> Funciona aunque se vaya el WIFI</li>
-                       <li class="flex items-center gap-2 text-[0.65rem] text-slate-400"><span class="icon-[ic--baseline-check] text-green-500"></span> Más rápido para cobrar</li>
-                    </ul>
-
-                    @if (downloadInfo(); as info) {
-                      <a [href]="info.downloadUrl" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs text-center uppercase tracking-widest transition-all block">
-                        DESCARGAR v{{ info.version }} ({{ info.fileSize }}) <span class="icon-[ic--baseline-arrow-forward] text-lg"></span>
-                      </a>
-                    } @else {
-                      <button class="w-full py-4 bg-white/5 text-slate-500 rounded-xl font-black text-xs uppercase tracking-widest cursor-disabled tooltip" data-tip="La descarga estará disponible muy pronto.">
-                        PRÓXIMAMENTE
-                      </button>
-                    }
-                    <p class="text-center text-[10px] text-slate-500 mt-3">Requiere Windows 10+ · ~85MB</p>
-                  </div>
-                </div>
-
-                <div class="space-y-4">
-                  <p class="text-[10px] text-slate-600 uppercase tracking-widest">Tu cuenta ya está activa. La app se conectará automáticamente.</p>
-                  <a href="https://wa.me/18296932458" target="_blank" class="text-xs font-bold text-blue-500 hover:underline flex items-center justify-center gap-2">
-                    <span class="icon-[ic--baseline-whatsapp]"></span> ¿Necesitas ayuda? Escríbenos
-                  </a>
-                </div>
-              </div>
-            }
-          <!-- Google Auth -->
-          @if (registerState() !== 'success' && registerState() !== 'terms') {
-            <div class="relative my-10 text-center">
-              <span class="relative z-10 px-4 bg-[#080E1A] text-slate-500 text-[10px] font-black uppercase tracking-widest">O continúa con</span>
-              <div class="absolute top-1/2 left-0 w-full h-px bg-white/5"></div>
+              <button
+                (click)="goToLogin()"
+                class="w-full py-4 border border-white/10 hover:bg-white/5 text-white font-bold rounded-xl transition-all"
+              >
+                Ya tengo cuenta, iniciar sesión
+              </button>
             </div>
-
-            <button class="w-full py-4 border border-white/10 hover:bg-white/5 text-white font-bold rounded-xl flex items-center justify-center gap-3 transition-all">
-              <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-              Entrar con Google
-            </button>
-          }
           } @else {
             <div class="p-8 rounded-3xl bg-white/5 border border-white/10 text-center">
               <p class="text-sm text-slate-300 mb-4">La versión instalada funciona solo con acceso autorizado y licencia activa.</p>
-              <a routerLink="/auth/login" class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest transition-all">Ir al login</a>
+              <button (click)="goToLogin()" class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest transition-all">Ir al login</button>
             </div>
           }
         </div>
@@ -446,7 +334,7 @@
       </p>
       
       <button 
-        (click)="scrollToHero($event)"
+        (click)="goToRegister()"
         class="w-full lg:w-auto px-12 py-5 bg-[#2563EB] hover:bg-blue-500 text-white font-bebas text-xl uppercase tracking-widest rounded-xl transition-all shadow-[0_20px_50px_rgba(37,99,235,0.3)] hover:-translate-y-1 mb-8"
       >
         CREAR MI CUENTA GRATIS <span class="icon-[ic--baseline-arrow-forward] text-2xl"></span>

@@ -14,6 +14,10 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+const webAdminBaseUrl = (import.meta.env.VITE_WEB_ADMIN_URL as string | undefined)?.replace(/\/$/, '') || 'http://localhost:4200'
+const webAdminHomeUrl = `${webAdminBaseUrl}/`
+const webAdminRegisterUrl = `${webAdminBaseUrl}/auth/register`
+
 onMounted(() => {
   window.addEventListener('scroll', () => {
     isScrolled.value = window.scrollY > 20
@@ -85,10 +89,10 @@ const faqs = [
           <a href="#precios" class="text-slate-400 hover:text-white transition-colors font-medium text-sm uppercase tracking-widest">Precios</a>
         </nav>
         <div class="flex items-center gap-6">
-          <a href="http://localhost:4200/" class="text-slate-300 hover:text-white transition-all text-sm font-bold uppercase tracking-wider">
+          <a :href="webAdminHomeUrl" class="text-slate-300 hover:text-white transition-all text-sm font-bold uppercase tracking-wider">
             Acceso
           </a>
-          <a href="http://localhost:4200/auth/register" class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] text-xs uppercase tracking-widest border border-blue-400/30">
+          <a :href="webAdminRegisterUrl" class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] text-xs uppercase tracking-widest border border-blue-400/30">
             Hazte Cliente
           </a>
         </div>
@@ -115,7 +119,7 @@ const faqs = [
               Factura en segundos, controla tu inventario y elimina el desorden de la libreta.
             </p>
             <div class="flex flex-wrap gap-6">
-              <a href="http://localhost:4200/auth/register" class="group relative px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-sm transition-all shadow-[0_0_40px_rgba(37,99,235,0.4)] text-lg uppercase tracking-wider overflow-hidden">
+              <a :href="webAdminRegisterUrl" class="group relative px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-sm transition-all shadow-[0_0_40px_rgba(37,99,235,0.4)] text-lg uppercase tracking-wider overflow-hidden">
                 <span class="relative z-10">Empezar Ahora</span>
                 <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               </a>
@@ -275,7 +279,7 @@ const faqs = [
                   {{ f }}
                 </li>
               </ul>
-              <a href="http://localhost:4200/auth/register" class="w-full py-4 text-center border-2 border-blue-900/40 hover:border-blue-500/50 rounded-xl text-white font-black uppercase tracking-widest text-xs transition-all">Empezar gratis 14 días</a>
+              <a :href="webAdminRegisterUrl" class="w-full py-4 text-center border-2 border-blue-900/40 hover:border-blue-500/50 rounded-xl text-white font-black uppercase tracking-widest text-xs transition-all">Empezar gratis 14 días</a>
             </div>
 
             <!-- Avanzado (DESTACADO) -->
@@ -294,7 +298,7 @@ const faqs = [
                   {{ f }}
                 </li>
               </ul>
-              <a href="http://localhost:4200/auth/register" class="w-full py-4 text-center bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-600/30">Empezar gratis 14 días</a>
+              <a :href="webAdminRegisterUrl" class="w-full py-4 text-center bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-600/30">Empezar gratis 14 días</a>
             </div>
 
             <!-- Premium -->

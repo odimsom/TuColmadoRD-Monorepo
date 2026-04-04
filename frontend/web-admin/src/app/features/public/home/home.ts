@@ -1,8 +1,7 @@
-import { Component, OnInit, AfterViewInit, signal, inject } from '@angular/core';
+import { Component, AfterViewInit, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { OnboardingWizard } from '../../../shared/components/onboarding-wizard/onboarding-wizard';
-import { DownloadService, DownloadInfo } from '../../../core/services/download.service';
 import { isDesktopApp } from '../../../core/utils/runtime';
 
 @Component({
@@ -12,16 +11,10 @@ import { isDesktopApp } from '../../../core/utils/runtime';
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
-export class Home implements OnInit, AfterViewInit {
+export class Home implements AfterViewInit {
   private router = inject(Router);
-  private downloadService = inject(DownloadService);
 
   billingCycle = signal<'monthly' | 'annual'>('monthly');
-  
-  // Registration Flow State
-  registerState = signal<'form' | 'terms' | 'success'>('form');
-  acceptedTerms = signal(false);
-  downloadInfo = signal<DownloadInfo | null>(null);
   readonly desktopApp = isDesktopApp();
 
   stats = [
@@ -31,12 +24,6 @@ export class Home implements OnInit, AfterViewInit {
     { value: 24, label: 'SOPORTE DOMINICANO', current: 0, suffix: '/7' }
   ];
 
-  ngOnInit() {
-    this.downloadService.getLatestTestRelease().subscribe(info => {
-      this.downloadInfo.set(info);
-    });
-  }
-
   ngAfterViewInit() {
     this.initCounters();
   }
@@ -45,33 +32,12 @@ export class Home implements OnInit, AfterViewInit {
     this.billingCycle.update(val => val === 'monthly' ? 'annual' : 'monthly');
   }
 
-  enterPortal() {
-    this.router.navigate(['/portal/dashboard']);
+  goToRegister() {
+    this.router.navigate(['/auth/register']);
   }
 
-  // Action to move from Form to Terms
-  startRegistration() {
-    this.registerState.set('terms');
-  }
-
-  // Action to move from Terms to Success
-  finalizeRegistration() {
-    if (this.acceptedTerms()) {
-      this.registerState.set('success');
-    }
-  }
-
-  scrollToHero(event: Event) {
-    event.preventDefault();
-    const el = document.getElementById('hero-form');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-      // Focus first input
-      setTimeout(() => {
-        const input = el.querySelector('input');
-        if (input) (input as HTMLElement).focus();
-      }, 500);
-    }
+  goToLogin() {
+    this.router.navigate(['/auth/login']);
   }
 
   private initCounters() {
