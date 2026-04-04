@@ -46,16 +46,18 @@ jobs:
         run: npm ci
 
       - name: Set version from tag
+        id: set_version
         run: |
           $tag = "${{ github.ref_name }}"
           $version = $tag.TrimStart('v')
           echo "APP_VERSION=$version" >> $env:GITHUB_ENV
+          echo "app_version=$version" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
       - name: Build Angular + .exe + Installer
         run: |
           $env:RELEASE_TYPE = "test"
-          $env:APP_VERSION = "${{ env.APP_VERSION }}"
+          $env:APP_VERSION = "${{ steps.set_version.outputs.app_version }}"
           $env:TU_COLMADORD_ROOT = "${{ github.workspace }}"
           Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
           $scriptPath = Join-Path $env:GITHUB_WORKSPACE "frontend/scripts/build-desktop.ps1"
@@ -89,11 +91,15 @@ jobs:
         shell: pwsh
 
       - name: Sign installer (code signing)
-        if: ${{ secrets.WINDOWS_CERT_PFX_BASE64 != '' && secrets.WINDOWS_CERT_PASSWORD != '' }}
         env:
           WINDOWS_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
           WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
         run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PFX_BASE64) -or [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PASSWORD)) {
+            Write-Host "Code signing skipped: configure WINDOWS_CERT_PFX_BASE64 and WINDOWS_CERT_PASSWORD repository secrets."
+            exit 0
+          }
+
           $certPath = Join-Path $env:RUNNER_TEMP "tucolmadord-codesign.pfx"
           [System.IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($env:WINDOWS_CERT_PFX_BASE64))
 
@@ -126,16 +132,10 @@ jobs:
           Remove-Item -Path $certPath -Force -ErrorAction SilentlyContinue
         shell: pwsh
 
-      - name: Code signing not configured
-        if: ${{ secrets.WINDOWS_CERT_PFX_BASE64 == '' || secrets.WINDOWS_CERT_PASSWORD == '' }}
-        run: |
-          Write-Host "Code signing skipped: configure WINDOWS_CERT_PFX_BASE64 and WINDOWS_CERT_PASSWORD repository secrets."
-        shell: pwsh
-
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: installer-${{ env.APP_VERSION }}
+          name: installer-${{ steps.set_version.outputs.app_version }}
           path: backend/publish/installer/*.exe
           if-no-files-found: error
 
