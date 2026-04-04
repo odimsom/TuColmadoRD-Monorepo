@@ -38,3 +38,19 @@ docker compose up --build -d
 
 - El frontend web-admin apunta al gateway público en `api.tucolmadord.synsetsolutions.com`.
 - El auth service queda detrás del compose y del gateway.
+
+## Release de prueba (Desktop)
+
+Para publicar la primera versión de prueba y habilitar la descarga desde web-admin:
+
+1. Crear y subir un tag con formato `vX.Y.Z-test.N` (ejemplo: `v0.0.1-test.1`).
+2. GitHub Actions ejecutará el workflow `Build & Release Test` en `.github/workflows/release-test.yml`.
+3. El workflow genera el instalador `.exe` y lo adjunta como prerelease del monorepo.
+4. Web-admin lee automáticamente la última prerelease `-test` y muestra el botón de descarga.
+
+Comandos sugeridos:
+
+```bash
+git tag v0.0.1-test.1
+git push origin v0.0.1-test.1
+```

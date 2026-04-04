@@ -10,6 +10,10 @@ const toggleFaq = (index: number) => {
   activeFaq.value = activeFaq.value === index ? null : index
 }
 
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 onMounted(() => {
   window.addEventListener('scroll', () => {
     isScrolled.value = window.scrollY > 20
@@ -61,7 +65,7 @@ const faqs = [
       ]"
     >
       <div class="container mx-auto flex justify-between items-center">
-        <div class="flex items-center gap-3 group cursor-pointer" @click="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <div class="flex items-center gap-3 group cursor-pointer" @click="scrollToTop">
           <div class="relative">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-9 h-9 transition-transform duration-500 group-hover:rotate-12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb" />
