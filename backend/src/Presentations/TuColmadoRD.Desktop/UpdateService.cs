@@ -8,7 +8,7 @@ namespace TuColmadoRD.Desktop;
 internal static class UpdateService
 {
     private const string LocalLatestInstallerApi = "http://localhost:5100/gateway/updates/latest-installer";
-    private const string ReleasesUrl = "https://api.github.com/repos/odimsom/TuColmadoRD.Frontend/releases";
+    private const string ReleasesUrl = "https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases";
 
     public static async Task<UpdateCheckResult> CheckForUpdateAsync()
     {
