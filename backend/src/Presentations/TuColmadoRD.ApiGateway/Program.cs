@@ -116,7 +116,7 @@ public static class GatewayHostBuilder
                 using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
                 http.DefaultRequestHeaders.UserAgent.ParseAdd("TuColmadoRD-Gateway/1.0");
 
-                using var response = await http.GetAsync("https://api.github.com/repos/odimsom/TuColmadoRD.Frontend/releases");
+                using var response = await http.GetAsync("https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases");
                 response.EnsureSuccessStatusCode();
 
                 await using var stream = await response.Content.ReadAsStreamAsync();

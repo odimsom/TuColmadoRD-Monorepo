@@ -36,12 +36,13 @@ public partial class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 5,
+            RowCount = 6,
             BackColor = AppTheme.Background,
             Padding = new Padding(24)
         };
 
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 22f));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -89,10 +90,27 @@ public partial class MainForm : Form
         openSystemButton.FlatAppearance.BorderSize = 0;
         openSystemButton.Click += (_, _) => OpenExternalUrl(_startUrl);
 
+        var updateButton = new Button
+        {
+            Text = "Buscar actualizaciones",
+            Width = 280,
+            Height = 44,
+            BackColor = Color.FromArgb(15, 23, 42),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
+            Cursor = Cursors.Hand,
+            Anchor = AnchorStyles.None
+        };
+        updateButton.FlatAppearance.BorderColor = Color.FromArgb(51, 65, 85);
+        updateButton.FlatAppearance.BorderSize = 1;
+        updateButton.Click += async (_, _) => await CheckAndUpdateAsync(updateButton);
+
         layout.Controls.Add(logo, 0, 1);
         layout.Controls.Add(title, 0, 2);
         layout.Controls.Add(_statusLabel, 0, 3);
         layout.Controls.Add(openSystemButton, 0, 4);
+        layout.Controls.Add(updateButton, 0, 5);
 
         Controls.Add(layout);
     }
@@ -134,5 +152,51 @@ public partial class MainForm : Form
             FileName = url,
             UseShellExecute = true
         });
+    }
+
+    private async Task CheckAndUpdateAsync(Button updateButton)
+    {
+        try
+        {
+            updateButton.Enabled = false;
+            updateButton.Text = "Buscando...";
+
+            var result = await UpdateService.CheckForUpdateAsync();
+            if (!result.IsUpdateAvailable || string.IsNullOrWhiteSpace(result.InstallerUrl))
+            {
+                MessageBox.Show("No hay actualizaciones disponibles en este momento.", "Actualizaciones", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                $"Hay una nueva versión disponible ({result.LatestVersion}).\n\n¿Deseas descargarla e instalar ahora?",
+                "Actualización disponible",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            if (confirm != DialogResult.Yes)
+            {
+                return;
+            }
+
+            updateButton.Text = "Descargando...";
+            var installerPath = await UpdateService.DownloadInstallerAsync(result.InstallerUrl);
+            UpdateService.LaunchInstaller(installerPath);
+            Application.Exit();
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error("Error while updating desktop app", ex);
+            MessageBox.Show("No se pudo completar la actualización automática. Inténtalo de nuevo más tarde.", "Error de actualización", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            if (!IsDisposed)
+            {
+                updateButton.Enabled = true;
+                updateButton.Text = "Buscar actualizaciones";
+            }
+        }
     }
 }

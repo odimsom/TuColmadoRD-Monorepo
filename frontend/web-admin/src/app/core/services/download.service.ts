@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface DownloadInfo {
   version: string;
@@ -38,13 +39,13 @@ export class DownloadService {
           r.prerelease && r.tag_name.includes('-test')
         );
         
-        if (!testReleases.length) return null;
+        if (!testReleases.length) return this.getFallbackDownloadInfo();
         
         // Tomar el más reciente (GitHub los devuelve ordenados por fecha descendente)
         const latest = testReleases[0];
         const asset = latest.assets.find(a => a.name.endsWith('.exe'));
         
-        if (!asset) return null;
+        if (!asset) return this.getFallbackDownloadInfo();
         
         return {
           version: latest.tag_name,
@@ -53,8 +54,21 @@ export class DownloadService {
           publishedAt: latest.published_at
         };
       }),
-      catchError(() => of(null))
+      catchError(() => of(this.getFallbackDownloadInfo()))
     );
+  }
+
+  private getFallbackDownloadInfo(): DownloadInfo | null {
+    if (!environment.downloadUrl) {
+      return null;
+    }
+
+    return {
+      version: 'latest',
+      downloadUrl: environment.downloadUrl,
+      fileSize: 'N/D',
+      publishedAt: ''
+    };
   }
 
   private formatBytes(bytes: number): string {
