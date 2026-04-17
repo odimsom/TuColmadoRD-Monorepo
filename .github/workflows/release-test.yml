@@ -1,9 +1,11 @@
-name: Build & Release Test
+name: Build & Release
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'v*-test*'
+      - 'v*'
   workflow_dispatch:
 
 permissions:
