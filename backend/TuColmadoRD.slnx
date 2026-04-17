@@ -16,6 +16,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/core/TuColmadoRD.Core.Domain.Tests/TuColmadoRD.Core.Domain.Tests.csproj" />
+    <Project Path="tests/core/TuColmadoRD.Core.Application.Tests/TuColmadoRD.Core.Application.Tests.csproj" />
     <Project Path="tests/infrastructure/TuColmadoRD.Infrastructure.Persistence.Tests/TuColmadoRD.Infrastructure.Persistence.Tests.csproj" />
     <Project Path="tests/Presentations/TuColmadoRD.Presentation.API.Tests/TuColmadoRD.Presentation.API.Tests.csproj" />
   </Folder>
