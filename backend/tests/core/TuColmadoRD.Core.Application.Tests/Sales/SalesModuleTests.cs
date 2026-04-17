@@ -1,301 +1,239 @@
 using FluentAssertions;
 using Moq;
-using TuColmadoRD.Core.Application.Interfaces.Repositories;
+using TuColmadoRD.Core.Application.Interfaces.Tenancy;
+using TuColmadoRD.Core.Application.Inventory.Abstractions;
 using TuColmadoRD.Core.Application.Sales.Abstractions;
 using TuColmadoRD.Core.Application.Sales.Commands;
-using TuColmadoRD.Core.Application.Sales.Queries;
-using TuColmadoRD.Core.Domain.Base;
+using TuColmadoRD.Core.Application.Sales.Handlers;
+using TuColmadoRD.Core.Domain.Base.Result;
+using TuColmadoRD.Core.Domain.Entities.Inventory;
 using TuColmadoRD.Core.Domain.Entities.Sales;
+using TuColmadoRD.Core.Domain.Entities.System;
+using TuColmadoRD.Core.Domain.Enums.Inventory_Purchasing;
 using TuColmadoRD.Core.Domain.ValueObjects;
+using TuColmadoRD.Core.Domain.ValueObjects.Base;
+using SaleQuantity = TuColmadoRD.Core.Domain.Entities.Sales.Quantity;
 using Xunit;
 
 namespace TuColmadoRD.Core.Application.Tests.Sales;
 
 /// <summary>
-/// Integration tests for the sales module.
-/// Tests create, void, and query operations with proper isolation.
+/// Unit tests for the Sales application module (CreateSale and VoidSale command handlers).
+/// All infrastructure is mocked via Moq — no real DB or I/O.
 /// </summary>
 public sealed class SalesModuleTests
 {
-    private readonly Mock<ITenantProvider> _mockTenantProvider;
-    private readonly Mock<ICurrentShiftService> _mockShiftService;
-    private readonly Mock<ISaleRepository> _mockSaleRepository;
-    private readonly Mock<IProductRepository> _mockProductRepository;
-    private readonly Mock<IShiftRepository> _mockShiftRepository;
-    private readonly Mock<IOutboxRepository> _mockOutboxRepository;
-    private readonly Mock<IUnitOfWork> _mockUnitOfWork;
+    // ─── Mocks ────────────────────────────────────────────────────────────────
+    private readonly Mock<ITenantProvider>       _tenant       = new();
+    private readonly Mock<ICurrentShiftService>  _shiftService = new();
+    private readonly Mock<IProductRepository>    _productRepo  = new();
+    private readonly Mock<ISaleRepository>       _saleRepo     = new();
+    private readonly Mock<ISaleSequenceService>  _sequence     = new();
+    private readonly Mock<IShiftRepository>      _shiftRepo    = new();
+    private readonly Mock<IOutboxRepository>     _outboxRepo   = new();
+    private readonly Mock<IUnitOfWork>           _uow          = new();
 
-    public SalesModuleTests()
-    {
-        _mockTenantProvider = new();
-        _mockShiftService = new();
-        _mockSaleRepository = new();
-        _mockProductRepository = new();
-        _mockShiftRepository = new();
-        _mockOutboxRepository = new();
-        _mockUnitOfWork = new();
-    }
+    private readonly TenantIdentifier _tenantId = TenantIdentifier.Validate(Guid.NewGuid()).Result!;
+    private readonly Guid _terminalId  = Guid.NewGuid();
 
+    // ─── Handler factories ────────────────────────────────────────────────────
     private CreateSaleCommandHandler CreateSaleHandler => new(
-        _mockTenantProvider.Object,
-        _mockShiftService.Object,
-        _mockSaleRepository.Object,
-        _mockProductRepository.Object,
-        _mockShiftRepository.Object,
-        _mockOutboxRepository.Object,
-        _mockUnitOfWork.Object);
+        _tenant.Object, _shiftService.Object, _productRepo.Object,
+        _saleRepo.Object, _sequence.Object, _shiftRepo.Object,
+        _outboxRepo.Object, _uow.Object);
 
     private VoidSaleCommandHandler VoidSaleHandler => new(
-        _mockTenantProvider.Object,
-        _mockShiftService.Object,
-        _mockSaleRepository.Object,
-        _mockProductRepository.Object,
-        _mockShiftRepository.Object,
-        _mockOutboxRepository.Object,
-        _mockUnitOfWork.Object);
+        _tenant.Object, _shiftService.Object, _saleRepo.Object,
+        _productRepo.Object, _shiftRepo.Object,
+        _outboxRepo.Object, _uow.Object);
+
+    // ─── Setup helpers ────────────────────────────────────────────────────────
+    public SalesModuleTests()
+    {
+        _tenant.Setup(x => x.TenantId).Returns(_tenantId);
+        _tenant.Setup(x => x.TerminalId).Returns(_terminalId);
+
+        // Default async no-ops for write methods
+        _saleRepo .Setup(x => x.AddAsync   (It.IsAny<Sale>(),                    It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _saleRepo .Setup(x => x.UpdateAsync(It.IsAny<Sale>(),                    It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _productRepo.Setup(x => x.UpdateRangeAsync(It.IsAny<IReadOnlyList<Product>>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _shiftRepo.Setup(x => x.UpdateAsync(It.IsAny<Shift>(),                   It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _outboxRepo.Setup(x => x.AddAsync  (It.IsAny<OutboxMessage>(),           It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _uow.Setup(x => x.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+    }
+
+    // =========================================================================
+    // CreateSale tests
+    // =========================================================================
 
     [Fact]
-    public async Task CreateSale_WithValidItems_ShouldSucceed()
+    public async Task CreateSale_WithValidItems_ShouldPersistSaleAndCommit()
     {
         // Arrange
-        var tenantId = Guid.NewGuid();
-        var terminalId = Guid.NewGuid();
         var shiftId = Guid.NewGuid();
+        var shift   = BuildShift();
+        var product = BuildProduct();
 
-        _mockTenantProvider.Setup(x => x.TenantId).Returns(tenantId);
-        _mockTenantProvider.Setup(x => x.TerminalId).Returns(terminalId);
-
-        // Mock shift service returns open shift
-        var shift = ShiftFixture.CreateOpenShift(shiftId, terminalId, tenantId);
-        _mockShiftService
-            .Setup(x => x.GetOpenShiftOrFailAsync(tenantId, terminalId, It.IsAny<CancellationToken>()))
+        _shiftService
+            .Setup(x => x.GetOpenShiftOrFailAsync(_tenantId, _terminalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(OperationResult<Shift, DomainError>.Good(shift));
 
-        // Mock products exist with sufficient stock
-        var products = CreateProductFixture(3, tenantId, 100m); // qty: 100
-        _mockProductRepository
-            .Setup(x => x.GetByIdsAsync(It.IsAny<List<Guid>>(), tenantId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(products);
+        _sequence
+            .Setup(x => x.GenerateReceiptNumberAsync(_tenantId, _terminalId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(OperationResult<string, DomainError>.Good("RCP-001"));
 
-        // Mock repository methods
-        _mockSaleRepository.Setup(x => x.AddAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _mockProductRepository.Setup(x => x.UpdateRangeAsync(It.IsAny<List<Product>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _mockShiftRepository.Setup(x => x.UpdateAsync(It.IsAny<Shift>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _mockOutboxRepository.Setup(x => x.AddAsync(It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _mockUnitOfWork.Setup(x => x.CommitAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Create command with multiple items
-        var items = new List<CreateSaleItemDto>
-        {
-            new(products[0].Id, 5m, 100m, 18m),
-            new(products[1].Id, 3m, 50m, 18m),
-            new(products[2].Id, 2m, 25m, 18m)
-        };
+        _productRepo
+            .Setup(x => x.GetByIdsAsync(It.IsAny<IReadOnlyList<Guid>>(), _tenantId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Product> { product }.AsReadOnly());
 
         var command = new CreateSaleCommand(
-            items, "TestCustomer", new List<PaymentMethodDto>
-            {
-                new(1, "cash", 1234.5m, null)
-            });
-
-        var handler = CreateSaleHandler;
+            Items:    new List<SaleItemRequest>    { new(product.Id, 2m)            }.AsReadOnly(),
+            Payments: new List<SalePaymentRequest> { new(1, 300m, null, null) }.AsReadOnly(),
+            Notes:    null);
 
         // Act
-        var result = await handler.Handle(command, CancellationToken.None);
+        var result = await CreateSaleHandler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsGood.Should().BeTrue();
-        _mockSaleRepository.Verify(x => x.AddAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>()), Times.Once);
-        _mockUnitOfWork.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _saleRepo .Verify(x => x.AddAsync   (It.IsAny<Sale>(),    It.IsAny<CancellationToken>()), Times.Once);
+        _outboxRepo.Verify(x => x.AddAsync  (It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+        _uow.Verify       (x => x.CommitAsync(It.IsAny<CancellationToken>()),                    Times.Once);
     }
 
     [Fact]
-    public async Task CreateSale_WithoutOpenShift_ShouldFail()
+    public async Task CreateSale_WithoutOpenShift_ShouldReturnShiftNotFoundError()
     {
         // Arrange
-        var tenantId = Guid.NewGuid();
-        var terminalId = Guid.NewGuid();
-
-        _mockTenantProvider.Setup(x => x.TenantId).Returns(tenantId);
-        _mockTenantProvider.Setup(x => x.TerminalId).Returns(terminalId);
-
-        // Mock shift service returns error
-        _mockShiftService
-            .Setup(x => x.GetOpenShiftOrFailAsync(tenantId, terminalId, It.IsAny<CancellationToken>()))
+        _shiftService
+            .Setup(x => x.GetOpenShiftOrFailAsync(_tenantId, _terminalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(OperationResult<Shift, DomainError>.Bad(
                 DomainError.Business("shift.not_found", "No hay turno abierto")));
 
-        var items = new List<CreateSaleItemDto>
-        {
-            new(Guid.NewGuid(), 1m, 100m, 18m)
-        };
-
-        var command = new CreateSaleCommand(items, null, []);
-        var handler = CreateSaleHandler;
+        var command = new CreateSaleCommand(
+            Items:    new List<SaleItemRequest>    { new(Guid.NewGuid(), 1m) }.AsReadOnly(),
+            Payments: new List<SalePaymentRequest> { }.AsReadOnly(),
+            Notes:    null);
 
         // Act
-        var result = await handler.Handle(command, CancellationToken.None);
+        var result = await CreateSaleHandler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsGood.Should().BeFalse();
         result.Error.Code.Should().Be("shift.not_found");
-        _mockSaleRepository.Verify(x => x.AddAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>()), Times.Never);
+        _saleRepo.Verify(x => x.AddAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>()), Times.Never);
+        _uow.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    // =========================================================================
+    // VoidSale tests
+    // =========================================================================
+
     [Fact]
-    public async Task VoidSale_WithValidSale_ShouldReverseStock()
+    public async Task VoidSale_WithValidSale_ShouldPublishOutboxAndCommit()
     {
         // Arrange
-        var tenantId = Guid.NewGuid();
-        var terminalId = Guid.NewGuid();
-        var shiftId = Guid.NewGuid();
-        var saleId = Guid.NewGuid();
+        var shift   = BuildShift();
+        var sale    = BuildCompletedSale(shift.Id);
+        var product = BuildProduct();
 
-        _mockTenantProvider.Setup(x => x.TenantId).Returns(tenantId);
-        _mockTenantProvider.Setup(x => x.TerminalId).Returns(terminalId);
-
-        // Create shift and sale
-        var shift = ShiftFixture.CreateOpenShift(shiftId, terminalId, tenantId);
-        var sale = SaleFixture.CreateCompletedSale(saleId, shiftId, tenantId, terminalId);
-
-        _mockShiftService
-            .Setup(x => x.GetOpenShiftOrFailAsync(tenantId, terminalId, It.IsAny<CancellationToken>()))
+        _shiftService
+            .Setup(x => x.GetOpenShiftOrFailAsync(_tenantId, _terminalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(OperationResult<Shift, DomainError>.Good(shift));
 
-        _mockSaleRepository
-            .Setup(x => x.GetByIdAsync(saleId, tenantId, It.IsAny<CancellationToken>()))
+        _saleRepo
+            .Setup(x => x.GetByIdAsync(sale.Id, _tenantId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(sale);
 
-        var products = CreateProductFixture(sale.Items.Count, tenantId, 50m);
-        _mockProductRepository
-            .Setup(x => x.GetByIdsAsync(It.IsAny<List<Guid>>(), tenantId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(products);
+        _productRepo
+            .Setup(x => x.GetByIdsAsync(It.IsAny<IReadOnlyList<Guid>>(), _tenantId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Product> { product }.AsReadOnly());
 
-        _mockSaleRepository.Setup(x => x.UpdateAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _mockProductRepository.Setup(x => x.UpdateRangeAsync(It.IsAny<List<Product>>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _mockShiftRepository.Setup(x => x.UpdateAsync(It.IsAny<Shift>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _mockOutboxRepository.Setup(x => x.AddAsync(It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _mockUnitOfWork.Setup(x => x.CommitAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        var command = new VoidSaleCommand(saleId, "Reason: Customer request");
-        var handler = VoidSaleHandler;
+        var command = new VoidSaleCommand(sale.Id, "Solicitud del cliente");
 
         // Act
-        var result = await handler.Handle(command, CancellationToken.None);
+        var result = await VoidSaleHandler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsGood.Should().BeTrue();
-        _mockOutboxRepository.Verify(x => x.AddAsync(It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()), Times.Once);
-        _mockUnitOfWork.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _outboxRepo.Verify(x => x.AddAsync(It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+        _uow.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task VoidSale_FromWrongShift_ShouldFail()
+    public async Task VoidSale_WhenSaleNotFound_ShouldReturnNotFoundError()
     {
         // Arrange
-        var tenantId = Guid.NewGuid();
-        var terminalId = Guid.NewGuid();
-        var currentShiftId = Guid.NewGuid();
-        var wrongShiftId = Guid.NewGuid();
+        var shift  = BuildShift();
         var saleId = Guid.NewGuid();
 
-        _mockTenantProvider.Setup(x => x.TenantId).Returns(tenantId);
-        _mockTenantProvider.Setup(x => x.TerminalId).Returns(terminalId);
-
-        var shift = ShiftFixture.CreateOpenShift(currentShiftId, terminalId, tenantId);
-        var sale = SaleFixture.CreateCompletedSale(saleId, wrongShiftId, tenantId, terminalId);
-
-        _mockShiftService
-            .Setup(x => x.GetOpenShiftOrFailAsync(tenantId, terminalId, It.IsAny<CancellationToken>()))
+        _shiftService
+            .Setup(x => x.GetOpenShiftOrFailAsync(_tenantId, _terminalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(OperationResult<Shift, DomainError>.Good(shift));
 
-        _mockSaleRepository
-            .Setup(x => x.GetByIdAsync(saleId, tenantId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sale);
+        _saleRepo
+            .Setup(x => x.GetByIdAsync(saleId, _tenantId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Sale?)null);
 
-        var command = new VoidSaleCommand(saleId, "Reason");
-        var handler = VoidSaleHandler;
+        var command = new VoidSaleCommand(saleId, "Razón");
 
         // Act
-        var result = await handler.Handle(command, CancellationToken.None);
+        var result = await VoidSaleHandler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsGood.Should().BeFalse();
-        result.Error.Code.Should().Be("sale.wrong_shift");
-        _mockUnitOfWork.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _uow.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    #region Fixtures
+    // =========================================================================
+    // Domain entity fixture helpers
+    // =========================================================================
 
-    private static List<Product> CreateProductFixture(int count, Guid tenantId, decimal qty)
+    private Shift BuildShift()
     {
-        var products = new List<Product>();
-        for (int i = 0; i < count; i++)
-        {
-            products.Add(ProductFixture.CreateProduct(tenantId, $"Product {i + 1}", qty));
-        }
-        return products;
+        var openingCash = Money.FromDecimal(0m).Result!;
+        var result = Shift.Open(_tenantId, _terminalId, openingCash, "Cajero Test");
+        result.IsGood.Should().BeTrue("el shift de prueba debe crearse sin errores");
+        return result.Result!;
     }
 
-    #endregion
-}
-
-/// <summary>
-/// Fixture factory for creating test Sale entities.
-/// </summary>
-internal static class SaleFixture
-{
-    internal static Sale CreateCompletedSale(Guid saleId, Guid shiftId, Guid tenantId, Guid terminalId)
+    private Product BuildProduct()
     {
-        var items = new List<SaleItem>
-        {
-            new(Guid.NewGuid(), "Product A", 5m, 100m, 18m),
-            new(Guid.NewGuid(), "Product B", 3m, 50m, 18m)
-        };
-
-        return new Sale(
-            saleId, shiftId, tenantId, terminalId,
-            "RCP001", "John Doe", items, null,
-            "completed", DateTime.UtcNow, null, null);
+        var cost     = Money.FromDecimal(80m).Result!;
+        var price    = Money.FromDecimal(100m).Result!;
+        var taxRate  = TaxRate.Create(0.18m).Result!;
+        var result   = Product.Create(_tenantId, "Producto Test", Guid.NewGuid(), cost, price, taxRate, UnitType.Unit);
+        result.IsGood.Should().BeTrue("el producto de prueba debe crearse sin errores");
+        return result.Result!;
     }
-}
 
-/// <summary>
-/// Fixture factory for creating test Product entities.
-/// </summary>
-internal static class ProductFixture
-{
-    internal static Product CreateProduct(Guid tenantId, string name, decimal stock)
+    /// <summary>
+    /// Builds a completed Sale by going through the full domain lifecycle.
+    /// </summary>
+    private Sale BuildCompletedSale(Guid shiftId)
     {
-        return new Product(
-            Guid.NewGuid(), tenantId, name, "SKU-001",
-            Money.FromDecimal(100m).GetResult()!, 18m, stock,
-            "active", DateTime.UtcNow);
-    }
-}
+        var product = BuildProduct();
 
-/// <summary>
-/// Fixture factory for creating test Shift entities.
-/// </summary>
-internal static class ShiftFixture
-{
-    internal static Shift CreateOpenShift(Guid shiftId, Guid terminalId, Guid tenantId)
-    {
-        return new Shift(
-            shiftId, terminalId, tenantId,
-            "John Doe", DateTime.UtcNow, null,
-            Money.FromDecimal(0m).GetResult()!,
-            Money.FromDecimal(5000m).GetResult()!,
-            "open");
+        var saleResult = Sale.Create(_tenantId, _terminalId, shiftId, "Cajero Test", "RCP-TEST-001", null);
+        saleResult.IsGood.Should().BeTrue();
+        var sale = saleResult.Result!;
+
+        var qty      = SaleQuantity.Of(2m).Result!;
+        var cost     = Money.FromDecimal(80m).Result!;
+        var price    = Money.FromDecimal(100m).Result!;
+        var taxRate  = TaxRate.Create(0.18m).Result!;
+
+        sale.AddItem(product.Id, product.Name, price, cost, qty, taxRate)
+            .IsGood.Should().BeTrue();
+
+        var paymentMethod = PaymentMethod.FromId(1).Result!;
+        var amount        = Money.FromDecimal(236m).Result!;        // 100*2*1.18 = 236
+        sale.AddPayment(paymentMethod, amount, null, null)
+            .IsGood.Should().BeTrue();
+
+        sale.Finalize()
+            .IsGood.Should().BeTrue();
+
+        return sale;
     }
 }
