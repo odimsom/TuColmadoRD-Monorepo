@@ -52,7 +52,7 @@ jobs:
 
       - name: Run tests
         working-directory: ./auth
-        run: pnpm test -- --ci
+        run: pnpm test
 
   test-frontend:
     name: Frontend Tests (Angular)
