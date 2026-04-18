@@ -238,13 +238,14 @@ describe('PairDeviceUseCase', () => {
     const result = await useCase.execute({
       email: 'cajero@colmado.com',
       password: 'secret',
+      deviceName: 'Terminal-01',
     });
 
     expect(result.tenantId).toBe('tenant-id-001');
     expect(result.terminalId).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
-    expect(result.publicLicenseKey).toMatch(/^LIC-[A-Z0-9]+-[A-Z0-9]+$/);
+    expect(result.publicLicenseKey).toMatch(/^LIC-[A-Z0-9-]+-[A-Z0-9]+$/);
   });
 
   it('TC-08: execute con contraseña inválida lanza INVALID_CREDENTIALS', async () => {
@@ -256,7 +257,7 @@ describe('PairDeviceUseCase', () => {
     const useCase = new PairDeviceUseCase(userRepo as any, tenantRepo as any);
 
     await expect(
-      useCase.execute({ email: 'cajero@colmado.com', password: 'wrong' }),
+      useCase.execute({ email: 'cajero@colmado.com', password: 'wrong', deviceName: 'Terminal-01' }),
     ).rejects.toThrow('INVALID_CREDENTIALS');
   });
 
@@ -267,7 +268,7 @@ describe('PairDeviceUseCase', () => {
     const useCase = new PairDeviceUseCase(userRepo as any, tenantRepo as any);
 
     await expect(
-      useCase.execute({ email: 'ghost@colmado.com', password: 'p' }),
+      useCase.execute({ email: 'ghost@colmado.com', password: 'p', deviceName: 'Terminal-01' }),
     ).rejects.toThrow('INVALID_CREDENTIALS');
   });
 });

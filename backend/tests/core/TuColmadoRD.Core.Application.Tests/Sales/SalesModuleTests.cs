@@ -134,8 +134,8 @@ public sealed class SalesModuleTests
     {
         // Arrange
         var shift   = BuildShift();
-        var sale    = BuildCompletedSale(shift.Id);
-        var product = BuildProduct();
+        var product = BuildProduct();                     // mismo producto que va dentro de la venta
+        var sale    = BuildCompletedSale(shift.Id, product);
 
         _shiftService
             .Setup(x => x.GetOpenShiftOrFailAsync(_tenantId, _terminalId, It.IsAny<CancellationToken>()))
@@ -204,15 +204,17 @@ public sealed class SalesModuleTests
         var taxRate  = TaxRate.Create(0.18m).Result!;
         var result   = Product.Create(_tenantId, "Producto Test", Guid.NewGuid(), cost, price, taxRate, UnitType.Unit);
         result.IsGood.Should().BeTrue("el producto de prueba debe crearse sin errores");
-        return result.Result!;
+        var product = result.Result!;
+        product.AdjustStock(100m);   // stock inicial para que las ventas puedan descontar
+        return product;
     }
 
     /// <summary>
     /// Builds a completed Sale by going through the full domain lifecycle.
     /// </summary>
-    private Sale BuildCompletedSale(Guid shiftId)
+    private Sale BuildCompletedSale(Guid shiftId, Product? product = null)
     {
-        var product = BuildProduct();
+        product ??= BuildProduct();
 
         var saleResult = Sale.Create(_tenantId, _terminalId, shiftId, "Cajero Test", "RCP-TEST-001", null);
         saleResult.IsGood.Should().BeTrue();
