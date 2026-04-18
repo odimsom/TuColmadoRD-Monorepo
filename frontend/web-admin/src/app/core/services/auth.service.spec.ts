@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 
 import { AuthService } from './auth.service';
 
@@ -28,11 +29,11 @@ function pastExp(secondsAgo = 3600): number {
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
-  let routerSpy: { navigate: jest.Mock };
+  let routerSpy: { navigate: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     localStorage.clear();
-    routerSpy = { navigate: jest.fn() };
+    routerSpy = { navigate: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [

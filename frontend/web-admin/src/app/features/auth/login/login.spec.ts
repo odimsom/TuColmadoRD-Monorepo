@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Observable } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 
 import { Login } from './login';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,14 +12,14 @@ import { AuthService } from '../../../core/services/auth.service';
 
 function createAuthServiceMock() {
   return {
-    login: jest.fn(),
-    currentUser: { set: jest.fn() },
-    token: { set: jest.fn() },
+    login:       vi.fn(),
+    currentUser: { set: vi.fn() },
+    token:       { set: vi.fn() },
   };
 }
 
 async function setupComponent(authServiceMock: ReturnType<typeof createAuthServiceMock>) {
-  const routerSpy = { navigate: jest.fn() };
+  const routerSpy = { navigate: vi.fn() };
 
   await TestBed.configureTestingModule({
     imports: [Login],
@@ -79,7 +80,6 @@ describe('Login Component', () => {
   // TC-51
   it('TC-51: onSubmit con form inválido no invoca AuthService.login', async () => {
     const { component } = await setupComponent(authMock);
-    // form stays empty → invalid
     component.onSubmit();
     expect(authMock.login).not.toHaveBeenCalled();
   });
@@ -112,10 +112,7 @@ describe('Login Component', () => {
   });
 
   it('TC-53b: loading es true mientras la petición está en curso', async () => {
-    // Observable that never completes (simulates pending request)
-    authMock.login.mockReturnValue(
-      new (require('rxjs').Observable)(() => {}),
-    );
+    authMock.login.mockReturnValue(new Observable(() => {}));
     const { component } = await setupComponent(authMock);
 
     component.loginForm.setValue({ email: 'cajero@colmado.com', password: 'pass' });
