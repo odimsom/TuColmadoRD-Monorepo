@@ -1,37 +1,32 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using TuColmadoRD.Infrastructure.CrossCutting.Security;
 using TuColmadoRD.Infrastructure.IOC.ServiceRegistrations;
-using TuColmadoRD.Infrastructure.Persistence.Contexts;
 using TuColmadoRD.Presentation.API.Endpoints.Customers;
 using TuColmadoRD.Presentation.API.Endpoints.Expenses;
 using TuColmadoRD.Presentation.API.Endpoints.Inventory;
 using TuColmadoRD.Presentation.API.Endpoints.Purchasing;
 using TuColmadoRD.Presentation.API.Endpoints.Sales;
 using TuColmadoRD.Presentation.API.Endpoints.Sales.Shifts;
-using TuColmadoRD.Presentation.API.Endpoints.Settings;
 
 namespace TuColmadoRD.Presentation.API;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         if (args.Any(a => a.Contains("TuColmadoRD.Presentation.API.dll")) || args.Length == 0)
         {
-            var app = await CoreApiHostBuilder.BuildCoreApi(args);
-            app.Run();
+            CoreApiHostBuilder.BuildCoreApi(args).Run();
         }
     }
 }
 
 public static class CoreApiHostBuilder
 {
-    public static async Task<WebApplication> BuildCoreApi(string[] args, bool isLocal = false)
+    public static WebApplication BuildCoreApi(string[] args, bool isLocal = false)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -55,25 +50,6 @@ public static class CoreApiHostBuilder
 
         var app = builder.Build();
 
-        // Apply EF Core migrations automatically on startup
-        if (!isLocal)
-        {
-            using var scope = app.Services.CreateScope();
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            try
-            {
-                var db = scope.ServiceProvider.GetRequiredService<TuColmadoDbContext>();
-                logger.LogInformation("Applying database migrations...");
-                await db.Database.MigrateAsync();
-                logger.LogInformation("Database migrations applied successfully.");
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "An error occurred while applying database migrations.");
-                throw;
-            }
-        }
-
         app.UseSwagger();
         if (isLocal || app.Environment.IsDevelopment())
         {
@@ -94,7 +70,6 @@ public static class CoreApiHostBuilder
         app.MapExpenseEndpoints();
         app.MapSalesEndpoints();
         app.MapShiftEndpoints();
-        app.MapSettingsEndpoints();
 
         return app;
     }
