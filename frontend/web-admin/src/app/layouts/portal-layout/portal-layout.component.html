@@ -1,130 +1,239 @@
-<div class="min-h-screen bg-[#0f172a] relative overflow-hidden flex transition-all duration-500">
-  <!-- Glow Background -->
-  <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-900/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
-  <div class="absolute bottom-[0%] right-[-5%] w-[500px] h-[500px] bg-blue-900/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+<div class="min-h-screen bg-[#060d1a] relative overflow-hidden flex transition-all duration-500">
 
-  <!-- Sidebar -->
-  <aside 
-    [class.w-72]="!isSidebarCollapsed()" 
-    [class.w-20]="isSidebarCollapsed()"
-    class="bg-[#0b1222]/95 backdrop-blur-3xl border-r border-white/5 flex flex-col h-screen sticky top-0 z-30 transition-all duration-300 ease-in-out shadow-2xl"
+  <!-- Global ambient glows -->
+  <div class="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] bg-blue-900/8 rounded-full blur-[140px] pointer-events-none z-0"></div>
+  <div class="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-900/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside
+    [class.w-72]="!isSidebarCollapsed()"
+    [class.w-[72px]]="isSidebarCollapsed()"
+    class="bg-[#080f1e]/98 backdrop-blur-3xl border-r border-white/[0.06] flex flex-col h-screen sticky top-0 z-30 transition-all duration-300 ease-in-out"
   >
-    <!-- Logo Section -->
-    <div class="p-6 border-b border-white/5 flex items-center" [class.justify-center]="isSidebarCollapsed()">
-      <div class="flex items-center gap-3">
-        <div class="relative group cursor-pointer" (click)="toggleSidebar()">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-8 h-8" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb" />
-            <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626" />
+    <!-- Logo -->
+    <div class="px-5 py-5 border-b border-white/[0.06] flex items-center" [class.justify-center]="isSidebarCollapsed()">
+      <button (click)="toggleSidebar()" class="flex items-center gap-3 group focus:outline-none">
+        <div class="relative shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-8 h-8 transition-transform duration-500 group-hover:rotate-12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb"/>
+            <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626"/>
           </svg>
-          <div class="absolute inset-0 bg-blue-500/20 blur-lg rounded-full scale-0 group-hover:scale-125 transition-transform duration-300"></div>
+          <div class="absolute inset-0 bg-blue-500/20 blur-lg rounded-full scale-0 group-hover:scale-150 transition-transform duration-500"></div>
         </div>
         @if (!isSidebarCollapsed()) {
-          <div class="flex flex-col animate-in fade-in slide-in-from-left-4 duration-300">
-            <span class="text-xl font-black text-white tracking-tighter uppercase">TuColmado</span>
-            <span class="text-[0.6rem] font-bold text-blue-500 uppercase tracking-[.3em] -mt-1 italic">Manager Portal</span>
+          <div class="flex flex-col leading-none animate-in fade-in slide-in-from-left-3 duration-300">
+            <span class="text-[1.1rem] font-black text-white tracking-tighter uppercase">TuColmado<span class="text-blue-500">RD</span></span>
+            <span class="text-[0.55rem] font-bold text-slate-500 uppercase tracking-[0.35em] mt-0.5">Manager Portal</span>
           </div>
         }
-      </div>
+      </button>
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-grow py-8 px-4 space-y-1">
-      <a routerLink="/portal/dashboard" routerLinkActive="bg-blue-600/10 text-blue-400 border-l-4 border-blue-500" [class.justify-center]="isSidebarCollapsed()" class="flex items-center gap-4 px-4 py-3.5 rounded-lg text-slate-500 hover:bg-white/5 hover:text-white transition-all group overflow-hidden">
-        <span class="icon-[ic--baseline-dashboard] text-xl min-w-[20px] group-hover:scale-110 transition-transform"></span>
+    <nav class="flex-grow py-6 px-3 space-y-0.5 overflow-y-auto">
+
+      <!-- Section label -->
+      @if (!isSidebarCollapsed()) {
+        <p class="px-3 mb-2 text-[0.55rem] font-black text-slate-600 uppercase tracking-[0.35em]">Principal</p>
+      }
+
+      <a routerLink="/portal/dashboard" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-dashboard] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
         @if (!isSidebarCollapsed()) {
-          <span class="font-bold text-xs uppercase tracking-widest animate-in fade-in slide-in-from-left-2 duration-300">Dashboard</span>
-        }
-      </a>
-      
-      <a routerLink="/portal/inventory" routerLinkActive="bg-blue-600/10 text-blue-400 border-l-4 border-blue-500" [class.justify-center]="isSidebarCollapsed()" class="flex items-center gap-4 px-4 py-3.5 rounded-lg text-slate-500 hover:bg-white/5 hover:text-white transition-all group overflow-hidden">
-        <span class="icon-[ic--baseline-inventory-2] text-xl min-w-[20px]"></span>
-        @if (!isSidebarCollapsed()) {
-          <span class="font-bold text-xs uppercase tracking-widest animate-in fade-in slide-in-from-left-2 duration-300">Inventario</span>
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Dashboard</span>
         }
       </a>
 
-      <a routerLink="/portal/sales" routerLinkActive="bg-blue-600/10 text-blue-400 border-l-4 border-blue-500" [class.justify-center]="isSidebarCollapsed()" class="flex items-center gap-4 px-4 py-3.5 rounded-lg text-slate-500 hover:bg-white/5 hover:text-white transition-all group overflow-hidden">
-        <span class="icon-[ic--baseline-receipt-long] text-xl min-w-[20px]"></span>
+      <a routerLink="/portal/sales" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-receipt-long] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
         @if (!isSidebarCollapsed()) {
-          <span class="font-bold text-xs uppercase tracking-widest animate-in fade-in slide-in-from-left-2 duration-300">Ventas</span>
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Ventas</span>
         }
       </a>
 
-      <a routerLink="/portal/customers" routerLinkActive="bg-blue-600/10 text-blue-400 border-l-4 border-blue-500" [class.justify-center]="isSidebarCollapsed()" class="flex items-center gap-4 px-4 py-3.5 rounded-lg text-slate-500 hover:bg-white/5 hover:text-white transition-all group overflow-hidden">
-        <span class="icon-[ic--baseline-people] text-xl min-w-[20px]"></span>
+      <a routerLink="/portal/inventory" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-inventory-2] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
         @if (!isSidebarCollapsed()) {
-          <span class="font-bold text-xs uppercase tracking-widest animate-in fade-in slide-in-from-left-2 duration-300">Fiados</span>
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Inventario</span>
         }
       </a>
+
+      <a routerLink="/portal/customers" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-people] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
+        @if (!isSidebarCollapsed()) {
+          <div class="flex items-center justify-between flex-1 animate-in fade-in duration-200">
+            <span class="text-[0.7rem] font-black uppercase tracking-widest">Fiados</span>
+            <span class="text-[0.5rem] font-black px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20 uppercase tracking-wide">Pronto</span>
+          </div>
+        }
+      </a>
+
+      <!-- Divider -->
+      <div class="my-3 mx-3 border-t border-white/[0.05]"></div>
+
+      @if (!isSidebarCollapsed()) {
+        <p class="px-3 mb-2 text-[0.55rem] font-black text-slate-600 uppercase tracking-[0.35em]">Cuenta</p>
+      }
+
+      <a routerLink="/portal/subscription" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-workspace-premium] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
+        @if (!isSidebarCollapsed()) {
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Suscripción</span>
+        }
+      </a>
+
+      <a routerLink="/portal/settings" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-settings] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
+        @if (!isSidebarCollapsed()) {
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Configuración</span>
+        }
+      </a>
+
+      <!-- Ícono fijo de descarga — siempre visible -->
+      @if (downloadInfo()) {
+        <button
+          (click)="downloadPOS()"
+          class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-all w-full text-left"
+          [title]="'Descargar POS · ' + downloadInfo()!.version"
+        >
+          <span class="icon-[ic--baseline-download] text-lg shrink-0"></span>
+          @if (!isSidebarCollapsed()) {
+            <span class="text-sm font-medium">Descargar POS</span>
+          }
+        </button>
+      }
     </nav>
 
-    <!-- Sidebar Footer -->
-    <div class="p-4 border-t border-white/5">
-      <div class="flex items-center" [class.justify-center]="isSidebarCollapsed()">
-        <button (click)="logout()" class="p-3 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
-          <span class="icon-[ic--baseline-logout] text-xl"></span>
+    <!-- Sidebar footer: user + logout + Synset -->
+    <div class="border-t border-white/[0.06] p-4 space-y-3">
+
+      <!-- User info -->
+      @if (!isSidebarCollapsed()) {
+        <div class="flex items-center gap-3 px-2 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-[0.65rem] font-black shadow-lg shrink-0">
+            {{ getInitials() }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold text-white truncate">{{ authService.currentUser()?.firstName || 'Usuario' }}</p>
+            <p class="text-[0.6rem] text-slate-500 font-medium truncate">{{ authService.currentUser()?.email }}</p>
+          </div>
+          <button (click)="logout()" title="Cerrar sesión" class="p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0">
+            <span class="icon-[ic--baseline-logout] text-sm"></span>
+          </button>
+        </div>
+      } @else {
+        <button (click)="logout()" title="Cerrar sesión" class="w-full flex justify-center p-2 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all">
+          <span class="icon-[ic--baseline-logout] text-lg"></span>
         </button>
-      </div>
+      }
+
+      <!-- Synset attribution -->
+      @if (!isSidebarCollapsed()) {
+        <a href="https://synsetsolutions.com" target="_blank" rel="noopener noreferrer"
+           class="flex items-center justify-center gap-2 py-2 opacity-25 hover:opacity-60 transition-opacity group">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb"/>
+            <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626"/>
+          </svg>
+          <span class="text-[0.55rem] font-black text-slate-400 uppercase tracking-[0.3em]">Synset Solutions</span>
+        </a>
+      }
     </div>
   </aside>
 
-  <!-- Main Content Area -->
-  <div class="flex-grow flex flex-col min-w-0 relative h-screen">
-    <header class="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-20">
-      <div class="flex items-center gap-6">
-        <!-- Connection Status -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" [class.bg-green-500]="connectionStatus() === 'online'" [class.bg-red-500]="connectionStatus() === 'offline'"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2" [class.bg-green-500]="connectionStatus() === 'online'" [class.bg-red-500]="connectionStatus() === 'offline'"></span>
-          </span>
-          <span class="text-[0.6rem] font-black uppercase tracking-widest text-slate-400">{{ connectionStatus() }}</span>
-        </div>
+  <!-- ===================== MAIN CONTENT ===================== -->
+  <div class="flex-grow flex flex-col min-w-0 relative h-screen overflow-hidden">
 
-        <div class="h-4 w-px bg-white/10"></div>
+    <!-- Header -->
+    <header class="h-14 border-b border-white/[0.06] flex items-center justify-between px-6 bg-[#080f1e]/80 backdrop-blur-md sticky top-0 z-20">
 
-        <!-- Colmado Name / Shift -->
-        <div class="flex items-center gap-3 cursor-pointer group">
-          <span class="text-xs font-black text-white uppercase tracking-tighter">{{ authService.currentUser()?.firstName || 'Tu Colmado' }}</span>
-          <div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-600/10 text-blue-500 border border-blue-500/20">
-            <span class="icon-[ic--baseline-history] text-xs"></span>
-            <span class="text-[0.6rem] font-bold uppercase tracking-tighter">Turno: Mañana</span>
-          </div>
-          <span class="icon-[ic--baseline-keyboard-arrow-down] text-slate-500 group-hover:text-white transition-colors"></span>
-        </div>
-      </div>
-      
+      <!-- Left: connection + context -->
       <div class="flex items-center gap-4">
-        <!-- Action Buttons -->
-        <button class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20">
+        <!-- Online/Offline indicator -->
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06]">
+          <span class="relative flex h-1.5 w-1.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
+              [class.bg-green-400]="connectionStatus() === 'online'"
+              [class.bg-red-400]="connectionStatus() === 'offline'"></span>
+            <span class="relative inline-flex rounded-full h-1.5 w-1.5"
+              [class.bg-green-400]="connectionStatus() === 'online'"
+              [class.bg-red-400]="connectionStatus() === 'offline'"></span>
+          </span>
+          <span class="text-[0.6rem] font-black uppercase tracking-widest"
+            [class.text-green-400]="connectionStatus() === 'online'"
+            [class.text-red-400]="connectionStatus() === 'offline'">{{ connectionStatus() }}</span>
+        </div>
+
+        <div class="h-3.5 w-px bg-white/10"></div>
+
+        <!-- Active shift indicator -->
+        @if (activeShift()) {
+          <div class="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/8 border border-emerald-500/20">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+            <span class="text-[0.6rem] font-black text-emerald-400 uppercase tracking-widest">Turno activo</span>
+            <span class="text-[0.6rem] font-mono font-semibold text-emerald-300/70 tabular-nums">{{ shiftElapsed() }}</span>
+          </div>
+        } @else {
+          <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06]">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-600 shrink-0"></span>
+            <span class="text-[0.6rem] font-black text-slate-600 uppercase tracking-widest">Sin turno</span>
+          </div>
+        }
+      </div>
+
+      <!-- Right: actions + profile -->
+      <div class="flex items-center gap-3">
+        <!-- Nueva Venta CTA -->
+        <a routerLink="/pos" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 flex items-center gap-1.5">
+          <span class="icon-[ic--baseline-point-of-sale] text-sm"></span>
           Nueva Venta
-        </button>
+        </a>
 
-        <button
-          (click)="updateDesktopApp()"
-          [disabled]="isCheckingUpdate()"
-          class="px-3 py-2 rounded-lg border border-emerald-400/30 text-emerald-300 hover:border-emerald-300/50 hover:text-emerald-200 disabled:opacity-60 disabled:cursor-not-allowed text-[0.6rem] font-bold uppercase tracking-widest transition-all"
-        >
-          {{ isCheckingUpdate() ? 'Buscando...' : 'Actualizar App' }}
-        </button>
-        
-        <button class="px-3 py-2 rounded-lg border border-white/10 text-slate-400 hover:border-white/20 hover:text-white text-[0.6rem] font-bold uppercase tracking-widest transition-all">
-          Registrarse
-        </button>
+        <div class="h-5 w-px bg-white/10"></div>
 
-        <div class="h-8 w-px bg-white/10 mx-2"></div>
-
-        <!-- User Profile -->
-        <div class="flex items-center gap-3 pl-2">
-          <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center font-black text-white text-xs shadow-xl ring-2 ring-blue-500/20">
+        <!-- User avatar -->
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center font-black text-white text-[0.65rem] shadow-xl ring-1 ring-blue-500/20">
             {{ getInitials() }}
           </div>
+          @if (!isSidebarCollapsed()) {
+            <span class="text-xs text-slate-400 font-bold hidden xl:block">{{ authService.currentUser()?.email }}</span>
+          }
         </div>
       </div>
     </header>
 
-    <main class="flex-grow overflow-y-auto custom-scrollbar relative z-10">
+    <!-- Content -->
+    <main class="flex-grow overflow-y-auto relative z-10">
+      <!-- Banner de descarga del POS -->
+      @if (showDownloadBanner() && downloadInfo()) {
+        <div class="flex items-center gap-4 px-6 py-3 bg-blue-600/10 border-b border-blue-500/20 text-sm">
+          <span class="icon-[ic--baseline-download] text-blue-400 text-lg shrink-0"></span>
+          <div class="flex-1">
+            <span class="font-bold text-white">¿Quieres usar el POS en esta computadora?</span>
+            <span class="text-slate-400 ml-2">Versión {{ downloadInfo()!.version }} disponible · {{ downloadInfo()!.fileSize }}</span>
+          </div>
+          <button
+            (click)="downloadPOS()"
+            class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-widest transition-all shrink-0"
+          >
+            Descargar POS
+          </button>
+          <button
+            (click)="dismissBanner()"
+            class="text-slate-500 hover:text-white transition-colors shrink-0 p-1"
+            aria-label="Cerrar banner de descarga"
+          >
+            <span class="icon-[ic--baseline-close] text-lg"></span>
+          </button>
+        </div>
+      }
       <router-outlet></router-outlet>
     </main>
   </div>
