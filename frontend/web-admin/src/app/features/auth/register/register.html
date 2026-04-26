@@ -1,151 +1,185 @@
-<div class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-4xl">
-    
-    <!-- STATE: FORM -->
-    <div *ngIf="state() === 'form'" class="card bg-base-200/80 backdrop-blur-xl border border-white/10 shadow-2xl max-w-md mx-auto">
-      <div class="card-body">
-        <div class="text-center mb-6">
-          <h2 class="text-3xl font-bold text-white tracking-tight">Nuevo Colmado</h2>
-          <p class="text-slate-400 text-sm mt-1">Registra tu negocio en segundos</p>
-        </div>
+<div class="min-h-screen bg-[#0f172a] text-white flex items-center justify-center px-6 py-12">
+  <div class="w-full max-w-lg">
 
-        <form [formGroup]="registerForm" (ngSubmit)="onTrySubmit()" class="space-y-4" data-testid="register-form">
-          <div class="form-control w-full">
-            <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Nombre del Negocio</span></label>
-            <input type="text" formControlName="businessName" placeholder="Ej: Colmado La Bendición" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-business-name" />
-            <label class="label" *ngIf="registerForm.controls.businessName.touched && registerForm.controls.businessName.invalid">
-              <span class="label-text-alt text-red-400">Ingresa un nombre de colmado valido (3-120 caracteres).</span>
-            </label>
-          </div>
+    <!-- Back + Step indicator -->
+    <div class="flex items-center gap-4 mb-8">
+      @if (step() !== 'account') {
+        <button (click)="back()" class="flex items-center gap-1.5 text-slate-500 hover:text-white transition-colors text-sm font-bold">
+          <span class="icon-[ic--baseline-arrow-back] text-base"></span>
+          Atrás
+        </button>
+      } @else {
+        <a routerLink="/auth/login" class="flex items-center gap-1.5 text-slate-500 hover:text-white transition-colors text-sm font-bold">
+          <span class="icon-[ic--baseline-arrow-back] text-base"></span>
+          Iniciar sesión
+        </a>
+      }
+      <span class="text-xs text-slate-600 font-bold uppercase tracking-widest ml-auto">{{ stepLabel() }}</span>
+    </div>
 
-          <div class="form-control w-full">
-            <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Correo Electrónico</span></label>
-            <input type="email" formControlName="email" placeholder="tu@colmado.com" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-email" />
-            <label class="label" *ngIf="registerForm.controls.email.touched && registerForm.controls.email.invalid">
-              <span class="label-text-alt text-red-400">Ingresa un correo valido.</span>
-            </label>
-          </div>
+    <!-- Progress bar -->
+    <div class="h-1 bg-white/5 rounded-full mb-10 overflow-hidden">
+      <div
+        class="h-full bg-blue-600 rounded-full transition-all duration-500"
+        [style.width]="step() === 'account' ? '33%' : step() === 'plan' ? '66%' : '100%'"
+      ></div>
+    </div>
 
-          <div class="form-control w-full">
-            <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Contraseña</span></label>
-            <input type="password" formControlName="password" placeholder="Minimo 8 caracteres" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="register-password" />
-            <label class="label" *ngIf="registerForm.controls.password.touched && registerForm.controls.password.invalid">
-              <span class="label-text-alt text-red-400">La contraseña debe tener entre 8 y 128 caracteres.</span>
-            </label>
-          </div>
+    <!-- Error -->
+    @if (error()) {
+      <div class="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm mb-6">
+        <span class="icon-[ic--baseline-error-outline] text-lg shrink-0"></span>
+        <span>{{ error() }}</span>
+      </div>
+    }
 
-          <div class="card-actions mt-8">
-            <button type="submit" [disabled]="registerForm.invalid" class="btn btn-primary w-full border-none shadow-lg shadow-blue-500/20" data-testid="register-continue-btn">
-              Continuar
-            </button>
+    <!-- ===== PASO 1: Cuenta ===== -->
+    @if (step() === 'account') {
+      <div>
+        <h2 class="text-3xl font-black tracking-tight mb-1">Crea tu cuenta</h2>
+        <p class="text-slate-500 text-sm mb-8">Sin tarjeta de crédito para empezar.</p>
+
+        <form [formGroup]="registerForm" (ngSubmit)="submitAccount()" class="space-y-5">
+          <div class="space-y-1.5">
+            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Nombre del negocio</label>
+            <input
+              type="text"
+              formControlName="businessName"
+              placeholder="Colmado El Buen Precio"
+              class="w-full bg-white/[0.04] border border-white/8 hover:border-white/15 focus:border-blue-500/60 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all"
+            />
           </div>
+          <div class="space-y-1.5">
+            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Correo electrónico</label>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="tu@colmado.com"
+              class="w-full bg-white/[0.04] border border-white/8 hover:border-white/15 focus:border-blue-500/60 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all"
+            />
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Contraseña</label>
+            <input
+              type="password"
+              formControlName="password"
+              placeholder="Mínimo 8 caracteres"
+              class="w-full bg-white/[0.04] border border-white/8 hover:border-white/15 focus:border-blue-500/60 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full mt-2 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-600/25"
+          >
+            Continuar →
+          </button>
         </form>
-
-        <div class="text-center mt-6">
-          <p class="text-sm text-slate-400">¿Ya tienes cuenta? <a routerLink="/auth/login" class="text-blue-500 hover:text-blue-400 font-medium transition-colors">Inicia Sesión</a></p>
-        </div>
       </div>
-    </div>
+    }
 
-    <!-- STATE: TERMS MODAL -->
-    <div *ngIf="state() === 'terms-modal'" class="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50 animate-in fade-in zoom-in duration-300" data-testid="terms-modal">
-      <div class="bg-[#0D1B2E] border border-[#1E3A8A55] rounded-2xl p-8 max-w-lg shadow-2xl">
-        <h3 class="text-2xl font-bold text-white mb-4">Términos del Servicio</h3>
-        <div class="prose prose-sm prose-invert max-h-60 overflow-y-auto mb-6 text-slate-300">
-          <p>Al unirte a TuColmadoRD, aceptas nuestras políticas de uso justo y privacidad...</p>
-          <p>Tu información comercial está protegida y nunca será compartida con terceros sin tu consentimiento.</p>
-        </div>
-        
-        <label class="flex items-center gap-3 mb-8 p-3 bg-white/5 rounded-lg border border-white/5 cursor-pointer hover:bg-white/10 transition-colors">
-          <input type="checkbox" [checked]="termsAccepted()" (change)="termsAccepted.set(!termsAccepted())" class="checkbox checkbox-primary" data-testid="terms-checkbox" />
-          <span class="text-sm text-slate-200">Acepto los términos y condiciones de uso.</span>
-        </label>
+    <!-- ===== PASO 2: Plan ===== -->
+    @if (step() === 'plan') {
+      <div>
+        <h2 class="text-3xl font-black tracking-tight mb-1">Elige tu plan</h2>
+        <p class="text-slate-500 text-sm mb-6">Cambia de plan cuando quieras.</p>
 
-        <div class="flex gap-4">
-          <button (click)="cancelTerms()" class="btn btn-ghost flex-1 text-slate-400">Cancelar</button>
-          <button (click)="confirmRegistration()" [disabled]="!termsAccepted()" class="btn btn-primary flex-1" data-testid="create-account-btn">Crear Mi Cuenta</button>
+        <!-- Billing toggle -->
+        <div class="flex items-center gap-3 mb-8">
+          <span class="text-sm font-bold" [class.text-white]="billingCycle() === 'monthly'" [class.text-slate-500]="billingCycle() === 'annual'">Mensual</span>
+          <button
+            (click)="toggleBilling()"
+            class="relative w-12 h-6 rounded-full transition-colors duration-200"
+            [class.bg-blue-600]="billingCycle() === 'annual'"
+            [class.bg-slate-700]="billingCycle() === 'monthly'"
+          >
+            <span
+              class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+              [class.translate-x-6]="billingCycle() === 'annual'"
+            ></span>
+          </button>
+          <span class="text-sm font-bold" [class.text-white]="billingCycle() === 'annual'" [class.text-slate-500]="billingCycle() === 'monthly'">
+            Anual <span class="ml-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 text-[0.6rem] font-black">-25%</span>
+          </span>
         </div>
+
+        <div class="space-y-4 mb-8">
+          @for (plan of plans; track plan.id) {
+            <div
+              (click)="selectPlan(plan.id)"
+              class="p-5 rounded-xl border cursor-pointer transition-all"
+              [class.border-blue-500]="selectedPlanId() === plan.id"
+              [class.bg-blue-600\/5]="selectedPlanId() === plan.id"
+              [class.border-white\/10]="selectedPlanId() !== plan.id"
+              [class.hover\:border-white\/20]="selectedPlanId() !== plan.id"
+            >
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-black text-lg">{{ plan.name }}</span>
+                <div class="text-right">
+                  <span class="text-2xl font-black">RD${{ currentPrice(plan) | number }}</span>
+                  <span class="text-slate-500 text-xs ml-1">{{ billingCycle() === 'monthly' ? '/mes' : '/año' }}</span>
+                </div>
+              </div>
+              <ul class="space-y-1">
+                @for (feature of plan.features; track $index) {
+                  <li class="flex items-center gap-2 text-xs text-slate-400">
+                    <span class="icon-[ic--baseline-check] text-blue-500 text-sm shrink-0"></span>
+                    {{ feature }}
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+
+        <button
+          (click)="confirmPlan()"
+          [disabled]="!selectedPlanId()"
+          class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-600/25"
+        >
+          Continuar con {{ selectedPlan()?.name ?? 'plan seleccionado' }} →
+        </button>
       </div>
-    </div>
+    }
 
-    <!-- STATE: LOADING -->
-    <div *ngIf="state() === 'loading'" class="flex flex-col items-center justify-center py-20">
-      <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
-      <p class="text-white font-medium animate-pulse">Configurando tu colmado...</p>
-    </div>
+    <!-- ===== PASO 3: Checkout ===== -->
+    @if (step() === 'checkout') {
+      <div>
+        <h2 class="text-3xl font-black tracking-tight mb-1">Confirmar y pagar</h2>
+        <p class="text-slate-500 text-sm mb-8">Tu cuenta se creará al completar el pago.</p>
 
-    <!-- STATE: ERROR -->
-    <div *ngIf="state() === 'error'" class="card bg-base-200 border border-red-500/30 p-8 max-w-md mx-auto text-center" data-testid="register-error-state">
-      <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
-        <span class="text-3xl">⚠️</span>
-      </div>
-      <h3 class="text-xl font-bold text-white mb-2">¡Ups! Algo salió mal</h3>
-      <p class="text-slate-400 mb-6" data-testid="register-error-message">{{ error() }}</p>
-      <button (click)="retry()" class="btn btn-outline btn-sm">Volver a intentar</button>
-    </div>
-
-    <!-- STATE: SUCCESS -->
-    <div *ngIf="state() === 'success'" class="animate-in slide-in-from-bottom-8 duration-700" data-testid="register-success-state">
-      <div class="text-center mb-10">
-        <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500 border border-green-500/20">
-          <span class="text-4xl">✓</span>
-        </div>
-        <h2 class="text-4xl font-bold text-white mb-2" data-testid="register-success-title">¡Todo listo!</h2>
-        <p class="text-slate-400">Tu cuenta ha sido activada con éxito.</p>
-      </div>
-
-      <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-        <!-- CARD A: WEB PORTAL -->
-        <div class="card bg-slate-900/50 border border-white/5 hover:border-blue-500/30 transition-all p-8 group">
-          <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-            <svg class="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
-          </div>
-          <h3 class="text-xl font-bold text-white mb-2">Úsalo desde el navegador</h3>
-          <p class="text-slate-400 text-sm mb-8">Reportes, fiados y configuración desde cualquier dispositivo.</p>
-          <a routerLink="/portal/dashboard" class="btn btn-outline btn-primary capitalize mt-auto">Entrar al sistema →</a>
-        </div>
-
-        <!-- CARD B: DESKTOP APP -->
-        <div class="card bg-[#0F172A] border-2 border-primary p-8 relative overflow-hidden group shadow-2xl shadow-primary/10">
-          <div class="absolute top-0 right-0 p-4">
-            <span class="bg-primary text-primary-content text-[10px] font-black px-2 py-1 rounded bg-blue-600">RECOMENDADO</span>
-          </div>
-          <div class="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform">
-            <svg class="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
-          </div>
-          <h3 class="text-xl font-bold text-white mb-2">Instala en tu caja registradora</h3>
-          <p class="text-slate-400 text-sm mb-6">Funciona sin internet. Sincroniza cuando hay conexión.</p>
-          
-          <ul class="space-y-3 mb-8">
-            <li class="flex items-center gap-2 text-sm text-slate-300"><span class="text-green-500">✓</span> Funciona sin WIFI</li>
-            <li class="flex items-center gap-2 text-sm text-slate-300"><span class="text-green-500">✓</span> Impresión térmica</li>
-            <li class="flex items-center gap-2 text-sm text-slate-300"><span class="text-green-500">✓</span> Más rápido en caja</li>
-          </ul>
-
-          <ng-container *ngIf="downloadInfo(); let info; else comingSoon">
-            <a [href]="info.downloadUrl" class="btn btn-primary w-full shadow-lg shadow-primary/20">
-              DESCARGAR v{{ info.version }} ({{ info.fileSize }}) →
-            </a>
-          </ng-container>
-          <ng-template #comingSoon>
-            <button disabled class="btn btn-ghost bg-white/5 text-slate-500 w-full cursor-not-allowed uppercase tracking-widest font-black">PRÓXIMAMENTE</button>
-          </ng-template>
-          
-          <p class="text-[10px] text-slate-500 text-center mt-4">Tu cuenta ya está activa. La app se conectará automáticamente.</p>
-          <div class="text-center mt-4">
-            <a href="https://wa.me/18296932458" target="_blank" class="text-xs text-blue-400 hover:underline">¿Necesitas ayuda? →</a>
+        <!-- Resumen -->
+        <div class="p-5 rounded-xl bg-white/[0.03] border border-white/8 mb-8">
+          <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-3">Resumen del pedido</p>
+          <div class="flex justify-between items-center">
+            <span class="font-bold">Plan {{ selectedPlan()?.name }}</span>
+            <span class="font-black text-lg">
+              RD${{ (billingCycle() === 'monthly' ? selectedPlan()?.priceMonthly : selectedPlan()?.priceAnnual) | number }}
+              <span class="text-slate-500 text-xs font-normal">{{ billingCycle() === 'monthly' ? '/mes' : '/año' }}</span>
+            </span>
           </div>
         </div>
+
+        <!-- Placeholder de integración de pago -->
+        <div class="p-6 rounded-xl bg-white/[0.02] border border-dashed border-white/10 text-center text-slate-500 text-sm mb-8">
+          <span class="icon-[ic--baseline-credit-card] text-2xl mb-2 block text-slate-600"></span>
+          Aquí va el formulario de pago del proveedor (Stripe, Cardnet, etc.)
+        </div>
+
+        <button
+          (click)="submitPayment()"
+          [disabled]="loading()"
+          class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2"
+        >
+          @if (loading()) {
+            <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            Procesando...
+          } @else {
+            Confirmar y activar cuenta
+          }
+        </button>
+        <p class="text-center text-xs text-slate-600 mt-4">Al confirmar aceptas los términos de servicio.</p>
       </div>
-    </div>
+    }
 
   </div>
 </div>
