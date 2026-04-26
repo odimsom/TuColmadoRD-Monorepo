@@ -1,8 +1,9 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { PaymentService } from '../../../core/payments/payment.service';
 import { RegisterRequest } from '../../../core/models/auth.models';
 
 type RegisterStep = 'account' | 'plan' | 'checkout';
@@ -23,9 +24,12 @@ interface Plan {
   templateUrl: './register.html',
   styleUrl: './register.scss'
 })
-export class Register {
+export class Register implements OnDestroy {
+  @ViewChild('cardMount') private cardMountRef?: ElementRef<HTMLDivElement>;
+
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private paymentService = inject(PaymentService);
   private router = inject(Router);
 
   step = signal<RegisterStep>('account');
@@ -83,6 +87,14 @@ export class Register {
   confirmPlan(): void {
     if (!this.selectedPlanId()) return;
     this.step.set('checkout');
+    // Wait one tick for Angular to render the checkout template before mounting
+    setTimeout(() => {
+      if (this.cardMountRef?.nativeElement) {
+        this.paymentService.mount(this.cardMountRef.nativeElement).catch(() => {
+          this.error.set('No se pudo cargar el formulario de pago. Recarga la página.');
+        });
+      }
+    });
   }
 
   toggleBilling(): void {
@@ -95,16 +107,25 @@ export class Register {
 
   back(): void {
     if (this.step() === 'plan')     { this.step.set('account'); return; }
-    if (this.step() === 'checkout') { this.step.set('plan');    return; }
+    if (this.step() === 'checkout') { this.paymentService.destroy(); this.step.set('plan'); return; }
   }
 
-  submitPayment(): void {
+  async submitPayment(): Promise<void> {
     if (this.registerForm.invalid || !this.selectedPlanId()) return;
 
     this.loading.set(true);
     this.error.set(null);
 
-    // TODO: include selectedPlanId and billingCycle in payload once payment provider is integrated
+    let paymentToken: string;
+    try {
+      const result = await this.paymentService.tokenize();
+      paymentToken = result.token;
+    } catch (err: any) {
+      this.loading.set(false);
+      this.error.set(err.message || 'Error al procesar el pago.');
+      return;
+    }
+
     const payload: RegisterRequest = {
       tenantName: this.registerForm.controls.businessName.value.trim(),
       email: this.registerForm.controls.email.value.trim().toLowerCase(),
@@ -112,11 +133,19 @@ export class Register {
     };
 
     this.authService.register(payload).subscribe({
-      next: () => { this.loading.set(false); this.router.navigate(['/portal/dashboard']); },
+      next: () => {
+        this.loading.set(false);
+        // TODO: POST /api/v1/subscriptions { planId: selectedPlanId(), billingCycle: billingCycle(), paymentToken }
+        this.router.navigate(['/portal/dashboard']);
+      },
       error: (err) => {
         this.loading.set(false);
         this.error.set(err.error?.message || 'Error al crear la cuenta. Inténtalo de nuevo.');
       },
     });
+  }
+
+  ngOnDestroy(): void {
+    this.paymentService.destroy();
   }
 }

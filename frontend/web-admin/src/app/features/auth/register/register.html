@@ -161,11 +161,8 @@
           </div>
         </div>
 
-        <!-- Placeholder de integración de pago -->
-        <div class="p-6 rounded-xl bg-white/[0.02] border border-dashed border-white/10 text-center text-slate-500 text-sm mb-8">
-          <span class="icon-[ic--baseline-credit-card] text-2xl mb-2 block text-slate-600"></span>
-          Aquí va el formulario de pago del proveedor (Stripe, Cardnet, etc.)
-        </div>
+        <!-- Payment provider mounts here -->
+        <div #cardMount class="mb-8"></div>
 
         <button
           (click)="submitPayment()"
