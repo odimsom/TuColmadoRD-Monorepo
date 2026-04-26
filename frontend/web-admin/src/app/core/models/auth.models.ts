@@ -5,6 +5,7 @@ export interface AuthUser {
   lastName: string | null;
   role: string | null;
   tenantId: string | null;
+  subscriptionStatus?: 'active' | 'expired' | 'trialing' | null;
 }
 
 export interface LoginRequest {

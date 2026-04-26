@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
@@ -16,6 +16,9 @@ export class AuthService {
   // State
   currentUser = signal<AuthUser | null>(this.getUserFromStorage());
   token = signal<string | null>(localStorage.getItem('tc_token'));
+  isLicenseExpired = computed(() =>
+    this.currentUser()?.subscriptionStatus === 'expired'
+  );
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, credentials).pipe(
