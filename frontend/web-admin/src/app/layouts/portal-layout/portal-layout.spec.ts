@@ -7,7 +7,7 @@ import { PortalLayout } from './portal-layout';
 import { AuthService } from '../../core/services/auth.service';
 import { DownloadService } from '../../core/services/download.service';
 import { SaleService } from '../../core/services/sale.service';
-import { throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 describe('PortalLayout', () => {
   let component: PortalLayout;
@@ -15,7 +15,7 @@ describe('PortalLayout', () => {
 
   beforeEach(async () => {
     const authMock = { currentUser: () => null, logout: vi.fn(), isLicenseExpired: () => false };
-    const downloadMock = { getLatestTestRelease: vi.fn() };
+    const downloadMock = { getLatestTestRelease: vi.fn().mockReturnValue(of(null)) };
     const saleMock = { getCurrentShift: vi.fn().mockReturnValue(throwError(() => new Error('no shift'))) };
 
     await TestBed.configureTestingModule({
