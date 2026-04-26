@@ -94,8 +94,8 @@ export class Register {
   }
 
   back(): void {
-    if (this.step() === 'plan')     this.step.set('account');
-    if (this.step() === 'checkout') this.step.set('plan');
+    if (this.step() === 'plan')     { this.step.set('account'); return; }
+    if (this.step() === 'checkout') { this.step.set('plan');    return; }
   }
 
   submitPayment(): void {
@@ -111,7 +111,7 @@ export class Register {
     };
 
     this.authService.register(payload).subscribe({
-      next: () => this.router.navigate(['/portal/dashboard']),
+      next: () => { this.loading.set(false); this.router.navigate(['/portal/dashboard']); },
       error: (err) => {
         this.loading.set(false);
         this.error.set(err.error?.message || 'Error al crear la cuenta. Inténtalo de nuevo.');

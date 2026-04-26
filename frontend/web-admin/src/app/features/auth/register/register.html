@@ -106,11 +106,10 @@
           @for (plan of plans; track plan.id) {
             <div
               (click)="selectPlan(plan.id)"
-              class="p-5 rounded-xl border cursor-pointer transition-all"
+              class="p-5 rounded-xl border cursor-pointer transition-all hover:border-white/20"
               [class.border-blue-500]="selectedPlanId() === plan.id"
               [class.bg-blue-600\/5]="selectedPlanId() === plan.id"
               [class.border-white\/10]="selectedPlanId() !== plan.id"
-              [class.hover\:border-white\/20]="selectedPlanId() !== plan.id"
             >
               <div class="flex items-center justify-between mb-3">
                 <span class="font-black text-lg">{{ plan.name }}</span>
