@@ -1,8 +1,4 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using TuColmadoRD.Infrastructure.CrossCutting.Security;
+using TuColmadoRD.Infrastructure.CrossCutting;
 using TuColmadoRD.Infrastructure.IOC.ServiceRegistrations;
 using TuColmadoRD.Presentation.API.Endpoints.Customers;
 using TuColmadoRD.Presentation.API.Endpoints.Expenses;
@@ -10,6 +6,7 @@ using TuColmadoRD.Presentation.API.Endpoints.Inventory;
 using TuColmadoRD.Presentation.API.Endpoints.Purchasing;
 using TuColmadoRD.Presentation.API.Endpoints.Sales;
 using TuColmadoRD.Presentation.API.Endpoints.Sales.Shifts;
+using TuColmadoRD.Presentation.API.Endpoints.Settings;
 
 namespace TuColmadoRD.Presentation.API;
 
@@ -46,6 +43,8 @@ public static class CoreApiHostBuilder
         builder.Services.AddAuthorization();
 
         builder.Services.AddGlobalServices(builder.Configuration);
+        // Cloud API uses JWT-based tenant resolution, not device file
+        builder.Services.AddCloudTenancy();
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CoreApiHostBuilder).Assembly));
 
         var app = builder.Build();
@@ -60,7 +59,6 @@ public static class CoreApiHostBuilder
         {
             app.UseHttpsRedirection();
         }
-        app.UseMiddleware<SubscriptionGuardMiddleware>();
 
         app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
@@ -70,6 +68,7 @@ public static class CoreApiHostBuilder
         app.MapExpenseEndpoints();
         app.MapSalesEndpoints();
         app.MapShiftEndpoints();
+        app.MapSettingsEndpoints();
 
         return app;
     }

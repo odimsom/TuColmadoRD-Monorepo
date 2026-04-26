@@ -18,6 +18,7 @@ export class LoginUseCase {
 
     let resolvedTenantId: string;
     let user;
+    let subscriptionStatus: import("../../domain/interfaces/tenant.interface").SubscriptionStatus = 'active';
 
     if (incomingTenantId) {
       const tenant = await this.tenantRepo.findById(incomingTenantId);
@@ -26,6 +27,7 @@ export class LoginUseCase {
       }
 
       resolvedTenantId = incomingTenantId;
+      subscriptionStatus = tenant.subscriptionStatus ?? 'active';
       user = await this.userRepo.findByEmailAndTenant(
         normalizedEmail,
         resolvedTenantId,
@@ -42,6 +44,8 @@ export class LoginUseCase {
       if (!tenant) {
         throw new Error("TENANT_NOT_FOUND");
       }
+
+      subscriptionStatus = tenant.subscriptionStatus ?? 'active';
     }
 
     if (!user) {
@@ -57,9 +61,10 @@ export class LoginUseCase {
       {
         sub: user._id,
         tenant_id: resolvedTenantId,
-        terminal_id: "00000000-0000-0000-0000-000000000000", // Default terminal for web logins
+        terminal_id: "00000000-0000-0000-0000-000000000000",
         role: user.role,
         email: user.email,
+        subscription_status: subscriptionStatus,
       },
       envConfig.jwt.secret,
       { expiresIn: envConfig.jwt.expiresIn as jwt.SignOptions["expiresIn"] },
@@ -68,12 +73,13 @@ export class LoginUseCase {
     return {
       accessToken: token,
       user: {
-        id:        user._id,
-        email:     user.email,
-        firstName: user.firstName ?? null,
-        lastName:  user.lastName  ?? null,
-        role:      user.role,
-        tenantId:  resolvedTenantId,
+        id:                 user._id,
+        email:              user.email,
+        firstName:          user.firstName ?? null,
+        lastName:           user.lastName  ?? null,
+        role:               user.role,
+        tenantId:           resolvedTenantId,
+        subscriptionStatus,
       },
     };
   }
