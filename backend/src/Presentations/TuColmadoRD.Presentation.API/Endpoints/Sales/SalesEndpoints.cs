@@ -43,7 +43,7 @@ public static class SalesEndpoints
         var commandItems = request.Items.Select(i => new ApplicationSaleItemRequest(i.ProductId, i.Quantity)).ToList();
         var commandPayments = request.Payments.Select(p => new ApplicationSalePaymentRequest(p.PaymentMethodId, p.Amount, p.Reference, p.CustomerId)).ToList();
         
-        var command = new CreateSaleCommand(commandItems, commandPayments, request.Notes);
+        var command = new CreateSaleCommand(commandItems, commandPayments, request.Notes, request.BuyerRnc);
 
         var result = await mediator.Send(command, ct);
         if (!result.TryGetResult(out var created) || created is null)
@@ -54,6 +54,7 @@ public static class SalesEndpoints
         var response = new CreateSaleResponse(
             created.SaleId,
             created.ReceiptNumber,
+            created.NcfNumber,
             created.Subtotal,
             created.TotalItbis,
             created.Total,

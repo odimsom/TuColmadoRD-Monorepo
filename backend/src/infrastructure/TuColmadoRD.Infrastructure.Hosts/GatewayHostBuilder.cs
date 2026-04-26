@@ -88,14 +88,14 @@ public static class GatewayHostBuilder
         var authGroup = app.MapGroup("/gateway/auth");
 
         authGroup.MapPost("/register", async (HttpContext ctx, IHttpClientFactory factory) => 
-            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/auth/register"));
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/register"));
 
         authGroup.MapPost("/login", async (HttpContext ctx, IHttpClientFactory factory) => 
-            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/auth/login"));
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/login"));
 
         // DEVICE PAIRING (Requires Auth)
         app.MapPost("/gateway/devices/pair", async (HttpContext ctx, IHttpClientFactory factory) => 
-            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/pair-device"))
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/pair-device"))
             .RequireAuthorization();
 
         // GENERIC API PROXY (Requires Auth)
@@ -116,7 +116,10 @@ public static class GatewayHostBuilder
 
         if (request.ContentLength > 0 || request.HasJsonContentType())
         {
-            proxyRequest.Content = new StreamContent(request.Body);
+            using var requestBodyBuffer = new MemoryStream();
+            await request.Body.CopyToAsync(requestBodyBuffer);
+            proxyRequest.Content = new ByteArrayContent(requestBodyBuffer.ToArray());
+
             if (request.ContentType != null)
             {
                 proxyRequest.Content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(request.ContentType);
@@ -125,7 +128,10 @@ public static class GatewayHostBuilder
 
         foreach (var header in request.Headers)
         {
-            if (header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase)) continue;
+            if (header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase)
+                || header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase)
+                || header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase)
+                || header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase)) continue;
             
             if (!proxyRequest.Headers.TryAddWithoutValidation(header.Key, (IEnumerable<string?>)header.Value) && proxyRequest.Content != null)
             {

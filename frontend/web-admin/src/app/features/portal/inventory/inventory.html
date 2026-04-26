@@ -1,0 +1,266 @@
+<div class="px-8 py-8 space-y-6 animate-in fade-in duration-500">
+
+  <!-- Header + Stats -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-white uppercase tracking-tighter">Inventario</h1>
+      <p class="text-slate-500 text-xs mt-1">Gestión de productos y stock del colmado</p>
+    </div>
+    <button (click)="openCreate()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 self-start sm:self-auto">
+      <span class="icon-[ic--baseline-add] text-sm"></span>
+      Nuevo Producto
+    </button>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl">
+      <p class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest mb-1">Total Productos</p>
+      <p class="text-2xl font-mono font-bold text-white">{{ totalProducts() }}</p>
+    </div>
+    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl">
+      <p class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest mb-1">Stock Crítico (≤5)</p>
+      <p class="text-2xl font-mono font-bold" [class.text-amber-400]="lowStockProducts() > 0" [class.text-white]="lowStockProducts() === 0">{{ lowStockProducts() }}</p>
+    </div>
+    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl">
+      <p class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest mb-1">Activos</p>
+      <p class="text-2xl font-mono font-bold text-green-400">{{ activeProducts() }}</p>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="bg-pos-surface border border-pos-border rounded-xl overflow-hidden shadow-sm">
+    <!-- Toolbar -->
+    <div class="px-6 py-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#1e293b]/20">
+      <div class="flex items-center gap-3">
+        <span class="icon-[ic--baseline-inventory-2] text-blue-500"></span>
+        <h2 class="text-xs font-black text-white uppercase tracking-widest">Catálogo de Productos</h2>
+      </div>
+      <div class="relative">
+        <input
+          type="text"
+          placeholder="Buscar producto..."
+          (input)="onSearch($event)"
+          class="bg-white/5 border border-white/5 rounded-md pl-3 pr-8 py-1.5 text-[0.7rem] w-56 focus:outline-none focus:border-pos-accent transition-all text-white"
+        />
+        <span class="icon-[ic--baseline-search] absolute right-2 top-1.5 text-slate-500 text-sm"></span>
+      </div>
+    </div>
+
+    <!-- Error -->
+    @if (errorMsg()) {
+      <div class="mx-6 mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">{{ errorMsg() }}</div>
+    }
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[0.7rem] border-collapse">
+        <thead class="bg-white/5 text-slate-500 uppercase font-black tracking-tighter">
+          <tr>
+            <th class="px-6 py-3 border-b border-white/5">Producto</th>
+            <th class="px-6 py-3 border-b border-white/5">Categoría</th>
+            <th class="px-6 py-3 border-b border-white/5 text-right">Costo</th>
+            <th class="px-6 py-3 border-b border-white/5 text-right">Precio Venta</th>
+            <th class="px-6 py-3 border-b border-white/5 text-center">Stock</th>
+            <th class="px-6 py-3 border-b border-white/5 text-center">ITBIS</th>
+            <th class="px-6 py-3 border-b border-white/5 text-center">Estado</th>
+            <th class="px-6 py-3 border-b border-white/5 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          @if (loading()) {
+            @for (i of [1,2,3,4,5,6,7,8]; track i) {
+              <tr class="animate-pulse">
+                <td colspan="8" class="px-6 py-4"><div class="h-4 bg-white/5 rounded w-full"></div></td>
+              </tr>
+            }
+          } @else if (products().length === 0) {
+            <tr>
+              <td colspan="8" class="text-center py-16 text-slate-500">
+                <span class="icon-[ic--baseline-inventory-2] text-4xl block mb-3 opacity-20"></span>
+                <p class="text-sm font-bold">Sin productos registrados</p>
+                <p class="text-xs mt-1">Haz clic en "Nuevo Producto" para agregar el primero.</p>
+              </td>
+            </tr>
+          } @else {
+            @for (product of products(); track product.productId; let odd = $odd) {
+              <tr [class.bg-white/[0.02]]="odd" class="hover:bg-pos-accent/5 transition-colors group">
+                <td class="px-6 py-3">
+                  <div class="flex flex-col">
+                    <span class="font-bold text-white">{{ product.name }}</span>
+                    <span class="text-slate-500 text-[0.6rem]">{{ product.unitTypeName }}</span>
+                  </div>
+                </td>
+                <td class="px-6 py-3 text-slate-400">{{ product.categoryName }}</td>
+                <td class="px-6 py-3 text-right font-mono text-slate-400">RD$ {{ product.costPrice | number:'1.2-2' }}</td>
+                <td class="px-6 py-3 text-right font-mono font-bold text-white">RD$ {{ product.salePrice | number:'1.2-2' }}</td>
+                <td class="px-6 py-3 text-center font-mono font-bold" [class]="getStockClass(product.stockQuantity)">
+                  {{ product.stockQuantity | number:'1.0-2' }}
+                </td>
+                <td class="px-6 py-3 text-center text-slate-400">{{ (product.itbisRate * 100) | number:'1.0-0' }}%</td>
+                <td class="px-6 py-3 text-center">
+                  @if (product.isActive) {
+                    <span class="px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 text-[0.6rem] font-black uppercase ring-1 ring-green-500/20">Activo</span>
+                  } @else {
+                    <span class="px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-500 text-[0.6rem] font-black uppercase ring-1 ring-slate-500/20">Inactivo</span>
+                  }
+                </td>
+                <td class="px-6 py-3 text-right">
+                  <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button (click)="openAdjustStock(product)" title="Ajustar Stock" class="p-1.5 hover:bg-blue-500/10 rounded text-slate-400 hover:text-blue-400 transition-colors">
+                      <span class="icon-[ic--baseline-add-box] text-sm"></span>
+                    </button>
+                    <button (click)="openEditPrice(product)" title="Editar Precio" class="p-1.5 hover:bg-amber-500/10 rounded text-slate-400 hover:text-amber-400 transition-colors">
+                      <span class="icon-[ic--baseline-attach-money] text-sm"></span>
+                    </button>
+                    @if (product.isActive) {
+                      <button (click)="deactivate(product)" title="Desactivar" class="p-1.5 hover:bg-red-500/10 rounded text-slate-400 hover:text-red-400 transition-colors">
+                        <span class="icon-[ic--baseline-remove-circle] text-sm"></span>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+      <div class="px-6 py-4 border-t border-white/5 flex items-center justify-between">
+        <span class="text-[0.65rem] text-slate-500">Página {{ page() }} de {{ totalPages() }} · {{ totalCount() }} productos</span>
+        <div class="flex gap-2">
+          <button (click)="prevPage()" [disabled]="page() <= 1" class="px-3 py-1.5 rounded bg-white/5 border border-white/5 text-xs text-slate-400 disabled:opacity-30 hover:bg-white/10 transition-all">← Anterior</button>
+          <button (click)="nextPage()" [disabled]="page() >= totalPages()" class="px-3 py-1.5 rounded bg-white/5 border border-white/5 text-xs text-slate-400 disabled:opacity-30 hover:bg-white/10 transition-all">Siguiente →</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ========== MODALS ========== -->
+
+<!-- Modal: Crear Producto -->
+@if (modalMode() === 'create') {
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+    <div class="bg-[#0d1b2e] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl">
+      <div class="px-6 py-5 border-b border-white/5 flex justify-between items-center">
+        <h3 class="text-lg font-black text-white uppercase tracking-tight">Nuevo Producto</h3>
+        <button (click)="closeModal()" class="text-slate-500 hover:text-white transition-colors"><span class="icon-[ic--baseline-close] text-xl"></span></button>
+      </div>
+      <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="p-6 space-y-4">
+        @if (errorMsg()) {
+          <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">{{ errorMsg() }}</div>
+        }
+        <div>
+          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nombre del Producto *</label>
+          <input formControlName="name" type="text" placeholder="Ej: Arroz Cristal 5 lbs" class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Costo (RD$)</label>
+            <input formControlName="costPrice" type="number" min="0" step="0.01" class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
+          </div>
+          <div>
+            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Precio Venta (RD$) *</label>
+            <input formControlName="salePrice" type="number" min="0.01" step="0.01" class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Unidad</label>
+            <select formControlName="unitType" class="w-full bg-[#0f172a] border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all">
+              @for (u of unitTypes; track u.id) {
+                <option [value]="u.id">{{ u.name }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">ITBIS</label>
+            <select formControlName="itbisRate" class="w-full bg-[#0f172a] border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all">
+              <option [value]="0">0% - Exento</option>
+              <option [value]="0.16">16% - ITBIS Reducido</option>
+              <option [value]="0.18">18% - ITBIS Estándar</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" (click)="closeModal()" class="flex-1 py-2.5 rounded-lg border border-white/10 text-slate-400 text-xs font-bold hover:text-white transition-all">Cancelar</button>
+          <button type="submit" [disabled]="saving() || createForm.invalid" class="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50">
+            {{ saving() ? 'Guardando...' : 'Crear Producto' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal: Editar Precio -->
+@if (modalMode() === 'edit-price') {
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+    <div class="bg-[#0d1b2e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+      <div class="px-6 py-5 border-b border-white/5 flex justify-between items-center">
+        <div>
+          <h3 class="text-lg font-black text-white uppercase tracking-tight">Actualizar Precio</h3>
+          <p class="text-slate-400 text-xs mt-0.5">{{ selectedProduct()?.name }}</p>
+        </div>
+        <button (click)="closeModal()" class="text-slate-500 hover:text-white"><span class="icon-[ic--baseline-close] text-xl"></span></button>
+      </div>
+      <form [formGroup]="priceForm" (ngSubmit)="submitPrice()" class="p-6 space-y-4">
+        @if (errorMsg()) {
+          <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">{{ errorMsg() }}</div>
+        }
+        <div>
+          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nuevo Costo (RD$)</label>
+          <input formControlName="newCostPrice" type="number" min="0" step="0.01" class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nuevo Precio de Venta (RD$) *</label>
+          <input formControlName="newSalePrice" type="number" min="0.01" step="0.01" class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" (click)="closeModal()" class="flex-1 py-2.5 rounded-lg border border-white/10 text-slate-400 text-xs font-bold hover:text-white transition-all">Cancelar</button>
+          <button type="submit" [disabled]="saving() || priceForm.invalid" class="flex-1 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50">
+            {{ saving() ? 'Guardando...' : 'Actualizar Precio' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal: Ajustar Stock -->
+@if (modalMode() === 'adjust-stock') {
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+    <div class="bg-[#0d1b2e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+      <div class="px-6 py-5 border-b border-white/5 flex justify-between items-center">
+        <div>
+          <h3 class="text-lg font-black text-white uppercase tracking-tight">Ajustar Stock</h3>
+          <p class="text-slate-400 text-xs mt-0.5">{{ selectedProduct()?.name }} · Stock actual: <strong class="text-white">{{ selectedProduct()?.stockQuantity }}</strong></p>
+        </div>
+        <button (click)="closeModal()" class="text-slate-500 hover:text-white"><span class="icon-[ic--baseline-close] text-xl"></span></button>
+      </div>
+      <form [formGroup]="stockForm" (ngSubmit)="submitStock()" class="p-6 space-y-4">
+        @if (errorMsg()) {
+          <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">{{ errorMsg() }}</div>
+        }
+        <div>
+          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Cantidad a Agregar / Quitar</label>
+          <p class="text-[0.6rem] text-slate-500 mb-2">Positivo para agregar (+10), negativo para reducir (-5)</p>
+          <input formControlName="delta" type="number" step="1" class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Motivo *</label>
+          <input formControlName="reason" type="text" placeholder="Ej: Recepción de mercancía, Merma..." class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" (click)="closeModal()" class="flex-1 py-2.5 rounded-lg border border-white/10 text-slate-400 text-xs font-bold hover:text-white transition-all">Cancelar</button>
+          <button type="submit" [disabled]="saving() || stockForm.invalid" class="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50">
+            {{ saving() ? 'Guardando...' : 'Aplicar Ajuste' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

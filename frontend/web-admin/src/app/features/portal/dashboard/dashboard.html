@@ -2,47 +2,62 @@
   
   <!-- Quick Stats Bar (Compact & Data-Dense) -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <!-- Stat 1: Ventas -->
+    <!-- Stat 1: Ingresos del turno (real desde API) -->
     <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-pos-accent transition-colors group">
       <div class="flex justify-between items-start mb-3">
-        <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Ventas del Día</span>
+        <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Ingresos del Turno</span>
         <span class="p-1.5 bg-blue-500/10 rounded-lg text-blue-500">
           <span class="icon-[ic--baseline-shopping-cart] text-sm"></span>
         </span>
       </div>
       <div class="flex items-end justify-between">
         <div class="flex flex-col">
-          <span class="text-2xl font-mono font-bold text-white tracking-tighter">RD$ {{ stats.totalSales * 150 | number:'1.0-0' }}</span>
+          <span class="text-2xl font-mono font-bold text-white tracking-tighter">RD$ {{ stats.totalRevenue | number:'1.2-2' }}</span>
           <div class="flex items-center gap-1 mt-1">
-            <span class="icon-[ic--baseline-trending-up] text-xs text-green-500"></span>
-            <span class="text-[0.65rem] font-bold text-green-500">12.5%</span>
-            <span class="text-[0.6rem] text-slate-500 font-medium ml-1">vs ayer</span>
+            <span class="text-[0.6rem] text-slate-500 font-medium">{{ stats.totalSales }} transacciones</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Stat 2: Stock Bajo -->
-    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-red-500/30 transition-colors group">
+    <!-- Stat 2: Stock Crítico -->
+    <div [class.opacity-60]="lowStockLoading"
+         [class.border-red-500\/30]="!lowStockLoading && lowStock.count > 0"
+         class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-red-500/30 transition-all group">
       <div class="flex justify-between items-start mb-3">
         <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Stock Crítico</span>
-        <span class="p-1.5 bg-red-500/10 rounded-lg text-red-500">
+        <span class="p-1.5 bg-red-500/10 rounded-lg" [class.text-red-500]="!lowStockLoading" [class.text-slate-600]="lowStockLoading">
           <span class="icon-[ic--baseline-inventory-2] text-sm"></span>
         </span>
       </div>
       <div class="flex items-end justify-between">
         <div class="flex flex-col">
-          <span class="text-2xl font-mono font-bold text-white tracking-tighter">04</span>
-          <div class="flex items-center gap-1 mt-1">
-            <span class="icon-[ic--baseline-warning] text-xs text-red-500"></span>
-            <span class="text-[0.65rem] font-bold text-red-500">Acción Requerida</span>
-          </div>
+          @if (lowStockLoading) {
+            <span class="text-2xl font-mono font-bold text-slate-600 tracking-tighter animate-pulse">···</span>
+          } @else {
+            <span class="text-2xl font-mono font-bold tracking-tighter"
+              [class.text-red-400]="lowStock.count > 0"
+              [class.text-emerald-400]="lowStock.count === 0">
+              {{ lowStock.count }}
+            </span>
+          }
+          <span class="text-[0.6rem] text-slate-500 font-medium mt-1">≤ 5 unidades</span>
         </div>
+        @if (!lowStockLoading && lowStock.count > 0) {
+          <div class="text-right max-w-[100px]">
+            @for (p of lowStock.items.slice(0, 2); track p.productId) {
+              <p class="text-[0.55rem] text-red-400/70 truncate leading-tight">{{ p.name }}</p>
+            }
+            @if (lowStock.count > 2) {
+              <p class="text-[0.5rem] text-slate-600">+{{ lowStock.count - 2 }} más</p>
+            }
+          </div>
+        }
       </div>
     </div>
 
-    <!-- Stat 3: Fiados -->
-    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-amber-500/30 transition-colors group">
+    <!-- Stat 3: Fiados Pendientes (pendiente de endpoint /credits/summary) -->
+    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-amber-500/30 transition-colors group opacity-60">
       <div class="flex justify-between items-start mb-3">
         <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Fiados Pendientes</span>
         <span class="p-1.5 bg-amber-500/10 rounded-lg text-amber-500">
@@ -51,16 +66,15 @@
       </div>
       <div class="flex items-end justify-between">
         <div class="flex flex-col">
-          <span class="text-2xl font-mono font-bold text-white tracking-tighter">RD$ 8,420</span>
+          <span class="text-2xl font-mono font-bold text-slate-500 tracking-tighter">—</span>
           <div class="flex items-center gap-1 mt-1">
-            <span class="icon-[ic--baseline-trending-down] text-xs text-amber-500"></span>
-            <span class="text-[0.65rem] font-bold text-amber-500">3 pendientes</span>
+            <span class="text-[0.6rem] text-slate-600 font-medium italic">Próximamente</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Stat 4: Tiempo Turno -->
+    <!-- Stat 4: Tiempo de Turno (real desde API /shifts/current) -->
     <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-pos-accent transition-colors group">
       <div class="flex justify-between items-start mb-3">
         <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Tiempo de Turno</span>
@@ -70,10 +84,16 @@
       </div>
       <div class="flex items-end justify-between">
         <div class="flex flex-col">
-          <span class="text-2xl font-mono font-bold text-white tracking-tighter">04:22:15</span>
-          <div class="flex items-center gap-1 mt-1 text-slate-500 text-[0.65rem] font-bold">
-            RESTANTE: 03:37:45
-          </div>
+          @if (shift.hasActiveShift) {
+            <span class="text-2xl font-mono font-bold text-white tracking-tighter">{{ shift.elapsedDisplay }}</span>
+            <div class="flex items-center gap-1 mt-1 text-green-500 text-[0.65rem] font-bold">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+              TURNO ACTIVO
+            </div>
+          } @else {
+            <span class="text-2xl font-mono font-bold text-slate-500 tracking-tighter">—</span>
+            <div class="flex items-center gap-1 mt-1 text-slate-600 text-[0.65rem] font-bold">SIN TURNO ABIERTO</div>
+          }
         </div>
       </div>
     </div>

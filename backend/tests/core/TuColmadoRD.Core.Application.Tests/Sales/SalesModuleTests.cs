@@ -37,15 +37,30 @@ public sealed class SalesModuleTests
     private readonly Guid _terminalId  = Guid.NewGuid();
 
     // ─── Handler factories ────────────────────────────────────────────────────
-    private CreateSaleCommandHandler CreateSaleHandler => new(
-        _tenant.Object, _shiftService.Object, _productRepo.Object,
-        _saleRepo.Object, _sequence.Object, _shiftRepo.Object,
-        _outboxRepo.Object, _uow.Object);
+        _createSaleHandler = new CreateSaleCommandHandler(
+            _tenantProviderMock.Object,
+            _shiftServiceMock.Object,
+            _productRepoMock.Object,
+            _saleRepoMock.Object,
+            _sequenceServiceMock.Object,
+            _shiftRepoMock.Object,
+            _outboxRepoMock.Object,
+            _unitOfWorkMock.Object,
+            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal.IFiscalSequenceRepository>().Object,
+            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal.IFiscalReceiptRepository>().Object,
+            new Mock<TuColmadoRD.Core.Application.Interfaces.Services.IEcfGeneratorClient>().Object,
+            new Mock<TuColmadoRD.Core.Application.Interfaces.Services.IEcfSignerService>().Object,
+            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.System.ITenantProfileRepository>().Object);
 
-    private VoidSaleCommandHandler VoidSaleHandler => new(
-        _tenant.Object, _shiftService.Object, _saleRepo.Object,
-        _productRepo.Object, _shiftRepo.Object,
-        _outboxRepo.Object, _uow.Object);
+        _voidSaleHandler = new VoidSaleCommandHandler(
+            _tenantProviderMock.Object,
+            _shiftServiceMock.Object,
+            _saleRepoMock.Object,
+            _productRepoMock.Object,
+            _shiftRepoMock.Object,
+            _outboxRepoMock.Object,
+            _unitOfWorkMock.Object,
+            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal.INcfAnnulmentLogRepository>().Object);
 
     // ─── Setup helpers ────────────────────────────────────────────────────────
     public SalesModuleTests()

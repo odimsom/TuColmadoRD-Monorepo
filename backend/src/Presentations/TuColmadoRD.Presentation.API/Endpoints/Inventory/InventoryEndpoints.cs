@@ -48,6 +48,10 @@ public static class InventoryEndpoints
             .WithName("GetCatalog")
             .WithOpenApi();
 
+        group.MapGet("/products/low-stock", GetLowStock)
+            .WithName("GetLowStockProducts")
+            .WithOpenApi();
+
         return app;
     }
 
@@ -169,5 +173,20 @@ public static class InventoryEndpoints
         }
 
         return TypedResults.Ok(dtos);
+    }
+
+    private static async Task<IResult> GetLowStock(
+        IMediator mediator,
+        int threshold = 5,
+        CancellationToken ct = default)
+    {
+        threshold = Math.Clamp(threshold, 0, 100);
+        var result = await mediator.Send(new GetLowStockQuery(threshold), ct);
+        if (!result.TryGetResult(out var response))
+        {
+            return result.Error.MapDomainError();
+        }
+
+        return TypedResults.Ok(response);
     }
 }

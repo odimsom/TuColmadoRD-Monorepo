@@ -1,1 +1,602 @@
-<p>pos-layout works!</p>
+<!-- ══════════════════════════════════════════════════════════════
+     POS Layout — TuColmadoRD
+     Full-screen cashier interface. Print-safe receipt included.
+     ══════════════════════════════════════════════════════════════ -->
+<div class="pos-screen h-screen flex flex-col bg-[#0b1120] text-white overflow-hidden select-none">
+
+  <!-- ─── HEADER ─────────────────────────────────────────────── -->
+  <header class="flex items-center gap-3 px-4 py-2 bg-[#080f1e] border-b border-white/[0.06] shrink-0">
+
+    <!-- Logo + brand -->
+    <div class="flex items-center gap-2 mr-2">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+        <rect x="2"  y="6"  width="20" height="20" rx="3" fill="#2563eb" opacity="0.9"/>
+        <rect x="10" y="6"  width="20" height="20" rx="3" fill="#dc2626" opacity="0.85"/>
+      </svg>
+      <span class="text-sm font-black tracking-tight">
+        TuColmado<span class="text-blue-400">RD</span>
+        <span class="text-[0.6rem] text-slate-500 font-normal ml-1 hidden sm:inline">POS</span>
+      </span>
+    </div>
+
+    <!-- Shift pill -->
+    @if (activeShift()) {
+      <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        Turno abierto
+      </div>
+    } @else {
+      <button
+        (click)="showOpenShiftModal.set(true)"
+        class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold hover:bg-amber-500/20 transition-colors">
+        <span class="icon-[ic--baseline-play-circle] text-sm"></span>
+        Abrir turno
+      </button>
+    }
+
+    <div class="flex-1"></div>
+
+    <!-- Clock -->
+    <div class="hidden md:block text-center">
+      <p class="text-xs font-mono font-semibold text-white tabular-nums">{{ clock() | date:'HH:mm:ss' }}</p>
+      <p class="text-[0.6rem] text-slate-500">{{ clock() | date:'dd MMM yyyy' }}</p>
+    </div>
+
+    <!-- Cashier name -->
+    <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+      <span class="icon-[ic--baseline-person] text-blue-400 text-sm"></span>
+      <span class="text-xs font-medium text-slate-300">{{ cashierName() }}</span>
+    </div>
+
+    <!-- Portal link (Owner/Admin only) -->
+    <button
+      (click)="toPortal()"
+      title="Ir al portal de administración"
+      class="p-2 rounded-lg text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all text-sm">
+      <span class="icon-[ic--baseline-dashboard]"></span>
+    </button>
+
+    <!-- Close shift -->
+    @if (activeShift()) {
+      <button
+        (click)="showCloseShiftModal.set(true)"
+        title="Cerrar turno"
+        class="p-2 rounded-lg text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 transition-all text-sm">
+        <span class="icon-[ic--baseline-stop-circle]"></span>
+      </button>
+    }
+
+    <!-- Logout -->
+    <button
+      (click)="logout()"
+      title="Cerrar sesión"
+      class="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all text-sm">
+      <span class="icon-[ic--baseline-logout]"></span>
+    </button>
+  </header>
+
+  <!-- ─── MAIN ────────────────────────────────────────────────── -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- LEFT — Product catalog -->
+    <div class="flex flex-col flex-1 overflow-hidden border-r border-white/[0.06]">
+
+      <!-- Search + categories -->
+      <div class="px-4 py-3 space-y-2 bg-[#080f1e]/60 border-b border-white/[0.04] shrink-0">
+        <!-- Search -->
+        <div class="relative">
+          <span class="icon-[ic--baseline-search] absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-base pointer-events-none"></span>
+          <input
+            type="text"
+            placeholder="Buscar producto..."
+            [value]="catalogSearch()"
+            (input)="setSearch($any($event.target).value)"
+            class="w-full pl-9 pr-4 py-2 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 focus:bg-white/[0.07] transition-all"
+          />
+        </div>
+        <!-- Category pills -->
+        @if (categories().length > 0) {
+          <div class="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+            <button
+              (click)="selectCategory(null)"
+              [class.bg-blue-600]="!selectedCategory()"
+              [class.text-white]="!selectedCategory()"
+              [class.bg-white\/\[0\.05\]]="selectedCategory()"
+              [class.text-slate-400]="selectedCategory()"
+              class="shrink-0 px-3 py-1 rounded-full text-xs font-semibold border border-white/[0.08] hover:border-blue-500/40 transition-all">
+              Todos
+            </button>
+            @for (cat of categories(); track cat.id) {
+              <button
+                (click)="selectCategory(cat.id)"
+                [class.bg-blue-600]="selectedCategory() === cat.id"
+                [class.text-white]="selectedCategory() === cat.id"
+                [class.bg-white\/\[0\.05\]]="selectedCategory() !== cat.id"
+                [class.text-slate-400]="selectedCategory() !== cat.id"
+                class="shrink-0 px-3 py-1 rounded-full text-xs font-semibold border border-white/[0.08] hover:border-blue-500/40 transition-all">
+                {{ cat.name }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Product grid -->
+      <div class="flex-1 overflow-y-auto p-3">
+        @if (loading()) {
+          <div class="flex items-center justify-center h-32 text-slate-600">
+            <span class="icon-[ic--baseline-refresh] animate-spin text-2xl mr-2"></span>
+            Cargando productos...
+          </div>
+        } @else if (!activeShift()) {
+          <div class="flex flex-col items-center justify-center h-48 text-center gap-3 text-slate-600">
+            <span class="icon-[ic--baseline-lock] text-4xl text-amber-500/40"></span>
+            <p class="text-sm">Abre un turno para comenzar a vender.</p>
+            <button
+              (click)="showOpenShiftModal.set(true)"
+              class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-colors">
+              Abrir turno ahora
+            </button>
+          </div>
+        } @else if (filteredCatalog().length === 0) {
+          <div class="flex flex-col items-center justify-center h-32 text-slate-600 gap-2">
+            <span class="icon-[ic--baseline-inventory] text-3xl"></span>
+            <p class="text-sm">Sin productos que coincidan.</p>
+          </div>
+        } @else {
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2">
+            @for (product of filteredCatalog(); track product.productId) {
+              <button
+                (click)="addToCart(product)"
+                [disabled]="product.stockQuantity <= 0"
+                class="group relative flex flex-col items-start p-3 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-blue-600/10 hover:border-blue-500/30 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-left">
+
+                <!-- Stock low badge -->
+                @if (product.stockQuantity > 0 && product.stockQuantity <= 5) {
+                  <span class="absolute top-1.5 right-1.5 text-[0.55rem] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold">
+                    {{ product.stockQuantity }} restantes
+                  </span>
+                }
+                @if (product.stockQuantity <= 0) {
+                  <span class="absolute top-1.5 right-1.5 text-[0.55rem] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 font-semibold">
+                    Agotado
+                  </span>
+                }
+
+                <!-- ITBIS badge -->
+                @if (product.itbisRate > 0) {
+                  <span class="absolute bottom-1.5 right-1.5 text-[0.5rem] px-1 py-0.5 rounded bg-slate-700/60 text-slate-400">
+                    ITBIS {{ (product.itbisRate * 100).toFixed(0) }}%
+                  </span>
+                }
+
+                <p class="text-xs font-semibold text-white leading-tight line-clamp-2 mb-2 group-hover:text-blue-300 transition-colors">{{ product.name }}</p>
+                <p class="text-sm font-black text-blue-400 mt-auto">{{ pesos(product.salePrice) }}</p>
+                <p class="text-[0.6rem] text-slate-600">{{ product.categoryName }}</p>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- RIGHT — Cart -->
+    <div class="flex flex-col w-72 xl:w-80 2xl:w-96 bg-[#080f1e] shrink-0">
+
+      <!-- Cart header -->
+      <div class="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="icon-[ic--baseline-shopping-cart] text-blue-400 text-base"></span>
+          <span class="text-sm font-bold text-white">Carrito</span>
+          @if (cartCount() > 0) {
+            <span class="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[0.6rem] font-black">{{ cartCount() }}</span>
+          }
+        </div>
+        @if (cartItems().length > 0) {
+          <button (click)="clearCart()" class="text-[0.65rem] text-slate-600 hover:text-red-400 transition-colors font-medium">
+            Limpiar
+          </button>
+        }
+      </div>
+
+      <!-- Cart items -->
+      <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
+        @if (cartItems().length === 0) {
+          <div class="flex flex-col items-center justify-center h-32 gap-2 text-slate-700">
+            <span class="icon-[ic--baseline-shopping-cart] text-3xl"></span>
+            <p class="text-xs">Selecciona productos del catálogo</p>
+          </div>
+        }
+        @for (item of cartItems(); track item.productId; let i = $index) {
+          <div class="flex items-start gap-2 p-2 rounded-lg bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.05] group">
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-white leading-tight truncate">{{ item.name }}</p>
+              <p class="text-[0.6rem] text-slate-500 mt-0.5">
+                {{ pesos(item.salePrice) }}
+                @if (item.itbisRate > 0) { <span class="text-slate-600">+ ITBIS</span> }
+              </p>
+            </div>
+            <!-- Qty controls -->
+            <div class="flex items-center gap-1 shrink-0">
+              <button (click)="setQuantity(i, item.quantity - 1)" class="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-red-500/20 hover:text-red-400 text-xs transition-colors">−</button>
+              <span class="w-6 text-center text-xs font-bold text-white tabular-nums">{{ item.quantity }}</span>
+              <button (click)="setQuantity(i, item.quantity + 1)" class="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-emerald-500/20 hover:text-emerald-400 text-xs transition-colors">+</button>
+            </div>
+            <!-- Line total -->
+            <div class="text-right shrink-0">
+              <p class="text-xs font-bold text-white tabular-nums">{{ pesos(item.lineTotal) }}</p>
+              @if (item.lineItbis > 0) {
+                <p class="text-[0.55rem] text-slate-600 tabular-nums">ITBIS: {{ pesos(item.lineItbis) }}</p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Cart totals -->
+      @if (cartItems().length > 0) {
+        <div class="border-t border-white/[0.06] px-4 py-3 space-y-1 shrink-0 bg-[#060d1a]">
+          <div class="flex justify-between text-xs text-slate-400">
+            <span>Subtotal (sin ITBIS)</span>
+            <span class="tabular-nums">{{ pesos(cartSubtotal()) }}</span>
+          </div>
+          @for (row of itbisBreakdown(); track row.label) {
+            <div class="flex justify-between text-xs text-slate-500">
+              <span>{{ row.label }}</span>
+              <span class="tabular-nums">{{ pesos(row.amount) }}</span>
+            </div>
+          }
+          @if (cartItbis() === 0) {
+            <div class="flex justify-between text-xs text-slate-600">
+              <span>ITBIS</span>
+              <span>RD$ 0.00</span>
+            </div>
+          }
+          <div class="flex justify-between text-sm font-black text-white pt-1 border-t border-white/[0.06]">
+            <span>TOTAL</span>
+            <span class="tabular-nums text-blue-400">{{ pesos(cartTotal()) }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- Checkout button -->
+      <div class="p-3 shrink-0">
+        <button
+          (click)="openPaymentModal()"
+          [disabled]="!cartItems().length || !activeShift()"
+          class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-black text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2">
+          <span class="icon-[ic--baseline-point-of-sale] text-base"></span>
+          Cobrar {{ cartItems().length > 0 ? pesos(cartTotal()) : '' }}
+        </button>
+        @if (!activeShift() && cartItems().length > 0) {
+          <p class="text-center text-[0.65rem] text-amber-500/70 mt-1.5">Debes abrir un turno primero</p>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: Abrir Turno
+     ══════════════════════════════════════════════════════════════ -->
+@if (showOpenShiftModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="w-full max-w-sm bg-[#0f1929] border border-white/[0.1] rounded-2xl shadow-2xl p-6">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+          <span class="icon-[ic--baseline-play-circle] text-amber-400 text-xl"></span>
+        </div>
+        <div>
+          <h2 class="text-base font-black text-white">Abrir Turno</h2>
+          <p class="text-xs text-slate-500">Registra el efectivo inicial en caja</p>
+        </div>
+      </div>
+
+      <form [formGroup]="openShiftForm" (ngSubmit)="submitOpenShift()" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Cajero</label>
+          <input formControlName="cashierName" type="text" placeholder="Nombre del cajero"
+            class="w-full px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.1] text-sm text-white focus:outline-none focus:border-blue-500/60 transition-all" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Efectivo inicial (RD$)</label>
+          <input formControlName="openingCashAmount" type="number" min="0" step="50"
+            class="w-full px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.1] text-sm text-white focus:outline-none focus:border-blue-500/60 transition-all" />
+        </div>
+        @if (errorMsg()) {
+          <p class="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">{{ errorMsg() }}</p>
+        }
+        <div class="flex gap-2 pt-1">
+          <button type="button" (click)="showOpenShiftModal.set(false)"
+            class="flex-1 py-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] text-sm text-slate-300 font-semibold transition-colors">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="openShiftForm.invalid || saving()"
+            class="flex-1 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-black text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            @if (saving()) { <span class="icon-[ic--baseline-refresh] animate-spin text-sm"></span> }
+            Abrir turno
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: Cerrar Turno
+     ══════════════════════════════════════════════════════════════ -->
+@if (showCloseShiftModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="w-full max-w-sm bg-[#0f1929] border border-white/[0.1] rounded-2xl shadow-2xl p-6">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center">
+          <span class="icon-[ic--baseline-stop-circle] text-red-400 text-xl"></span>
+        </div>
+        <div>
+          <h2 class="text-base font-black text-white">Cerrar Turno</h2>
+          <p class="text-xs text-slate-500">
+            Ventas: <strong class="text-white">{{ activeShift()?.totalSalesCount }}</strong>
+            &nbsp;|&nbsp;
+            Total: <strong class="text-white">{{ pesos(activeShift()?.totalSalesAmount ?? 0) }}</strong>
+          </p>
+        </div>
+      </div>
+
+      <form [formGroup]="closeShiftForm" (ngSubmit)="submitCloseShift()" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Efectivo en caja (conteo físico)</label>
+          <input formControlName="actualCashAmount" type="number" min="0" step="50"
+            class="w-full px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.1] text-sm text-white focus:outline-none focus:border-blue-500/60 transition-all" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Notas (opcional)</label>
+          <textarea formControlName="notes" rows="2" placeholder="Observaciones..."
+            class="w-full px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.1] text-sm text-white resize-none focus:outline-none focus:border-blue-500/60 transition-all"></textarea>
+        </div>
+        @if (errorMsg()) {
+          <p class="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">{{ errorMsg() }}</p>
+        }
+        <div class="flex gap-2 pt-1">
+          <button type="button" (click)="showCloseShiftModal.set(false)"
+            class="flex-1 py-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] text-sm text-slate-300 font-semibold transition-colors">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="closeShiftForm.invalid || saving()"
+            class="flex-1 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-black text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            @if (saving()) { <span class="icon-[ic--baseline-refresh] animate-spin text-sm"></span> }
+            Cerrar turno
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: Cobro / Pago
+     ══════════════════════════════════════════════════════════════ -->
+@if (showPaymentModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="w-full max-w-md bg-[#0f1929] border border-white/[0.1] rounded-2xl shadow-2xl p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-base font-black text-white flex items-center gap-2">
+          <span class="icon-[ic--baseline-payment] text-blue-400"></span>
+          Cobrar venta
+        </h2>
+        <button (click)="showPaymentModal.set(false)" class="text-slate-600 hover:text-white transition-colors">
+          <span class="icon-[ic--baseline-close]"></span>
+        </button>
+      </div>
+
+      <!-- Total -->
+      <div class="text-center mb-5 p-4 rounded-xl bg-blue-600/10 border border-blue-500/20">
+        <p class="text-xs text-slate-400 mb-1">Total a cobrar</p>
+        <p class="text-3xl font-black text-blue-400 tabular-nums">{{ pesos(cartTotal()) }}</p>
+        <p class="text-xs text-slate-500 mt-1">
+          Subtotal: {{ pesos(cartSubtotal()) }} + ITBIS: {{ pesos(cartItbis()) }}
+        </p>
+      </div>
+
+      <!-- Payment method -->
+      <div class="mb-4">
+        <p class="text-xs font-semibold text-slate-400 mb-2">Método de pago</p>
+        <div class="grid grid-cols-3 gap-2">
+          @for (m of [['cash','Efectivo','ic--baseline-payments'],['card','Tarjeta','ic--baseline-credit-card'],['transfer','Transferencia','ic--baseline-account-balance']] ; track m[0]) {
+            <button
+              (click)="setPaymentMethod($any(m[0]))"
+              [class.bg-blue-600]="paymentMethod() === m[0]"
+              [class.border-blue-500]="paymentMethod() === m[0]"
+              [class.bg-white\/\[0\.04\]]="paymentMethod() !== m[0]"
+              [class.border-white\/\[0\.08\]]="paymentMethod() !== m[0]"
+              class="flex flex-col items-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-all hover:border-blue-500/40">
+              <span class="text-lg" [class]="'icon-[' + m[2] + ']'"></span>
+              {{ m[1] }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Cash tendered (only for cash) -->
+      @if (paymentMethod() === 'cash') {
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Efectivo recibido</label>
+          <input type="number" [value]="cashTendered()" (input)="setCashTendered(+$any($event.target).value)"
+            min="0" step="50"
+            class="w-full px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.1] text-lg font-black text-white text-center focus:outline-none focus:border-blue-500/60 transition-all" />
+          <!-- Quick-amount buttons -->
+          <div class="flex gap-1.5 mt-2">
+            @for (amt of [500, 1000, 2000, 5000]; track amt) {
+              <button (click)="setCashTendered(amt)"
+                class="flex-1 py-1.5 rounded-lg bg-white/[0.04] hover:bg-blue-600/20 border border-white/[0.06] text-xs font-semibold text-slate-300 transition-all">
+                {{ amt | number }}
+              </button>
+            }
+          </div>
+          @if (changeDue() > 0) {
+            <div class="flex justify-between items-center mt-3 px-3 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <span class="text-xs font-semibold text-emerald-400">Cambio a devolver</span>
+              <span class="text-base font-black text-emerald-400 tabular-nums">{{ pesos(changeDue()) }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Optional buyer RNC (B01) -->
+      <div class="mb-5">
+        <label class="block text-xs font-semibold text-slate-400 mb-1.5">
+          RNC del comprador
+          <span class="text-slate-600 font-normal ml-1">(opcional — emite B01 crédito fiscal)</span>
+        </label>
+        <input type="text" placeholder="123456789" [value]="buyerRnc()" (input)="setBuyerRnc($any($event.target).value)"
+          maxlength="9"
+          class="w-full px-3 py-2 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-white placeholder-slate-700 focus:outline-none focus:border-blue-500/60 transition-all" />
+      </div>
+
+      @if (errorMsg()) {
+        <p class="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg mb-4">{{ errorMsg() }}</p>
+      }
+
+      <div class="flex gap-2">
+        <button type="button" (click)="showPaymentModal.set(false)"
+          class="flex-1 py-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-sm text-slate-300 font-semibold transition-colors">
+          Volver
+        </button>
+        <button type="button" (click)="submitSale()" [disabled]="saving()"
+          class="flex-2 flex-grow py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-900/30">
+          @if (saving()) { <span class="icon-[ic--baseline-refresh] animate-spin text-sm"></span> }
+          <span class="icon-[ic--baseline-check-circle]"></span>
+          Confirmar venta
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════
+     MODAL: Recibo / Ticket
+     ══════════════════════════════════════════════════════════════ -->
+@if (showReceiptModal() && lastSale()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm receipt-backdrop">
+    <div class="w-full max-w-sm">
+      <!-- Screen actions (hidden on print) -->
+      <div class="flex gap-2 mb-3 no-print">
+        <button (click)="printReceipt()"
+          class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-sm flex items-center justify-center gap-2 transition-colors">
+          <span class="icon-[ic--baseline-print]"></span>
+          Imprimir / Guardar PDF
+        </button>
+        <button (click)="showReceiptModal.set(false)"
+          class="flex-1 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-slate-300 font-semibold text-sm transition-colors">
+          Cerrar
+        </button>
+      </div>
+
+      <!-- ─── RECEIPT PAPER ─────────────────────────────── -->
+      <div id="receipt-paper" class="receipt-paper bg-white text-black rounded-xl overflow-hidden shadow-2xl font-mono text-[0.7rem] leading-snug">
+
+        <!-- Header DGI obligatorio (Norma 06-18 DGII) -->
+        <div class="text-center px-4 pt-4 pb-2 border-b border-dashed border-gray-300">
+          <!-- Brand -->
+          <div class="flex justify-center mb-1">
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+              <rect x="2"  y="6"  width="20" height="20" rx="3" fill="#2563eb" opacity="0.9"/>
+              <rect x="10" y="6"  width="20" height="20" rx="3" fill="#dc2626" opacity="0.85"/>
+            </svg>
+          </div>
+          <p class="font-black text-sm tracking-tight">{{ tenantProfile()?.businessName ?? 'TuColmadoRD' }}</p>
+          @if (tenantProfile()?.rnc) {
+            <p class="text-gray-600 text-[0.6rem]">RNC: {{ tenantProfile()!.rnc }}</p>
+          }
+          @if (tenantProfile()?.businessAddress) {
+            <p class="text-gray-600 text-[0.6rem]">{{ tenantProfile()!.businessAddress }}</p>
+          }
+          @if (tenantProfile()?.phone) {
+            <p class="text-gray-600 text-[0.6rem]">Tel: {{ tenantProfile()!.phone }}</p>
+          }
+        </div>
+
+        <!-- Fecha, recibo, NCF, cajero -->
+        <div class="px-4 py-2 border-b border-dashed border-gray-300 space-y-0.5">
+          <div class="flex justify-between">
+            <span class="text-gray-500">Fecha:</span>
+            <span class="font-semibold">{{ fmtDate() }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">No. Recibo:</span>
+            <span class="font-bold">{{ lastSale()!.receiptNumber }}</span>
+          </div>
+          @if (lastSale()!.ncfNumber) {
+            <div class="flex justify-between">
+              <span class="text-gray-500">NCF:</span>
+              <span class="font-black text-blue-700">{{ lastSale()!.ncfNumber }}</span>
+            </div>
+          }
+          <div class="flex justify-between">
+            <span class="text-gray-500">Cajero:</span>
+            <span class="font-semibold">{{ cashierName() }}</span>
+          </div>
+        </div>
+
+        <!-- Items -->
+        <div class="px-4 py-2 border-b border-dashed border-gray-300">
+          <!-- Column headers -->
+          <div class="flex text-[0.6rem] text-gray-400 font-semibold mb-1 pb-1 border-b border-gray-100">
+            <span class="flex-1">Descripción</span>
+            <span class="w-8 text-center">Cant</span>
+            <span class="w-14 text-right">Precio</span>
+            <span class="w-16 text-right">Total</span>
+          </div>
+          @for (item of lastSale()!.items; track item.productId) {
+            <div class="flex items-start py-0.5">
+              <span class="flex-1 leading-tight pr-1 text-[0.65rem]">{{ item.productName }}</span>
+              <span class="w-8 text-center text-gray-600">{{ item.quantity }}</span>
+              <span class="w-14 text-right tabular-nums">{{ pesos(item.unitPrice) }}</span>
+              <span class="w-16 text-right tabular-nums font-semibold">{{ pesos(item.lineTotal) }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Totals — DGI Norma 06-18 requires explicit ITBIS breakdown -->
+        <div class="px-4 py-2 border-b border-dashed border-gray-300 space-y-0.5">
+          <div class="flex justify-between text-gray-600">
+            <span>Subtotal (excl. ITBIS)</span>
+            <span class="tabular-nums">{{ pesos(lastSale()!.subtotal) }}</span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>ITBIS</span>
+            <span class="tabular-nums">{{ pesos(lastSale()!.totalItbis) }}</span>
+          </div>
+          <div class="flex justify-between font-black text-base pt-1 border-t border-gray-200">
+            <span>TOTAL</span>
+            <span class="tabular-nums">{{ pesos(lastSale()!.total) }}</span>
+          </div>
+        </div>
+
+        <!-- Payment -->
+        <div class="px-4 py-2 border-b border-dashed border-gray-300 space-y-0.5">
+          <div class="flex justify-between">
+            <span class="text-gray-500">Pago recibido</span>
+            <span class="tabular-nums font-semibold">{{ pesos(lastSale()!.totalPaid) }}</span>
+          </div>
+          @if (lastSale()!.changeDue > 0) {
+            <div class="flex justify-between">
+              <span class="text-gray-500">Cambio</span>
+              <span class="tabular-nums font-semibold">{{ pesos(lastSale()!.changeDue) }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Footer legal DGI -->
+        <div class="text-center px-4 py-3 text-[0.55rem] text-gray-400 space-y-0.5">
+          @if (lastSale()!.ncfNumber) {
+            <p class="font-bold text-[0.6rem] text-gray-700">NCF: {{ lastSale()!.ncfNumber }}</p>
+            <p>Comprobante Fiscal emitido conforme</p>
+            <p>Norma 06-18 DGII — República Dominicana</p>
+          }
+          <p class="pt-1">Desarrollado por <strong>Synset Solutions</strong></p>
+          <p class="text-[0.5rem]">tucolmadord.app</p>
+        </div>
+      </div>
+    </div>
+  </div>
+}

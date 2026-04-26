@@ -6,7 +6,9 @@ using TuColmadoRD.Core.Application.Sales.Abstractions;
 using TuColmadoRD.Core.Application.Sales.Commands;
 using TuColmadoRD.Core.Application.Sales.Outbox;
 using TuColmadoRD.Core.Domain.Base.Result;
+using TuColmadoRD.Core.Domain.Entities.Fiscal;
 using TuColmadoRD.Core.Domain.Entities.System;
+using TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal;
 using TuColmadoRD.Core.Domain.ValueObjects;
 using TuColmadoRD.Core.Domain.ValueObjects.Base;
 using ResultUnit = TuColmadoRD.Core.Domain.Base.Result.Unit;
@@ -22,6 +24,7 @@ public sealed class VoidSaleCommandHandler : IRequestHandler<VoidSaleCommand, Op
     private readonly IShiftRepository _shiftRepository;
     private readonly IOutboxRepository _outboxRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INcfAnnulmentLogRepository _annulmentLogRepository;
 
     public VoidSaleCommandHandler(
         ITenantProvider tenantProvider,
@@ -30,7 +33,8 @@ public sealed class VoidSaleCommandHandler : IRequestHandler<VoidSaleCommand, Op
         IProductRepository productRepository,
         IShiftRepository shiftRepository,
         IOutboxRepository outboxRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        INcfAnnulmentLogRepository annulmentLogRepository)
     {
         _tenantProvider = tenantProvider;
         _shiftService = shiftService;
@@ -39,6 +43,7 @@ public sealed class VoidSaleCommandHandler : IRequestHandler<VoidSaleCommand, Op
         _shiftRepository = shiftRepository;
         _outboxRepository = outboxRepository;
         _unitOfWork = unitOfWork;
+        _annulmentLogRepository = annulmentLogRepository;
     }
 
     public async Task<OperationResult<ResultUnit, DomainError>> Handle(
@@ -80,6 +85,12 @@ public sealed class VoidSaleCommandHandler : IRequestHandler<VoidSaleCommand, Op
         var reverseResult = shift.ReverseSale(reversalAmount);
         if (!reverseResult.IsGood)
             return OperationResult<ResultUnit, DomainError>.Bad(reverseResult.Error);
+
+        if (!string.IsNullOrWhiteSpace(sale.NcfNumber))
+        {
+            var annulmentLog = NcfAnnulmentLog.Create(tenantId, sale.NcfNumber, sale.Id, request.VoidReason);
+            await _annulmentLogRepository.AddAsync(annulmentLog, ct);
+        }
 
         var saleVoidedPayload = new SaleVoidedPayload(
             sale.Id,

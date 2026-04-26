@@ -53,10 +53,25 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=postgres;Database=${POSTGRES_DB:-TuColmadoDb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1234}
+      ConnectionStrings__PostgresSQLConnectionString: Host=postgres;Database=${POSTGRES_DB:-TuColmadoDb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1234}
+      EcfGenerator__BaseUrl: http://ecf-generator:5000
+      AuthApi__BaseUrl: http://auth:3000
+      Outbox__CloudSyncBaseUrl: http://auth:3000
     depends_on:
       - postgres
+      - ecf-generator
     ports:
       - "${CORE_PORT:-5229}:8080"
+    networks:
+      - tucolmadord-network
+
+  ecf-generator:
+    build:
+      context: ./generadordexmle-cf
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
     networks:
       - tucolmadord-network
 

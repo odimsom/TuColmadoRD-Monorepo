@@ -10,9 +10,11 @@ export interface IJwtPayload {
 export interface IAuthResponse {
   accessToken: string;
   user: {
-    id: string;
-    email: string;
-    role: Role;
-    tenantId: string;
+    id:        string;
+    email:     string;
+    firstName: string | null;
+    lastName:  string | null;
+    role:      Role;
+    tenantId:  string;
   };
 }

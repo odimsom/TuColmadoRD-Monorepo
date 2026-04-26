@@ -68,10 +68,12 @@ export class LoginUseCase {
     return {
       accessToken: token,
       user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        tenantId: resolvedTenantId,
+        id:        user._id,
+        email:     user.email,
+        firstName: user.firstName ?? null,
+        lastName:  user.lastName  ?? null,
+        role:      user.role,
+        tenantId:  resolvedTenantId,
       },
     };
   }

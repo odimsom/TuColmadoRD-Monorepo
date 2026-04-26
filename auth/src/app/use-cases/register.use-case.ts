@@ -61,7 +61,14 @@ export class RegisterUseCase {
 
     return {
       accessToken: token,
-      user: { id: user._id, email: user.email, role: Role.OWNER, tenantId },
+      user: {
+        id:        user._id,
+        email:     user.email,
+        firstName: user.firstName ?? null,
+        lastName:  user.lastName  ?? null,
+        role:      Role.OWNER,
+        tenantId,
+      },
     };
   }
 }

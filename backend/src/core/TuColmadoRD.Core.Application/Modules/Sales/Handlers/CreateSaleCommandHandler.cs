@@ -6,16 +6,23 @@ using TuColmadoRD.Core.Application.Sales.Abstractions;
 using TuColmadoRD.Core.Application.Sales.Commands;
 using TuColmadoRD.Core.Application.Sales.Outbox;
 using TuColmadoRD.Core.Domain.Base.Result;
+using TuColmadoRD.Core.Domain.Entities.Fiscal;
 using TuColmadoRD.Core.Domain.Entities.Sales;
-using TuColmadoRD.Core.Domain.Entities.System;
+using TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal;
+using TuColmadoRD.Core.Domain.Interfaces.Repositories.System;
+using TuColmadoRD.Core.Application.Interfaces.Services;
 using TuColmadoRD.Core.Domain.ValueObjects;
 using TuColmadoRD.Core.Domain.ValueObjects.Base;
 using SalesQuantity = TuColmadoRD.Core.Domain.Entities.Sales.Quantity;
+using System.Collections.Generic;
 
 namespace TuColmadoRD.Core.Application.Sales.Handlers;
 
 public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand, OperationResult<CreateSaleResult, DomainError>>
 {
+    private const string PrefixConsumerFinal = "B02";
+    private const string PrefixCreditFiscal  = "B01";
+
     private readonly ITenantProvider _tenantProvider;
     private readonly ICurrentShiftService _shiftService;
     private readonly IProductRepository _productRepository;
@@ -24,6 +31,11 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
     private readonly IShiftRepository _shiftRepository;
     private readonly IOutboxRepository _outboxRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IFiscalSequenceRepository _fiscalSequenceRepository;
+    private readonly IFiscalReceiptRepository _fiscalReceiptRepository;
+    private readonly IEcfGeneratorClient _ecfGeneratorClient;
+    private readonly IEcfSignerService _ecfSignerService;
+    private readonly ITenantProfileRepository _tenantProfileRepository;
 
     public CreateSaleCommandHandler(
         ITenantProvider tenantProvider,
@@ -33,7 +45,12 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         ISaleSequenceService sequenceService,
         IShiftRepository shiftRepository,
         IOutboxRepository outboxRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IFiscalSequenceRepository fiscalSequenceRepository,
+        IFiscalReceiptRepository fiscalReceiptRepository,
+        IEcfGeneratorClient ecfGeneratorClient,
+        IEcfSignerService ecfSignerService,
+        ITenantProfileRepository tenantProfileRepository)
     {
         _tenantProvider = tenantProvider;
         _shiftService = shiftService;
@@ -43,6 +60,11 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         _shiftRepository = shiftRepository;
         _outboxRepository = outboxRepository;
         _unitOfWork = unitOfWork;
+        _fiscalSequenceRepository = fiscalSequenceRepository;
+        _fiscalReceiptRepository = fiscalReceiptRepository;
+        _ecfGeneratorClient = ecfGeneratorClient;
+        _ecfSignerService = ecfSignerService;
+        _tenantProfileRepository = tenantProfileRepository;
     }
 
     public async Task<OperationResult<CreateSaleResult, DomainError>> Handle(
@@ -169,18 +191,111 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
             sale.TotalPaidAmount, sale.ChangeDueAmount, sale.Notes, sale.CreatedAt,
             itemPayloadLines.AsReadOnly(), paymentPayloadLines.AsReadOnly());
 
-        var outboxMessage = new OutboxMessage("SaleCreated", JsonSerializer.Serialize(saleCreatedPayload));
+        var outboxMessage = new TuColmadoRD.Core.Domain.Entities.System.OutboxMessage("SaleCreated", JsonSerializer.Serialize(saleCreatedPayload));
+
+        // ── NCF assignment ──────────────────────────────────────────────────────
+        string? ncfNumber = null;
+        FiscalReceipt? fiscalReceipt = null;
+
+        var isCreditFiscal = !string.IsNullOrWhiteSpace(request.BuyerRnc);
+        
+        var eCfPrefix = isCreditFiscal ? "E31" : "E32";
+        var bPrefix = isCreditFiscal ? PrefixCreditFiscal : PrefixConsumerFinal;
+
+        var activeSequence = await _fiscalSequenceRepository.GetActiveByPrefixAsync(tenantId, eCfPrefix, ct)
+            ?? await _fiscalSequenceRepository.GetActiveByPrefixAsync(tenantId, bPrefix, ct);
+
+        if (activeSequence is not null)
+        {
+            var ncfResult = activeSequence.GetNextNcf();
+            if (ncfResult.TryGetResult(out var generatedNcf) && !string.IsNullOrEmpty(generatedNcf))
+            {
+                ncfNumber = generatedNcf;
+                sale.AssignNcf(ncfNumber);
+
+                Rnc? buyerRnc = null;
+                if (isCreditFiscal)
+                {
+                    var rncResult = Rnc.Create(request.BuyerRnc!);
+                    if (rncResult.TryGetResult(out var parsedRnc))
+                        buyerRnc = parsedRnc;
+                }
+
+                string? trackId = null;
+
+                if (ncfNumber.StartsWith("E3", StringComparison.OrdinalIgnoreCase))
+                {
+                    var profile = await _tenantProfileRepository.GetByTenantAsync(tenantId, ct);
+                    if (profile is not null)
+                    {
+                        var payload = new Dictionary<string, object>
+                        {
+                            ["TipoeCF"] = isCreditFiscal ? 31 : 32,
+                            ["eNCF"] = ncfNumber,
+                            ["RNCEmisor"] = profile.Rnc?.Value ?? "131111111",
+                            ["RazonSocialEmisor"] = profile.BusinessName,
+                            ["FechaEmision"] = DateTime.Now.ToString("dd-MM-yyyy"),
+                            ["MontoTotal"] = sale.TotalAmount,
+                            ["MontoGravadoTotal"] = sale.TotalAmount - sale.TotalItbisAmount,
+                            ["TotalITBIS"] = sale.TotalItbisAmount,
+                            ["IndicadorMontoGravado"] = "1",
+                            ["TipoIngresos"] = "01",
+                            ["TipoPago"] = "1"
+                        };
+
+                        if (isCreditFiscal)
+                        {
+                            payload["RNCComprador"] = request.BuyerRnc!;
+                            payload["RazonSocialComprador"] = "CLIENTE CREDITO FISCAL";
+                        }
+
+                        for (int i = 0; i < saleItemResults.Count; i++)
+                        {
+                            payload[$"Item_{i+1}_NumeroLinea"] = i + 1;
+                            payload[$"Item_{i+1}_NombreItem"] = saleItemResults[i].ProductName;
+                            payload[$"Item_{i+1}_CantidadItem"] = saleItemResults[i].Quantity;
+                            payload[$"Item_{i+1}_PrecioUnitarioItem"] = saleItemResults[i].UnitPrice;
+                            payload[$"Item_{i+1}_MontoItem"] = saleItemResults[i].LineTotal;
+                            payload[$"Item_{i+1}_IndicadorBienoServicio"] = 1;
+                            payload[$"Item_{i+1}_IndicadorFacturacion"] = 1;
+                        }
+
+                        var xmlRaw = await _ecfGeneratorClient.GenerateXmlAsync(payload);
+                        var signedXml = await _ecfSignerService.SignXmlAsync(xmlRaw, tenantId);
+
+                        trackId = $"MOCK_DGII_TRACKID_{Guid.NewGuid().ToString("N")[..8]}";
+                    }
+                }
+
+                fiscalReceipt = FiscalReceipt.Emit(
+                    tenantId,
+                    sale.Id,
+                    ncfNumber,
+                    Money.FromDecimal(sale.TotalItbisAmount).Result,
+                    buyerRnc,
+                    trackId);
+            }
+        }
+        // ────────────────────────────────────────────────────────────────────────
 
         await _saleRepository.AddAsync(sale, ct);
         await _productRepository.UpdateRangeAsync(products, ct);
         await _shiftRepository.UpdateAsync(shift, ct);
         await _outboxRepository.AddAsync(outboxMessage, ct);
+
+        if (fiscalReceipt is not null)
+        {
+            await _fiscalReceiptRepository.AddAsync(fiscalReceipt, ct);
+            await _fiscalSequenceRepository.UpdateAsync(activeSequence!, ct);
+        }
+
         await _unitOfWork.CommitAsync(ct);
 
         return OperationResult<CreateSaleResult, DomainError>.Good(
             new CreateSaleResult(
                 sale.Id,
                 sale.ReceiptNumber,
+                ncfNumber,
                 sale.SubtotalAmount,
                 sale.TotalItbisAmount,
                 sale.TotalAmount,

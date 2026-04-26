@@ -5,6 +5,8 @@ export interface IUser {
   tenantId: string;
   email: string;
   password: string;
+  firstName?: string | null;
+  lastName?: string | null;
   role: Role;
   isActive: boolean;
   createdAt: Date;

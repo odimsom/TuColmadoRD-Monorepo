@@ -35,13 +35,15 @@ public class TuColmadoDbContext : DbContext
     public DbSet<AuditTrail> AuditTrails => Set<AuditTrail>();
     public DbSet<SystemConfig> SystemConfigs => Set<SystemConfig>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<TenantProfile> TenantProfiles => Set<TenantProfile>();
 
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<CustomerAccount> CustomerAccounts => Set<CustomerAccount>();
     public DbSet<DebtTransaction> DebtTransactions => Set<DebtTransaction>();
 
-    public DbSet<FiscalReceipt> FiscalReceipts => Set<FiscalReceipt>();
     public DbSet<FiscalSequence> FiscalSequences => Set<FiscalSequence>();
+    public DbSet<FiscalReceipt> FiscalReceipts => Set<FiscalReceipt>();
+    public DbSet<NcfAnnulmentLog> NcfAnnulmentLogs => Set<NcfAnnulmentLog>();
     public DbSet<Tax> Taxes => Set<Tax>();
 
     public DbSet<Employee> Employees => Set<Employee>();

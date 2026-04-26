@@ -1,0 +1,22 @@
+E2E Test Results — 2026-04-18
+==============================
+
+test:e2e:account
+----------------
+Selenium e2e passed: account creation flow is working.
+EXIT CODE: 0
+
+test:e2e:task4
+--------------
+Selenium task4 suite passed: 5 escenarios ejecutados.
+Browser mode: headless
+Step delay: 0ms
+HTML report: tests/e2e/artifacts/report-task4.html
+EXIT CODE: 0
+
+Scenarios (task4):
+  US01-HAPPY-LOGIN      — Camino feliz login             PASS
+  US02-NEG-LOGIN        — Credenciales invalidas          PASS
+  US03-LIMIT-LOGIN      — Validaciones minimas login      PASS
+  US04-HAPPY-REGISTER   — Camino feliz registro           PASS
+  US05-NEG-LIMIT-REGISTER — Negativa + limites registro   PASS

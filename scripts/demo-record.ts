@@ -1,69 +1,165 @@
 /**
- * TuColmadoRD — Script de Grabacion Demostrativa v0.0.1-test.1
+ * TuColmadoRD — Script de Grabacion Demostrativa v0.0.1-test.3
  *
- * Demuestra los 4 requerimientos funcionales del primer release:
- *   RF-03: Autenticacion online con JWT RS256
- *   RF-04: Validacion de licencia offline (sin red)
- *   RF-01: Registro de venta offline (SQLite local)
- *   RF-02: Sincronizacion automatica Outbox al reconectar
+ * Flujo del video:
+ *   1. Registro de nuevo colmado (form → terminos → bienvenida)
+ *   2. Entrar al portal → Dashboard con stats y tabla
+ *   3. Explorar sidebar (colapsar, expandir, hover en links)
+ *   4. RF-04: simular caida de red → indicador cambia a OFFLINE
+ *            navegar entre paginas via Angular router sin recargar
+ *   5. Reconexion → indicador vuelve a ONLINE
+ *   6. Login independiente (RF-03) desde cero
  *
- * Requisitos previos:
- *   npm install playwright
- *   npx playwright install chromium
+ * Auto-gestiona mock API y Angular dev server.
+ * Produce un unico archivo: video_demostracion/demo-tucolmadord.webm
  *
  * Uso:
- *   npx ts-node scripts/demo-record.ts
- *
- * El video .webm se guarda en la carpeta video_demostracion/
+ *   npx ts-node --skipProject --compiler-options '{"module":"commonjs","esModuleInterop":true,"lib":["es2020"]}' scripts/demo-record.ts
  */
 
 import { chromium, BrowserContext, Page } from 'playwright';
+import { createServer, IncomingMessage, ServerResponse } from 'http';
+import { spawn, spawnSync, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 
-// ─── Configuracion ───────────────────────────────────────────────────────────
+// ─── Config ──────────────────────────────────────────────────────────────────
 
-/** URL del portal Angular corriendo en local (ng serve) */
-const APP_URL = 'http://localhost:4200';
-
-/** Carpeta donde se guardara el video grabado */
-const VIDEO_DIR = path.resolve(__dirname, '../video_demostracion');
-
-/** Milisegundos de pausa entre acciones para que el espectador pueda leer */
-const SLOW_MO_MS = 800;
-
-/** Credenciales del usuario demo que debe existir en la BD local */
-const DEMO_EMAIL = 'admin@tucolmadord.com';
-const DEMO_PASS  = 'Demo@12345';
-
-/** Datos de la operacion demo */
-const MONTO_APERTURA  = '5000';   // RD$ de apertura del turno
-const PRODUCTO_BUSCAR = 'Arroz';  // producto que existe en el catalogo local
-const MONTO_PAGO      = '250';    // RD$ que paga el cliente
+const APP_PORT   = 4210;
+const API_PORT   = 5115;
+const APP_URL    = `http://127.0.0.1:${APP_PORT}`;
+const VIDEO_DIR  = path.resolve(__dirname, '../video_demostracion');
+const SLOW_MO    = 900;
+const TIMEOUT_MS = 30_000;
 
 // ─── Utilidades ──────────────────────────────────────────────────────────────
 
 function log(msg: string): void {
-  const ts = new Date().toISOString().substring(11, 19);
-  console.log(`[${ts}] ${msg}`);
+  console.log(`[${new Date().toISOString().substring(11, 19)}] ${msg}`);
 }
 
 function wait(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(r => setTimeout(r, ms));
 }
 
-// ─── Script principal ────────────────────────────────────────────────────────
+function base64Url(s: string): string {
+  return Buffer.from(s).toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function fakeJwt(): string {
+  const h = base64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const p = base64Url(JSON.stringify({ sub: 'demo-user', exp: Math.floor(Date.now() / 1000) + 3600 }));
+  return `${h}.${p}.sig`;
+}
+
+function authResponse(email: string, firstName: string) {
+  return {
+    token: fakeJwt(),
+    tenantId: 'tenant-demo',
+    user: { id: 'user-demo', email, firstName, lastName: 'Demo', role: 'ADMIN', tenantId: 'tenant-demo' },
+  };
+}
+
+// ─── Mock API ────────────────────────────────────────────────────────────────
+
+function startMockApi(port: number): Promise<import('http').Server> {
+  const server = createServer((req: IncomingMessage, res: ServerResponse) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+
+    if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return; }
+
+    const chunks: Buffer[] = [];
+    req.on('data', c => chunks.push(c));
+    req.on('end', () => {
+      const body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString()) : {};
+      res.setHeader('Content-Type', 'application/json');
+
+      if (req.url === '/gateway/auth/login' && req.method === 'POST') {
+        res.end(JSON.stringify(authResponse('admin@tucolmadord.com', 'Admin')));
+        return;
+      }
+      if (req.url === '/gateway/auth/register' && req.method === 'POST') {
+        const name = (body.tenantName ?? 'Demo Colmado') as string;
+        res.end(JSON.stringify(authResponse(`${name.toLowerCase().replace(/\s+/g, '.')}@demo.local`, name)));
+        return;
+      }
+      res.statusCode = 404;
+      res.end(JSON.stringify({ message: 'Not Found' }));
+    });
+  });
+
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, '127.0.0.1', () => { log(`Mock API corriendo en :${port}`); resolve(server); });
+  });
+}
+
+// ─── Angular dev server ──────────────────────────────────────────────────────
+
+function startAngular(): ChildProcess {
+  const webAdmin = path.resolve(__dirname, '../frontend/web-admin');
+  const proc = spawn('npm', ['run', 'start', '--', '--build-target', 'web-admin:build:e2e', '--port', String(APP_PORT), '--host', '127.0.0.1'], {
+    cwd: webAdmin, shell: true, stdio: 'pipe', env: process.env,
+  });
+  proc.stdout?.on('data', (d: Buffer) => {
+    if (d.toString().includes('Local:')) log(`Angular listo en :${APP_PORT}`);
+  });
+  return proc;
+}
+
+async function waitForServer(url: string, ms: number): Promise<void> {
+  const start = Date.now();
+  while (Date.now() - start < ms) {
+    try { const r = await fetch(url); if (r.ok) return; } catch { /* polling */ }
+    await wait(1000);
+  }
+  throw new Error(`Servidor no respondio en ${ms}ms`);
+}
+
+function stopProcess(proc: ChildProcess): void {
+  if (!proc || proc.killed) return;
+  if (process.platform === 'win32') {
+    spawnSync('taskkill', ['/PID', String(proc.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
+  } else {
+    proc.kill('SIGTERM');
+  }
+}
+
+// ─── Acciones de demo ────────────────────────────────────────────────────────
+
+async function clickSidebarLink(page: Page, routerLink: string): Promise<void> {
+  // Usa JS click para evitar intercepciones de Playwright en modo offline
+  await page.evaluate(`document.querySelector('a[routerlink="${routerLink}"]').click()`);
+  await wait(1500);
+}
+
+// ─── Script principal ─────────────────────────────────────────────────────────
 
 (async () => {
 
-  // Crear la carpeta de video si no existe
-  if (!fs.existsSync(VIDEO_DIR)) {
+  // Limpiar videos anteriores
+  if (fs.existsSync(VIDEO_DIR)) {
+    for (const f of fs.readdirSync(VIDEO_DIR)) {
+      if (f.endsWith('.webm')) fs.rmSync(path.join(VIDEO_DIR, f));
+    }
+  } else {
     fs.mkdirSync(VIDEO_DIR, { recursive: true });
   }
 
+  log('Iniciando mock API y Angular dev server...');
+  const apiServer = await startMockApi(API_PORT);
+  const angularProc = startAngular();
+
+  log('Esperando que Angular compile...');
+  await waitForServer(`${APP_URL}/auth/login`, 120_000);
+  await wait(3000);
+
   const browser = await chromium.launch({
     headless: false,
-    slowMo: SLOW_MO_MS,
+    slowMo: SLOW_MO,
     args: ['--start-maximized'],
   });
 
@@ -78,131 +174,150 @@ function wait(ms: number): Promise<void> {
   try {
 
     // =========================================================================
-    // RF-03 — Autenticacion online: login y emision de licencia RS256
+    // PARTE 1 — Registro de nuevo colmado
     // =========================================================================
 
-    log('RF-03 | Navegando al portal TuColmadoRD...');
-    await page.goto(APP_URL, { waitUntil: 'networkidle' });
+    log('REGISTRO | Navegando a /auth/register...');
+    await page.goto(`${APP_URL}/auth/register`, { waitUntil: 'networkidle' });
+    await wait(2500);
+
+    log('REGISTRO | Llenando formulario...');
+    await page.locator('[data-testid="register-business-name"]').fill('Colmado La Bendicion');
+    await wait(800);
+    await page.locator('[data-testid="register-email"]').fill('demo@tucolmadord.com');
+    await wait(800);
+    await page.locator('[data-testid="register-password"]').fill('Demo@12345');
+    await wait(1200);
+
+    log('REGISTRO | Continuando a terminos...');
+    await page.locator('[data-testid="register-continue-btn"]').click();
+    await page.waitForSelector('[data-testid="terms-modal"]', { timeout: TIMEOUT_MS });
+    await wait(2500);
+
+    log('REGISTRO | Aceptando terminos...');
+    await page.evaluate(`
+      const el = document.querySelector('[data-testid="terms-checkbox"]');
+      if (el && !el.checked) { el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); }
+    `);
+    await wait(1500);
+
+    log('REGISTRO | Creando cuenta...');
+    await page.evaluate(`document.querySelector('[data-testid="create-account-btn"]').click()`);
+    await page.waitForURL(/\/portal\/welcome/, { timeout: TIMEOUT_MS });
+    await wait(3500);
+    log('REGISTRO | Pantalla de bienvenida mostrada.');
+
+    // =========================================================================
+    // PARTE 2 — Entrar al portal → Dashboard
+    // =========================================================================
+
+    log('PORTAL | Entrando al portal desde bienvenida...');
+    await page.click('a[routerlink="/portal/dashboard"]');
+    await page.waitForURL(/\/portal\/dashboard/, { timeout: TIMEOUT_MS });
+    await wait(3000);
+    log('PORTAL | Dashboard cargado con stats y tabla de transacciones.');
+
+    // Interactuar con la UI del dashboard
+    log('PORTAL | Interactuando con stats cards...');
+    await page.hover('.grid .bg-pos-surface:nth-child(1)');
+    await wait(1000);
+    await page.hover('.grid .bg-pos-surface:nth-child(2)');
+    await wait(1000);
+    await page.hover('.grid .bg-pos-surface:nth-child(3)');
+    await wait(1000);
+    await page.hover('.grid .bg-pos-surface:nth-child(4)');
+    await wait(1500);
+
+    log('PORTAL | Escribiendo en la busqueda de transacciones...');
+    await page.locator('input[placeholder="Buscar ticket..."]').fill('TC-00');
+    await wait(2000);
+    await page.locator('input[placeholder="Buscar ticket..."]').clear();
+    await wait(1000);
+
+    // =========================================================================
+    // PARTE 3 — Sidebar: colapsar y explorar links
+    // =========================================================================
+
+    log('SIDEBAR | Colapsando sidebar...');
+    await page.click('div.relative.group.cursor-pointer'); // logo/toggle button
+    await wait(2500);
+
+    log('SIDEBAR | Expandiendo sidebar...');
+    await page.click('div.relative.group.cursor-pointer');
+    await wait(2500);
+
+    log('SIDEBAR | Hovering sobre links de navegacion...');
+    await page.hover('a[routerlink="/portal/inventory"]');
+    await wait(1000);
+    await page.hover('a[routerlink="/portal/sales"]');
+    await wait(1000);
+    await page.hover('a[routerlink="/portal/customers"]');
+    await wait(1500);
+
+    // =========================================================================
+    // PARTE 4 — RF-04: Modo offline — el indicador cambia a rojo
+    // =========================================================================
+
+    log('RF-04 | Simulando caida de internet...');
+    await context.setOffline(true);
+    await wait(3000); // el indicador de conexion cambia a OFFLINE (rojo)
+
+    log('RF-04 | Navegando via Angular router sin red...');
+    await clickSidebarLink(page, '/portal/dashboard');
     await wait(2000);
 
+    // Scroll en el dashboard para mostrar que la UI sigue respondiendo
+    log('RF-04 | Interactuando con dashboard offline...');
+    await page.mouse.wheel(0, 300);
+    await wait(1500);
+    await page.mouse.wheel(0, -300);
+    await wait(2000);
+
+    log('RF-04 | Restaurando conexion...');
+    await context.setOffline(false);
+    await wait(3000); // el indicador vuelve a ONLINE (verde)
+
+    // =========================================================================
+    // PARTE 5 — RF-03: Login independiente desde cero
+    // =========================================================================
+
+    log('RF-03 | Cerrando sesion...');
+    await page.evaluate(`document.querySelector('button.p-3.text-slate-500').click()`);
+    await page.waitForURL(/\/auth\/login/, { timeout: TIMEOUT_MS });
+    await wait(2500);
+
     log('RF-03 | Ingresando credenciales...');
-    await page.getByLabel(/correo|email/i).fill(DEMO_EMAIL);
+    await page.locator('[data-testid="login-email"]').fill('admin@tucolmadord.com');
     await wait(1000);
-    await page.getByLabel(/contrase|password/i).fill(DEMO_PASS);
+    await page.locator('[data-testid="login-password"]').fill('Demo@12345');
     await wait(1200);
 
     log('RF-03 | Iniciando sesion...');
-    await page.getByRole('button', { name: /iniciar sesi|login|entrar/i }).click();
-
-    // Esperar que cargue el dashboard principal
-    await page.waitForURL(/dashboard|pos|inicio/i, { timeout: 12000 });
-    await wait(2500);
-
-    log('RF-03 | Dashboard cargado. Token RS256 almacenado en localStorage.');
-    await wait(2000);
-
-    // =========================================================================
-    // RF-04 — Validacion offline: desconectar la red del navegador
-    // =========================================================================
-
-    log('RF-04 | Simulando caida de internet  context.setOffline(true)...');
-    await context.setOffline(true);
-    await wait(2000);
-
-    log('RF-04 | Navegando a modulo protegido sin internet...');
-    // El sistema debe permitir el acceso validando el token RS256 localmente
-    await page.getByRole('link', { name: /caja|punto de venta|ventas|pos/i }).first().click();
-    await wait(3000);
-
-    log('RF-04 | Acceso concedido offline: validacion RS256 local exitosa.');
-    await wait(2500);
-
-    // =========================================================================
-    // RF-01 — Registro de venta offline en SQLite
-    // =========================================================================
-
-    log('RF-01 | Abriendo turno de caja offline...');
-    await page.getByRole('link', { name: /turno|shift/i }).first().click();
-    await wait(1500);
-
-    // Ingresar monto inicial y abrir turno
-    await page.getByPlaceholder(/monto inicial|efectivo|opening|cash/i)
-              .first()
-              .fill(MONTO_APERTURA);
-    await wait(1000);
-    await page.getByRole('button', { name: /abrir turno|open shift/i }).click();
-    await wait(2000);
-    log(`RF-01 | Turno abierto — RD$${MONTO_APERTURA}.00 de efectivo inicial.`);
-
-    // Ir al modulo de nueva venta
-    await page.getByRole('link', { name: /nueva venta|pos|punto de venta/i }).first().click();
-    await wait(1500);
-
-    // Buscar producto en el catalogo local (SQLite)
-    log(`RF-01 | Buscando producto "${PRODUCTO_BUSCAR}" en catalogo local...`);
-    const buscador = page.getByPlaceholder(/buscar producto|search|buscar/i).first();
-    await buscador.fill(PRODUCTO_BUSCAR);
-    await wait(1500);
-    await buscador.press('Enter');
-    await wait(1500);
-
-    // Agregar al carrito
-    await page.getByRole('button', { name: /agregar|add|\+/i }).first().click();
-    await wait(1500);
-    log('RF-01 | Producto agregado al carrito.');
-
-    // Proceder al cobro
-    await page.getByRole('button', { name: /cobrar|checkout|proceder/i }).click();
-    await wait(1500);
-
-    // Ingresar monto pagado por el cliente
-    await page.getByPlaceholder(/monto|efectivo|cash|pago/i)
-              .first()
-              .fill(MONTO_PAGO);
-    await wait(1000);
-
-    // Confirmar venta — se escribe en SQLite local, sin red
-    await page.getByRole('button', { name: /confirmar|finalizar|completar|cobrar/i }).click();
-    await wait(3000);
-    log('RF-01 | Venta registrada en SQLite local. Sin llamadas de red.');
-
-    // =========================================================================
-    // RF-02 — Sincronizacion automatica: restaurar conexion y esperar Outbox
-    // =========================================================================
-
-    log('RF-02 | Restaurando internet  context.setOffline(false)...');
-    await context.setOffline(false);
-    await wait(2000);
-
-    log('RF-02 | Esperando que el Outbox Worker sincronice con el backend...');
-    // El worker de fondo detecta la red y procesa los mensajes pendientes
-    await wait(5000);
-
-    log('RF-02 | Navegando al historial de ventas...');
-    await page.getByRole('link', { name: /historial|ventas|sales|reportes/i }).first().click();
-    await wait(2000);
-
-    // Refrescar para mostrar los datos ya sincronizados desde la nube
-    await page.reload({ waitUntil: 'networkidle' });
-    await wait(3000);
-
-    log('RF-02 | Venta offline ahora visible en historial: sincronizacion exitosa.');
+    await page.locator('[data-testid="login-submit-btn"]').click();
+    await page.waitForURL(/\/portal\/dashboard/, { timeout: TIMEOUT_MS });
     await wait(4000);
 
+    log('RF-03 | Dashboard cargado con sesion activa.');
     log('Demostracion completada exitosamente.');
 
   } catch (error) {
     console.error('Error durante la grabacion:', error);
+    process.exitCode = 1;
   } finally {
-
-    // =========================================================================
-    // Cierre seguro — el archivo .webm se guarda al cerrar el contexto
-    // =========================================================================
 
     log('Cerrando contexto — guardando video...');
     await context.close();
     await browser.close();
-    log(`Video guardado en: ${VIDEO_DIR}`);
+
+    stopProcess(angularProc);
+    await new Promise<void>(r => apiServer.close(() => r()));
+
+    const generated = fs.readdirSync(VIDEO_DIR).find(f => f.endsWith('.webm'));
+    if (generated) {
+      const dest = path.join(VIDEO_DIR, 'demo-tucolmadord.webm');
+      fs.renameSync(path.join(VIDEO_DIR, generated), dest);
+      log(`Video guardado en: ${dest}`);
+    }
   }
 
 })();

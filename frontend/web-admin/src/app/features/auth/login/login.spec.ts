@@ -19,23 +19,23 @@ function createAuthServiceMock() {
 }
 
 async function setupComponent(authServiceMock: ReturnType<typeof createAuthServiceMock>) {
-  const routerSpy = { navigate: vi.fn() };
-
   await TestBed.configureTestingModule({
     imports: [Login],
     providers: [
       provideHttpClient(),
       provideRouter([]),
       { provide: AuthService, useValue: authServiceMock },
-      { provide: Router, useValue: routerSpy },
     ],
   }).compileComponents();
+
+  const router = TestBed.inject(Router);
+  const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
   const fixture: ComponentFixture<Login> = TestBed.createComponent(Login);
   const component = fixture.componentInstance;
   await fixture.whenStable();
 
-  return { fixture, component, routerSpy };
+  return { fixture, component, routerSpy: { navigate: navigateSpy } };
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

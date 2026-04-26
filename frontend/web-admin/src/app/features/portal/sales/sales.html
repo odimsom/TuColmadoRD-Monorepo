@@ -1,0 +1,220 @@
+<div class="px-8 py-8 space-y-6 animate-in fade-in duration-500">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-black text-white uppercase tracking-tighter">Ventas</h1>
+      <p class="text-slate-500 text-xs mt-1">Historial de turnos y transacciones</p>
+    </div>
+    <button (click)="openShiftModal()" class="px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-green-600/20 flex items-center gap-2">
+      <span class="icon-[ic--baseline-play-arrow] text-sm"></span>
+      Abrir Turno
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-1 bg-white/5 rounded-lg p-1 w-fit border border-white/5">
+    <button
+      (click)="setTab('shifts')"
+      [class.bg-blue-600]="activeTab() === 'shifts'"
+      [class.text-white]="activeTab() === 'shifts'"
+      [class.text-slate-500]="activeTab() !== 'shifts'"
+      class="px-4 py-2 rounded-md text-xs font-black uppercase tracking-widest transition-all"
+    >Turnos</button>
+    <button
+      (click)="setTab('transactions')"
+      [class.bg-blue-600]="activeTab() === 'transactions'"
+      [class.text-white]="activeTab() === 'transactions'"
+      [class.text-slate-500]="activeTab() !== 'transactions'"
+      class="px-4 py-2 rounded-md text-xs font-black uppercase tracking-widest transition-all"
+    >Transacciones</button>
+  </div>
+
+  <!-- TAB: TURNOS -->
+  @if (activeTab() === 'shifts') {
+    <div class="bg-pos-surface border border-pos-border rounded-xl overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-[#1e293b]/20">
+        <div class="flex items-center gap-3">
+          <span class="icon-[ic--baseline-history] text-blue-500"></span>
+          <h2 class="text-xs font-black text-white uppercase tracking-widest">Historial de Turnos</h2>
+        </div>
+        <div class="flex gap-2">
+          @for (opt of [{v: 'all', l: 'Todos'}, {v: 'open', l: 'Abiertos'}, {v: 'closed', l: 'Cerrados'}]; track opt.v) {
+            <button
+              (click)="filterShifts(opt.v)"
+              [class.bg-blue-600]="shiftStatus() === opt.v"
+              [class.text-white]="shiftStatus() === opt.v"
+              [class.text-slate-500]="shiftStatus() !== opt.v"
+              class="px-3 py-1 rounded text-[0.6rem] font-black uppercase tracking-wider transition-all hover:text-white"
+            >{{ opt.l }}</button>
+          }
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-[0.7rem] border-collapse">
+          <thead class="bg-white/5 text-slate-500 uppercase font-black tracking-tighter">
+            <tr>
+              <th class="px-6 py-3 border-b border-white/5">Cajero</th>
+              <th class="px-6 py-3 border-b border-white/5">Apertura</th>
+              <th class="px-6 py-3 border-b border-white/5">Cierre</th>
+              <th class="px-6 py-3 border-b border-white/5 text-right">Efectivo Apertura</th>
+              <th class="px-6 py-3 border-b border-white/5 text-right">Total Ventas</th>
+              <th class="px-6 py-3 border-b border-white/5 text-center">Transacciones</th>
+              <th class="px-6 py-3 border-b border-white/5 text-center">Estado</th>
+              <th class="px-6 py-3 border-b border-white/5 text-right">Diferencia</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            @if (loadingShifts()) {
+              @for (i of [1,2,3,4,5]; track i) {
+                <tr class="animate-pulse"><td colspan="8" class="px-6 py-4"><div class="h-4 bg-white/5 rounded w-full"></div></td></tr>
+              }
+            } @else if (shifts().length === 0) {
+              <tr>
+                <td colspan="8" class="text-center py-14 text-slate-500">
+                  <span class="icon-[ic--baseline-history] text-4xl block mb-3 opacity-20"></span>
+                  <p class="text-sm font-bold">No hay turnos registrados</p>
+                </td>
+              </tr>
+            } @else {
+              @for (shift of shifts(); track shift.shiftId; let odd = $odd) {
+                <tr [class.bg-white/[0.02]]="odd" class="hover:bg-pos-accent/5 transition-colors">
+                  <td class="px-6 py-3 font-bold text-white">{{ shift.cashierName }}</td>
+                  <td class="px-6 py-3 text-slate-400">{{ shift.openedAt | date:'dd/MM/yy HH:mm' }}</td>
+                  <td class="px-6 py-3 text-slate-400">{{ shift.closedAt ? (shift.closedAt | date:'dd/MM/yy HH:mm') : '—' }}</td>
+                  <td class="px-6 py-3 text-right font-mono text-slate-300">RD$ {{ shift.openingCashAmount | number:'1.2-2' }}</td>
+                  <td class="px-6 py-3 text-right font-mono font-bold text-white">RD$ {{ shift.totalSalesAmount | number:'1.2-2' }}</td>
+                  <td class="px-6 py-3 text-center text-slate-300">{{ shift.totalSalesCount }}</td>
+                  <td class="px-6 py-3 text-center">
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[0.6rem] font-black uppercase ring-1" [class]="getShiftStatusClass(shift.status)">
+                      <span class="w-1 h-1 rounded-full bg-current"></span>
+                      {{ shift.status === 'Open' ? 'Abierto' : 'Cerrado' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-3 text-right font-mono text-sm"
+                    [class.text-green-400]="(shift.cashDifference ?? 0) >= 0"
+                    [class.text-red-400]="(shift.cashDifference ?? 0) < 0">
+                    {{ shift.cashDifference != null ? ('RD$ ' + (shift.cashDifference | number:'1.2-2')) : '—' }}
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (shiftTotalPages() > 1) {
+        <div class="px-6 py-4 border-t border-white/5 flex items-center justify-between">
+          <span class="text-[0.65rem] text-slate-500">Página {{ shiftPage() }} de {{ shiftTotalPages() }}</span>
+          <div class="flex gap-2">
+            <button (click)="prevShiftPage()" [disabled]="shiftPage() <= 1" class="px-3 py-1.5 rounded bg-white/5 border border-white/5 text-xs text-slate-400 disabled:opacity-30 hover:bg-white/10 transition-all">← Anterior</button>
+            <button (click)="nextShiftPage()" [disabled]="shiftPage() >= shiftTotalPages()" class="px-3 py-1.5 rounded bg-white/5 border border-white/5 text-xs text-slate-400 disabled:opacity-30 hover:bg-white/10 transition-all">Siguiente →</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- TAB: TRANSACCIONES -->
+  @if (activeTab() === 'transactions') {
+    <div class="bg-pos-surface border border-pos-border rounded-xl overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-white/5 flex items-center gap-3 bg-[#1e293b]/20">
+        <span class="icon-[ic--baseline-receipt-long] text-blue-500"></span>
+        <h2 class="text-xs font-black text-white uppercase tracking-widest">Transacciones · {{ transTotalCount() }} en total</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-[0.7rem] border-collapse">
+          <thead class="bg-white/5 text-slate-500 uppercase font-black tracking-tighter">
+            <tr>
+              <th class="px-6 py-3 border-b border-white/5">Nro. Ticket</th>
+              <th class="px-6 py-3 border-b border-white/5">Fecha y Hora</th>
+              <th class="px-6 py-3 border-b border-white/5 text-center">Artículos</th>
+              <th class="px-6 py-3 border-b border-white/5 text-right">Total</th>
+              <th class="px-6 py-3 border-b border-white/5 text-right">Pagado</th>
+              <th class="px-6 py-3 border-b border-white/5 text-center">Estado</th>
+              <th class="px-6 py-3 border-b border-white/5 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            @if (loadingTrans()) {
+              @for (i of [1,2,3,4,5]; track i) {
+                <tr class="animate-pulse"><td colspan="7" class="px-6 py-4"><div class="h-4 bg-white/5 rounded w-full"></div></td></tr>
+              }
+            } @else if (sales().length === 0) {
+              <tr>
+                <td colspan="7" class="text-center py-14 text-slate-500">
+                  <span class="icon-[ic--baseline-receipt-long] text-4xl block mb-3 opacity-20"></span>
+                  <p class="text-sm font-bold">Sin transacciones registradas</p>
+                </td>
+              </tr>
+            } @else {
+              @for (sale of sales(); track sale.id; let odd = $odd) {
+                <tr [class.bg-white/[0.02]]="odd" class="hover:bg-pos-accent/5 transition-colors group">
+                  <td class="px-6 py-3 font-mono font-bold text-white">#{{ sale.receiptNumber }}</td>
+                  <td class="px-6 py-3 text-slate-400">{{ sale.createdAt | date:'dd/MM/yy - HH:mm' }}</td>
+                  <td class="px-6 py-3 text-center text-white">{{ sale.itemsCount }}</td>
+                  <td class="px-6 py-3 text-right font-mono font-bold text-white">RD$ {{ sale.totalAmount | number:'1.2-2' }}</td>
+                  <td class="px-6 py-3 text-right font-mono text-slate-300">RD$ {{ sale.totalPaidAmount | number:'1.2-2' }}</td>
+                  <td class="px-6 py-3 text-center">
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[0.6rem] font-black uppercase ring-1" [class]="getStatusClass(sale.statusId)">
+                      <span class="w-1 h-1 rounded-full bg-current"></span>
+                      {{ getStatusText(sale.statusId) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-3 text-right">
+                    @if (sale.statusId === 1) {
+                      <button (click)="voidSale(sale.id)" class="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/10 rounded text-slate-500 hover:text-red-400 transition-all" title="Anular Venta">
+                        <span class="icon-[ic--baseline-block] text-sm"></span>
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (transTotalPages() > 1) {
+        <div class="px-6 py-4 border-t border-white/5 flex items-center justify-between">
+          <span class="text-[0.65rem] text-slate-500">Página {{ transPage() }} de {{ transTotalPages() }}</span>
+          <div class="flex gap-2">
+            <button (click)="prevTransPage()" [disabled]="transPage() <= 1" class="px-3 py-1.5 rounded bg-white/5 border border-white/5 text-xs text-slate-400 disabled:opacity-30 hover:bg-white/10 transition-all">← Anterior</button>
+            <button (click)="nextTransPage()" [disabled]="transPage() >= transTotalPages()" class="px-3 py-1.5 rounded bg-white/5 border border-white/5 text-xs text-slate-400 disabled:opacity-30 hover:bg-white/10 transition-all">Siguiente →</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal: Abrir Turno -->
+@if (showOpenShift()) {
+  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+    <div class="bg-[#0d1b2e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+      <div class="px-6 py-5 border-b border-white/5 flex justify-between items-center">
+        <h3 class="text-lg font-black text-white uppercase tracking-tight">Abrir Nuevo Turno</h3>
+        <button (click)="showOpenShift.set(false)" class="text-slate-500 hover:text-white"><span class="icon-[ic--baseline-close] text-xl"></span></button>
+      </div>
+      <form [formGroup]="openShiftForm" (ngSubmit)="submitOpenShift()" class="p-6 space-y-4">
+        @if (openShiftError()) {
+          <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">{{ openShiftError() }}</div>
+        }
+        <div>
+          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nombre del Cajero</label>
+          <input formControlName="cashierName" type="text" placeholder="Ej: Juan Pérez" class="w-full bg-white/5 border border-white/5 focus:border-green-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
+        </div>
+        <div>
+          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Efectivo en Caja (RD$)</label>
+          <input formControlName="openingCashAmount" type="number" min="0" step="0.01" class="w-full bg-white/5 border border-white/5 focus:border-green-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" (click)="showOpenShift.set(false)" class="flex-1 py-2.5 rounded-lg border border-white/10 text-slate-400 text-xs font-bold hover:text-white transition-all">Cancelar</button>
+          <button type="submit" [disabled]="savingShift()" class="flex-1 py-2.5 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50">
+            {{ savingShift() ? 'Abriendo...' : 'Abrir Turno' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

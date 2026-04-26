@@ -46,6 +46,13 @@ public class Sale : ITenantEntity
     public DateTime? VoidedAt { get; private set; }
     public string? VoidReason { get; private set; }
 
+    /// <summary>
+    /// NCF asignado por DGI (Número de Comprobante Fiscal).
+    /// Null si la secuencia fiscal no está configurada para este tenant.
+    /// Requerido para cumplir con Norma 06-18 DGII / Ley 32-23 e-CF.
+    /// </summary>
+    public string? NcfNumber { get; private set; }
+
     public IReadOnlyCollection<object> DomainEvents => _domainEvents.AsReadOnly();
 
     public static OperationResult<Sale, DomainError> Create(
@@ -258,6 +265,16 @@ public class Sale : ITenantEntity
             DateTime.UtcNow));
 
         return OperationResult<Unit, DomainError>.Good(Unit.Value);
+    }
+
+    /// <summary>
+    /// Assigns the NCF after the fiscal sequence has been consumed.
+    /// Called by the application handler once <see cref="FiscalSequence.GetNextNcf"/> succeeds.
+    /// </summary>
+    public void AssignNcf(string ncf)
+    {
+        if (!string.IsNullOrWhiteSpace(ncf))
+            NcfNumber = ncf.Trim();
     }
 
     public void ClearDomainEvents() => _domainEvents.Clear();

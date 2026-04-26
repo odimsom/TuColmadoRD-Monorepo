@@ -14,8 +14,9 @@ namespace TuColmadoRD.Core.Domain.Entities.Fiscal
         public Rnc? BuyerRnc { get; private set; }
         public Money TotalTaxed { get; private set; }
         public DateTime IssuedAt { get; private set; }
+        public string? TrackId { get; private set; }
 
-        private FiscalReceipt(TenantIdentifier tenantId, Guid saleId, string ncf, Money totalTaxed, Rnc? rnc)
+        private FiscalReceipt(TenantIdentifier tenantId, Guid saleId, string ncf, Money totalTaxed, Rnc? rnc, string? trackId)
         {
             Id = Guid.NewGuid();
             TenantId = tenantId;
@@ -24,11 +25,12 @@ namespace TuColmadoRD.Core.Domain.Entities.Fiscal
             TotalTaxed = totalTaxed;
             BuyerRnc = rnc;
             IssuedAt = DateTime.UtcNow;
+            TrackId = trackId;
         }
 
-        public static FiscalReceipt Emit(TenantIdentifier tenantId, Guid saleId, string ncf, Money totalTaxed, Rnc? rnc = null)
+        public static FiscalReceipt Emit(TenantIdentifier tenantId, Guid saleId, string ncf, Money totalTaxed, Rnc? rnc = null, string? trackId = null)
         {
-            return new FiscalReceipt(tenantId, saleId, ncf, totalTaxed, rnc);
+            return new FiscalReceipt(tenantId, saleId, ncf, totalTaxed, rnc, trackId);
         }
     }
 }
