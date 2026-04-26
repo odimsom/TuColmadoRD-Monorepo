@@ -41,8 +41,9 @@
 
         <form [formGroup]="registerForm" (ngSubmit)="submitAccount()" class="space-y-5">
           <div class="space-y-1.5">
-            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Nombre del negocio</label>
+            <label for="businessName" class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Nombre del negocio</label>
             <input
+              id="businessName"
               type="text"
               formControlName="businessName"
               placeholder="Colmado El Buen Precio"
@@ -50,8 +51,9 @@
             />
           </div>
           <div class="space-y-1.5">
-            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Correo electrónico</label>
+            <label for="reg-email" class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Correo electrónico</label>
             <input
+              id="reg-email"
               type="email"
               formControlName="email"
               placeholder="tu@colmado.com"
@@ -59,8 +61,9 @@
             />
           </div>
           <div class="space-y-1.5">
-            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Contraseña</label>
+            <label for="reg-password" class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Contraseña</label>
             <input
+              id="reg-password"
               type="password"
               formControlName="password"
               placeholder="Mínimo 8 caracteres"

@@ -1,7 +1,7 @@
-import { Component, inject, signal, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { SaleService, ShiftDto } from '../../core/services/sale.service';
 import { DownloadService, DownloadInfo } from '../../core/services/download.service';
@@ -30,6 +30,8 @@ export class PortalLayout implements OnInit, OnDestroy {
     localStorage.getItem(BANNER_DISMISSED_KEY) !== 'true'
   );
   isLicenseExpired = this.authService.isLicenseExpired;
+  private router = inject(Router);
+  isOnSubscriptionPage = computed(() => this.router.url.startsWith('/portal/subscription'));
 
   private readonly onOnline  = () => this.connectionStatus.set('online');
   private readonly onOffline = () => this.connectionStatus.set('offline');

@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-[#060d1a] relative overflow-hidden flex transition-all duration-500">
 
   <!-- Overlay de licencia vencida -->
-  @if (isLicenseExpired()) {
+  @if (isLicenseExpired() && !isOnSubscriptionPage()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center">
       <!-- Backdrop borroso -->
       <div class="absolute inset-0 bg-[#0f172a]/80 backdrop-blur-sm"></div>

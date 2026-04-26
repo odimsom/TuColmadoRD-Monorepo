@@ -104,6 +104,7 @@ export class Register {
     this.loading.set(true);
     this.error.set(null);
 
+    // TODO: include selectedPlanId and billingCycle in payload once payment provider is integrated
     const payload: RegisterRequest = {
       tenantName: this.registerForm.controls.businessName.value.trim(),
       email: this.registerForm.controls.email.value.trim().toLowerCase(),
