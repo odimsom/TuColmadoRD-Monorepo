@@ -87,16 +87,9 @@
         <button
           (click)="goToRegister()"
           class="w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all"
-          [class.bg-blue-600]="plan.highlighted"
-          [class.hover\:bg-blue-500]="plan.highlighted"
-          [class.text-white]="plan.highlighted"
-          [class.shadow-lg]="plan.highlighted"
-          [class.shadow-blue-600\/25]="plan.highlighted"
-          [class.bg-white\/5]="!plan.highlighted"
-          [class.hover\:bg-white\/10]="!plan.highlighted"
-          [class.text-slate-200]="!plan.highlighted"
-          [class.border]="!plan.highlighted"
-          [class.border-white\/10]="!plan.highlighted"
+          [ngClass]="plan.highlighted
+            ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/25'
+            : 'bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10'"
         >
           Empezar con {{ plan.name }}
         </button>
