@@ -1,5 +1,32 @@
 <div class="min-h-screen bg-[#060d1a] relative overflow-hidden flex transition-all duration-500">
 
+  <!-- Overlay de licencia vencida -->
+  @if (isLicenseExpired()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center">
+      <!-- Backdrop borroso -->
+      <div class="absolute inset-0 bg-[#0f172a]/80 backdrop-blur-sm"></div>
+      <!-- Card central -->
+      <div class="relative z-10 flex flex-col items-center text-center max-w-sm mx-6 p-10 rounded-3xl bg-[#1e293b] border border-white/10 shadow-2xl">
+        <div class="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
+          <span class="icon-[ic--baseline-lock] text-3xl text-red-400"></span>
+        </div>
+        <h2 class="text-2xl font-black text-white mb-2">Tu licencia ha vencido</h2>
+        <p class="text-slate-400 text-sm leading-relaxed mb-8">
+          Reactiva tu plan para continuar usando TuColmadoRD y acceder a todos tus datos.
+        </p>
+        <a
+          routerLink="/portal/subscription"
+          class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2"
+        >
+          Reactivar licencia →
+        </a>
+        <button (click)="logout()" class="mt-4 text-xs text-slate-600 hover:text-slate-400 transition-colors">
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  }
+
   <!-- Global ambient glows -->
   <div class="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] bg-blue-900/8 rounded-full blur-[140px] pointer-events-none z-0"></div>
   <div class="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-900/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
