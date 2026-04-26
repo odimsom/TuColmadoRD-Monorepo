@@ -45,7 +45,6 @@ export class Login {
       error: (err) => {
         this.loading = false;
         this.error = 'Credenciales inválidas.';
-        console.error('Login error:', err);
       }
     });
   }

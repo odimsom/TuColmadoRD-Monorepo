@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { SaleService, SaleSummary } from '../../../core/services/sale.service';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { Subscription } from 'rxjs';
@@ -7,7 +8,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit, OnDestroy {
@@ -16,7 +17,18 @@ export class Dashboard implements OnInit, OnDestroy {
   private subs = new Subscription();
 
   sales = [] as SaleSummary[];
+  searchTerm = '';
   loading = true;
+
+  get filteredSales(): SaleSummary[] {
+    if (!this.searchTerm) return this.sales;
+    const term = this.searchTerm.toLowerCase();
+    return this.sales.filter(s => s.receiptNumber.toLowerCase().includes(term));
+  }
+
+  onSearch(event: Event): void {
+    this.searchTerm = (event.target as HTMLInputElement).value;
+  }
 
   stats = {
     totalSales: 0,
@@ -57,7 +69,6 @@ export class Dashboard implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error loading sales:', err);
         this.loading = false;
       }
     });

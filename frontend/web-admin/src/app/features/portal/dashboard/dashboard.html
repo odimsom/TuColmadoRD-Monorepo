@@ -108,10 +108,10 @@
       </div>
       <div class="flex items-center gap-4">
         <div class="relative">
-          <input type="text" placeholder="Buscar ticket..." class="bg-white/5 border border-white/5 rounded-md px-3 py-1 text-[0.65rem] w-48 focus:outline-none focus:border-pos-accent transition-all">
+          <input type="text" placeholder="Buscar ticket..." (input)="onSearch($event)" class="bg-white/5 border border-white/5 rounded-md px-3 py-1 text-[0.65rem] w-48 focus:outline-none focus:border-pos-accent transition-all">
           <span class="icon-[ic--baseline-search] absolute right-2 top-1.5 text-slate-500"></span>
         </div>
-        <button class="text-[0.6rem] font-bold text-pos-accent hover:underline uppercase tracking-tighter">Ver Reporte Completo</button>
+        <a routerLink="/portal/sales" class="text-[0.6rem] font-bold text-pos-accent hover:underline uppercase tracking-tighter">Ver Reporte Completo</a>
       </div>
     </div>
 
@@ -125,24 +125,25 @@
             <th class="px-6 py-3 border-b border-white/5">Artículos</th>
             <th class="px-6 py-3 border-b border-white/5 text-right">Total</th>
             <th class="px-6 py-3 border-b border-white/5 text-center">Estado</th>
-            <th class="px-6 py-3 border-b border-white/5 text-right">Acciones</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-white/5">
           @if (loading) {
             @for (i of [1,2,3,4,5]; track i) {
               <tr class="animate-pulse">
-                <td colspan="7" class="px-6 py-4">
+                <td colspan="6" class="px-6 py-4">
                   <div class="h-4 bg-white/5 rounded w-full"></div>
                 </td>
               </tr>
             }
-          } @else if (sales.length === 0) {
+          } @else if (filteredSales.length === 0) {
             <tr>
-              <td colspan="7" class="text-center py-12 text-slate-500 italic">No hay actividad reciente en este turno.</td>
+              <td colspan="6" class="text-center py-12 text-slate-500 italic">
+                {{ searchTerm ? 'Sin resultados para "' + searchTerm + '".' : 'No hay actividad reciente en este turno.' }}
+              </td>
             </tr>
           } @else {
-            @for (sale of sales; track sale.id; let odd = $odd) {
+            @for (sale of filteredSales; track sale.id; let odd = $odd) {
               <tr [class.bg-white/[0.02]]="odd" class="hover:bg-pos-accent/5 transition-colors group cursor-default">
                 <td class="px-6 py-3 font-mono font-bold text-white tracking-tighter">#{{ sale.receiptNumber }}</td>
                 <td class="px-6 py-3 text-center">
@@ -161,16 +162,6 @@
                     <span class="w-1 h-1 rounded-full bg-current"></span>
                     {{ getStatusText(sale.statusId) }}
                   </span>
-                </td>
-                <td class="px-6 py-3 text-right">
-                  <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button class="p-1.5 hover:bg-white/10 rounded text-slate-400 hover:text-white transition-colors" title="Ver Detalles">
-                      <span class="icon-[ic--baseline-visibility] text-sm"></span>
-                    </button>
-                    <button class="p-1.5 hover:bg-white/10 rounded text-slate-400 hover:text-white transition-colors" title="Imprimir Ticket">
-                      <span class="icon-[ic--baseline-print] text-sm"></span>
-                    </button>
-                  </div>
                 </td>
               </tr>
             }
