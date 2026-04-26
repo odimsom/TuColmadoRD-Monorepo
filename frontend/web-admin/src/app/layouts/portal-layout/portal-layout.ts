@@ -1,4 +1,5 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -18,6 +19,7 @@ export class PortalLayout implements OnInit, OnDestroy {
   authService     = inject(AuthService);
   private sales   = inject(SaleService);
   private downloads = inject(DownloadService);
+  private destroyRef = inject(DestroyRef);
 
   isSidebarCollapsed = signal(false);
   connectionStatus   = signal<'online' | 'offline'>(navigator.onLine ? 'online' : 'offline');
@@ -27,7 +29,7 @@ export class PortalLayout implements OnInit, OnDestroy {
   showDownloadBanner = signal(
     localStorage.getItem(BANNER_DISMISSED_KEY) !== 'true'
   );
-  isLicenseExpired = computed(() => this.authService.isLicenseExpired());
+  isLicenseExpired = this.authService.isLicenseExpired;
 
   private readonly onOnline  = () => this.connectionStatus.set('online');
   private readonly onOffline = () => this.connectionStatus.set('offline');
@@ -47,7 +49,9 @@ export class PortalLayout implements OnInit, OnDestroy {
   }
 
   loadDownloadInfo(): void {
-    this.downloads.getLatestTestRelease().subscribe(info => this.downloadInfo.set(info));
+    this.downloads.getLatestTestRelease()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(info => this.downloadInfo.set(info));
   }
 
   dismissBanner(): void {
@@ -63,13 +67,15 @@ export class PortalLayout implements OnInit, OnDestroy {
   }
 
   loadShift(): void {
-    this.sales.getCurrentShift().subscribe({
-      next: shift => {
-        this.activeShift.set(shift);
-        this.startShiftTimer(shift.openedAt);
-      },
-      error: () => this.activeShift.set(null)
-    });
+    this.sales.getCurrentShift()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: shift => {
+          this.activeShift.set(shift);
+          this.startShiftTimer(shift.openedAt);
+        },
+        error: () => this.activeShift.set(null)
+      });
   }
 
   private startShiftTimer(openedAt: string): void {
