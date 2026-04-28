@@ -1,27 +1,52 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import {
   InventoryService,
   ProductDto,
   CreateProductRequest,
   AdjustStockRequest,
+  CategoryDto,
 } from '../../../core/services/inventory.service';
+import { ExpenseService } from '../../../core/services/expense.service';
+import { RdCurrencyPipe } from '../../../core/pipes';
 
 type ModalMode = 'create' | 'edit-price' | 'adjust-stock' | null;
+
+function salePriceValidator(group: AbstractControl): ValidationErrors | null {
+  const cost = group.get('costPrice')?.value ?? 0;
+  const sale = group.get('salePrice')?.value ?? 0;
+  return sale > 0 && sale < cost ? { saleBelowCost: true } : null;
+}
+
+const ERROR_MESSAGES: Record<string, string> = {
+  'product.sale_price_below_cost': 'El precio de venta no puede ser menor al costo.',
+  'product.category_required': 'Selecciona una categoría.',
+  'product.name_required': 'El nombre del producto es obligatorio.',
+  'product.invalid_price': 'El precio ingresado no es válido.',
+  'category.not_found': 'La categoría seleccionada no existe.',
+};
+
+function mapInventoryError(code?: string): string {
+  if (!code) return '';
+  return ERROR_MESSAGES[code] ?? code;
+}
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, RdCurrencyPipe],
   templateUrl: './inventory.html',
 })
 export class Inventory implements OnInit {
   private inventoryService = inject(InventoryService);
+  private expenseService = inject(ExpenseService);
   private fb = inject(FormBuilder);
 
   // State
   products = signal<ProductDto[]>([]);
+  categories = signal<CategoryDto[]>([]);
   loading = signal(true);
   saving = signal(false);
   errorMsg = signal<string | null>(null);
@@ -44,17 +69,27 @@ export class Inventory implements OnInit {
     salePrice: [0, [Validators.required, Validators.min(0.01)]],
     itbisRate: [0.18, [Validators.required, Validators.min(0), Validators.max(1)]],
     unitType: [1, Validators.required],
-    categoryId: ['00000000-0000-0000-0000-000000000001', Validators.required],
-  });
+    categoryId: ['', Validators.required],
+  }, { validators: salePriceValidator });
 
   priceForm = this.fb.nonNullable.group({
     newCostPrice: [0, [Validators.required, Validators.min(0)]],
     newSalePrice: [0, [Validators.required, Validators.min(0.01)]],
   });
 
+  adjustType = signal<'compra' | 'ajuste'>('ajuste');
+
   stockForm = this.fb.nonNullable.group({
-    delta: [0, [Validators.required]],
-    reason: ['', [Validators.required, Validators.minLength(3)]],
+    delta: [0, [Validators.required, Validators.min(0.001)]],
+    reason: [''],
+    expenseAmount: [0, [Validators.min(0)]],
+  });
+
+  calculatedExpense = computed(() => {
+    const product = this.selectedProduct();
+    const delta = this.stockForm.controls.delta.value ?? 0;
+    if (!product || this.adjustType() !== 'compra' || delta <= 0) return 0;
+    return Math.round(delta * product.costPrice * 100) / 100;
   });
 
   // Computed stats
@@ -64,6 +99,17 @@ export class Inventory implements OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
+    this.loadCategories();
+  }
+
+  loadingCategories = signal(false);
+
+  loadCategories(): void {
+    this.loadingCategories.set(true);
+    this.inventoryService.getCategories().subscribe({
+      next: (cats) => { this.categories.set(cats); this.loadingCategories.set(false); },
+      error: () => this.loadingCategories.set(false),
+    });
   }
 
   loadProducts(): void {
@@ -106,10 +152,18 @@ export class Inventory implements OnInit {
 
   // --- Modal openers ---
   openCreate(): void {
-    this.createForm.reset({ itbisRate: 0.18, unitType: 1, categoryId: '00000000-0000-0000-0000-000000000001' });
     this.selectedProduct.set(null);
-    this.modalMode.set('create');
     this.errorMsg.set(null);
+    this.modalMode.set('create');
+    this.loadingCategories.set(true);
+    this.inventoryService.getCategories().subscribe({
+      next: (cats) => {
+        this.categories.set(cats);
+        this.loadingCategories.set(false);
+        this.createForm.reset({ itbisRate: 0.18, unitType: 1, categoryId: cats[0]?.id ?? '' });
+      },
+      error: () => this.loadingCategories.set(false),
+    });
   }
 
   openEditPrice(product: ProductDto): void {
@@ -121,9 +175,15 @@ export class Inventory implements OnInit {
 
   openAdjustStock(product: ProductDto): void {
     this.selectedProduct.set(product);
-    this.stockForm.reset({ delta: 0, reason: '' });
+    this.adjustType.set('ajuste');
+    this.stockForm.reset({ delta: 0, reason: '', expenseAmount: 0 });
     this.modalMode.set('adjust-stock');
     this.errorMsg.set(null);
+  }
+
+  setAdjustType(type: 'compra' | 'ajuste'): void {
+    this.adjustType.set(type);
+    this.stockForm.patchValue({ reason: '', expenseAmount: 0 });
   }
 
   closeModal(): void {
@@ -147,7 +207,7 @@ export class Inventory implements OnInit {
     };
     this.inventoryService.createProduct(cmd).subscribe({
       next: () => { this.saving.set(false); this.closeModal(); this.loadProducts(); },
-      error: (err) => { this.saving.set(false); this.errorMsg.set(err?.error?.message || 'Error creando producto.'); }
+      error: (err) => { this.saving.set(false); this.errorMsg.set(mapInventoryError(err?.error?.error ?? err?.error?.message) || 'Error creando producto.'); }
     });
   }
 
@@ -162,12 +222,39 @@ export class Inventory implements OnInit {
   }
 
   submitStock(): void {
-    if (this.stockForm.invalid || !this.selectedProduct()) return;
-    this.saving.set(true);
+    const product = this.selectedProduct();
+    if (!product) return;
     const v = this.stockForm.getRawValue();
-    const req: AdjustStockRequest = { delta: v.delta, reason: v.reason };
-    this.inventoryService.adjustStock(this.selectedProduct()!.productId, req).subscribe({
-      next: () => { this.saving.set(false); this.closeModal(); this.loadProducts(); },
+    if (v.delta <= 0 && this.adjustType() === 'compra') {
+      this.errorMsg.set('La cantidad debe ser mayor a 0 para registrar una compra.');
+      return;
+    }
+    if (this.adjustType() === 'ajuste' && !v.reason.trim()) {
+      this.stockForm.controls.reason.setErrors({ required: true });
+      this.stockForm.markAllAsTouched();
+      return;
+    }
+    this.saving.set(true);
+    const reason = this.adjustType() === 'compra'
+      ? `Compra de ${v.delta} ${product.unitTypeName ?? 'unidades'} de ${product.name}`
+      : v.reason;
+    const req: AdjustStockRequest = { delta: v.delta, reason };
+    this.inventoryService.adjustStock(product.productId, req).subscribe({
+      next: () => {
+        if (this.adjustType() === 'compra') {
+          const amount = v.expenseAmount > 0 ? v.expenseAmount : this.calculatedExpense();
+          this.expenseService.registerExpense({
+            amount,
+            category: 'Compra de Inventario',
+            description: reason,
+          }).subscribe({
+            next: () => { this.saving.set(false); this.closeModal(); this.loadProducts(); },
+            error: () => { this.saving.set(false); this.closeModal(); this.loadProducts(); },
+          });
+        } else {
+          this.saving.set(false); this.closeModal(); this.loadProducts();
+        }
+      },
       error: (err) => { this.saving.set(false); this.errorMsg.set(err?.error?.message || 'Error ajustando stock.'); }
     });
   }

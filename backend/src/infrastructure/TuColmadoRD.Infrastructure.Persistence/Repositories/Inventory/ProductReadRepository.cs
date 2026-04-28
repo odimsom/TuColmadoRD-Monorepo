@@ -22,7 +22,7 @@ public sealed class ProductReadRepository : IProductReadRepository
     {
         return await _dbContext.Products
             .AsNoTracking()
-            .Where(p => p.Id == id && p.TenantId == tenantId)
+            .Where(p => p.Id == id && p.TenantId.Value == tenantId)
             .Join(
                 _dbContext.Categories.AsNoTracking(),
                 p => p.CategoryId,
@@ -50,7 +50,7 @@ public sealed class ProductReadRepository : IProductReadRepository
 
         var baseQuery = _dbContext.Products
             .AsNoTracking()
-            .Where(p => p.TenantId == tenantId);
+            .Where(p => p.TenantId.Value == tenantId);
 
         if (!query.IncludeInactive)
         {

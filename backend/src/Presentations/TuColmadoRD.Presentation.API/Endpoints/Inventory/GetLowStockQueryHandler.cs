@@ -23,13 +23,13 @@ internal sealed class GetLowStockQueryHandler
     public async Task<OperationResult<LowStockResponse, DomainError>> Handle(
         GetLowStockQuery request, CancellationToken cancellationToken)
     {
-        var tenantId  = _tenantProvider.TenantId;
+        var tenantId  = (Guid)_tenantProvider.TenantId;
         var threshold = Math.Max(0, request.Threshold);
 
         var items = await _dbContext.Set<TuColmadoRD.Core.Domain.Entities.Inventory.Product>()
             .AsNoTracking()
             .Where(p =>
-                p.TenantId == tenantId &&
+                p.TenantId.Value == tenantId &&
                 p.IsActive &&
                 p.StockQuantity <= threshold)
             .OrderBy(p => p.StockQuantity)

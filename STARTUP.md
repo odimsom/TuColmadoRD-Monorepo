@@ -54,11 +54,7 @@ docker compose ps   # ambos "healthy"
 ```bash
 cd auth
 npm install
-cp ../.env .env          # ajusta si usas puertos distintos
-# El .env del servicio usa MONGODB_URI, JWT_SECRET, PORT
-MONGODB_URI="mongodb://root:1234@localhost:27019/tu_colmado_auth?authSource=admin" \
-JWT_SECRET="dev-secret-change-in-production" \
-PORT=5239 \
+# auth/.env ya tiene las variables correctas (JWT_SECRET, MONGODB_URI, PORT)
 npm run dev
 ```
 
@@ -103,10 +99,11 @@ dotnet run
 
 Variables requeridas:
 ```
-GatewayOptions__AuthApiUrl=http://localhost:5239
-GatewayOptions__CoreApiUrl=http://localhost:5229
-GatewayOptions__JwtSecret=dev-secret-change-in-production
+GatewayOptions__AuthApiUrl=http://localhost:3000
+GatewayOptions__CoreApiUrl=http://localhost:5070
+GatewayOptions__JwtSecret=dominican-street-premium-secret-key-2026
 ```
+> En desarrollo local los valores en `appsettings.json` ya son correctos; no se necesitan las variables de entorno.
 
 Escucha en `:5032`.
 

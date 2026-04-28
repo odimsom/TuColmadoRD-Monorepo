@@ -1043,6 +1043,14 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
                                 .HasColumnType("character varying(20)")
                                 .HasColumnName("Address_HouseNumber");
 
+                            b1.Property<double?>("Latitude")
+                                .HasColumnType("double precision")
+                                .HasColumnName("Address_Latitude");
+
+                            b1.Property<double?>("Longitude")
+                                .HasColumnType("double precision")
+                                .HasColumnName("Address_Longitude");
+
                             b1.Property<string>("Province")
                                 .IsRequired()
                                 .HasMaxLength(100)
@@ -1547,6 +1555,14 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
                                 .HasMaxLength(20)
                                 .HasColumnType("character varying(20)")
                                 .HasColumnName("Destination_HouseNumber");
+
+                            b1.Property<double?>("Latitude")
+                                .HasColumnType("double precision")
+                                .HasColumnName("Destination_Latitude");
+
+                            b1.Property<double?>("Longitude")
+                                .HasColumnType("double precision")
+                                .HasColumnName("Destination_Longitude");
 
                             b1.Property<string>("Province")
                                 .IsRequired()

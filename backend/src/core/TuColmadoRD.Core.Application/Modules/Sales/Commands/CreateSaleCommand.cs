@@ -50,6 +50,18 @@ public sealed record CreateSaleResult(
     IReadOnlyList<SaleItemResult> Items);
 
 /// <summary>
+/// Request address for delivery.
+/// </summary>
+public sealed record DeliveryAddressRequest(
+    string Province,
+    string Sector,
+    string Street,
+    string Reference,
+    string? HouseNumber = null,
+    double? Latitude = null,
+    double? Longitude = null);
+
+/// <summary>
 /// Command to create a new sale with items and payments.
 /// </summary>
 public sealed record CreateSaleCommand(
@@ -60,5 +72,6 @@ public sealed record CreateSaleCommand(
     /// RNC del comprador (9 dígitos). Si se provee, se emite B01 (crédito fiscal).
     /// Si es null, se emite B02 (consumidor final).
     /// </summary>
-    string? BuyerRnc = null
+    string? BuyerRnc = null,
+    DeliveryAddressRequest? DeliveryAddress = null
 ) : IRequest<OperationResult<CreateSaleResult, DomainError>>, ICommandMarker;

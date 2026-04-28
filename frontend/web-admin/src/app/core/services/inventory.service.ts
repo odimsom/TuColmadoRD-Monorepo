@@ -44,6 +44,11 @@ export interface AdjustStockRequest {
   reason: string;
 }
 
+export interface CategoryDto {
+  id: string;
+  name: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
   private gateway = inject(GatewayService);
@@ -81,5 +86,21 @@ export class InventoryService {
 
   getLowStock(threshold = 5): Observable<{ count: number; items: { productId: string; name: string; stockQuantity: number }[] }> {
     return this.gateway.get('/api/v1/inventory/products/low-stock', { threshold });
+  }
+
+  getCategories(): Observable<CategoryDto[]> {
+    return this.gateway.get<CategoryDto[]>('/api/v1/inventory/categories');
+  }
+
+  createCategory(name: string): Observable<{ id: string }> {
+    return this.gateway.post<{ id: string }>('/api/v1/inventory/categories', { name });
+  }
+
+  seedDefaultCategories(): Observable<{ created: number }> {
+    return this.gateway.post<{ created: number }>('/api/v1/inventory/categories/seed-defaults', {});
+  }
+
+  deactivateCategory(id: string): Observable<void> {
+    return this.gateway.delete(`/api/v1/inventory/categories/${id}`);
   }
 }

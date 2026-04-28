@@ -18,6 +18,7 @@ public static class SalesEndpoints
 
         group.MapPost(string.Empty, CreateSale)
             .WithName("CreateSale")
+            .AllowAnonymous()
             .WithOpenApi();
 
         group.MapPost("/{saleId:guid}/void", VoidSale)
@@ -164,7 +165,7 @@ public static class SalesEndpoints
             .ToList();
 
         var totalPages = (int)Math.Ceiling((double)paged.TotalCount / paged.PageSize);
-        var response = new PagedSalesResponse(items, paged.PageNumber, paged.PageSize, paged.TotalCount, totalPages);
+        var response = new PagedSalesResponse(items, paged.PageNumber, paged.PageSize, paged.TotalCount, totalPages, paged.TotalRevenue);
 
         return TypedResults.Ok(response);
     }

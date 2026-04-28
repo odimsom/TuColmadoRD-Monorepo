@@ -35,8 +35,8 @@ services:
       NODE_ENV: production
       PORT: 3000
       MONGODB_URI: mongodb://root:1234@mongo:27017/tu_colmado_auth?authSource=admin
-      JWT_SECRET: ${JWT_SECRET:-change-me}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      JWT_SECRET: ${JWT_SECRET:-dominican-street-premium-secret-key-2026}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
     depends_on:
       - mongo
     ports:
@@ -83,7 +83,9 @@ services:
     environment:
       GatewayOptions__AuthApiUrl: http://auth:3000
       GatewayOptions__CoreApiUrl: http://api:8080
-      GatewayOptions__JwtSecret: ${JWT_SECRET:-change-me}
+      GatewayOptions__JwtSecret: ${JWT_SECRET:-dominican-street-premium-secret-key-2026}
+      GatewayOptions__AllowedOrigins__0: http://localhost:5209
+      GatewayOptions__AllowedOrigins__1: ${PUBLIC_WEB_DOMAIN:-https://tucolmadord.synsetsolutions.com}
     depends_on:
       - auth
       - api

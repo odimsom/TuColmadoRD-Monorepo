@@ -84,4 +84,5 @@ public sealed record PagedSalesResponse(
     int Page,
     int PageSize,
     int TotalCount,
-    int TotalPages);
+    int TotalPages,
+    decimal TotalRevenue);

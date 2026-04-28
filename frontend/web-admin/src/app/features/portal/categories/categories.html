@@ -1,0 +1,89 @@
+<div class="px-8 py-8 space-y-6 animate-in fade-in duration-500">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-white uppercase tracking-tighter">Categorías</h1>
+      <p class="text-slate-500 text-xs mt-1">Gestiona las categorías de tus productos</p>
+    </div>
+    <button
+      (click)="seedDefaults()"
+      [disabled]="seeding()"
+      class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-2 self-start sm:self-auto disabled:opacity-50">
+      <span class="icon-[ic--baseline-auto-awesome] text-sm"></span>
+      {{ seeding() ? 'Inicializando...' : 'Inicializar por Defecto' }}
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  @if (errorMsg()) {
+    <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">{{ errorMsg() }}</div>
+  }
+  @if (successMsg()) {
+    <div class="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-xs">{{ successMsg() }}</div>
+  }
+
+  <!-- Add Category Form -->
+  <div class="bg-pos-surface border border-pos-border rounded-xl p-6">
+    <h2 class="text-xs font-black text-white uppercase tracking-widest mb-4">Nueva Categoría</h2>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="flex gap-3">
+      <input
+        formControlName="name"
+        type="text"
+        placeholder="Ej: Bebidas, Alimentos, Limpieza..."
+        class="flex-1 bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
+      />
+      <button
+        type="submit"
+        [disabled]="saving() || form.invalid"
+        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-all disabled:opacity-50 flex items-center gap-2">
+        <span class="icon-[ic--baseline-add] text-sm"></span>
+        {{ saving() ? 'Guardando...' : 'Agregar' }}
+      </button>
+    </form>
+    @if (form.controls.name.invalid && form.controls.name.touched) {
+      <p class="text-xs text-red-400 mt-1.5">El nombre debe tener entre 2 y 80 caracteres.</p>
+    }
+  </div>
+
+  <!-- Categories List -->
+  <div class="bg-pos-surface border border-pos-border rounded-xl overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-white/5 flex items-center gap-3 bg-[#1e293b]/20">
+      <span class="icon-[ic--baseline-label] text-blue-500"></span>
+      <h2 class="text-xs font-black text-white uppercase tracking-widest">
+        Categorías Activas · {{ categories().length }}
+      </h2>
+    </div>
+
+    @if (loading()) {
+      <div class="p-6 space-y-2">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="h-10 bg-white/5 rounded-lg animate-pulse"></div>
+        }
+      </div>
+    } @else if (categories().length === 0) {
+      <div class="text-center py-16 text-slate-500">
+        <span class="icon-[ic--baseline-label-off] text-4xl block mb-3 opacity-20"></span>
+        <p class="text-sm font-bold">Sin categorías</p>
+        <p class="text-xs mt-1">Haz clic en "Inicializar por Defecto" para agregar las categorías estándar de un colmado.</p>
+      </div>
+    } @else {
+      <ul class="divide-y divide-white/5">
+        @for (cat of categories(); track cat.id) {
+          <li class="flex items-center justify-between px-6 py-3 hover:bg-white/[0.02] group transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="w-2 h-2 rounded-full bg-blue-500/60 shrink-0"></span>
+              <span class="text-sm font-medium text-white">{{ cat.name }}</span>
+            </div>
+            <button
+              (click)="deactivate(cat)"
+              title="Eliminar categoría"
+              class="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-all">
+              <span class="icon-[ic--baseline-delete-outline] text-sm"></span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>

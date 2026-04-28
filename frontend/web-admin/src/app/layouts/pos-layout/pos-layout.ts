@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -7,13 +7,16 @@ import {
   SaleService, ShiftDto, CreateSaleResult
 } from '../../core/services/sale.service';
 import { InventoryService, ProductDto } from '../../core/services/inventory.service';
+import { CustomerService, CustomerSummary } from '../../core/services/customer.service';
 import { SettingsService, TenantProfileDto } from '../../core/services/settings.service';
+import { RdCurrencyPipe, RncPipe } from '../../core/pipes';
 
 export interface CartItem {
   productId: string;
   name: string;
   salePrice: number;
   itbisRate: number;
+  unitTypeId: number;
   quantity: number;
   lineSubtotal: number;
   lineItbis: number;
@@ -21,25 +24,29 @@ export interface CartItem {
 }
 
 /** Payment method IDs as defined in the backend PaymentMethod enum. */
-const PM = { Cash: 1, Card: 2, Transfer: 3 } as const;
+const PM = { Cash: 1, Card: 2, Transfer: 3, Credit: 4, Delivery: 5 } as const;
 
 @Component({
   selector: 'app-pos-layout',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RdCurrencyPipe, RncPipe],
   templateUrl: './pos-layout.html',
   styleUrl: './pos-layout.scss',
 })
 export class PosLayout implements OnInit, OnDestroy {
-  private auth     = inject(AuthService);
-  private sales    = inject(SaleService);
-  private inv      = inject(InventoryService);
-  private settings = inject(SettingsService);
-  private router   = inject(Router);
-  private fb       = inject(FormBuilder);
+  private auth      = inject(AuthService);
+  private sales     = inject(SaleService);
+  private inv       = inject(InventoryService);
+  private customers = inject(CustomerService);
+  private settings  = inject(SettingsService);
+  private router    = inject(Router);
+  private fb        = inject(FormBuilder);
 
   // ── Exposed for template ──────────────────────────
   authService = this.auth;
+
+  @ViewChild('quickSaleAmountInput') quickSaleAmountInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('cashTenderedInput') cashTenderedInput?: ElementRef<HTMLInputElement>;
 
   // ── Data signals ─────────────────────────────────
   catalog       = signal<ProductDto[]>([]);
@@ -47,22 +54,97 @@ export class PosLayout implements OnInit, OnDestroy {
   activeShift   = signal<ShiftDto | null>(null);
   lastSale      = signal<CreateSaleResult | null>(null);
   tenantProfile = signal<TenantProfileDto | null>(null);
+  allCustomers  = signal<CustomerSummary[]>([]);
 
   // ── UI state ─────────────────────────────────────
-  loading            = signal(false);
-  saving             = signal(false);
-  catalogSearch      = signal('');
-  selectedCategory   = signal<string | null>(null);
-  showOpenShiftModal  = signal(false);
-  showCloseShiftModal = signal(false);
-  showPaymentModal    = signal(false);
-  showReceiptModal    = signal(false);
-  errorMsg           = signal<string | null>(null);
+  loading             = signal(false);
+  saving              = signal(false);
+  catalogSearch       = signal('');
+  selectedCategory    = signal<string | null>(null);
+  showOpenShiftModal   = signal(false);
+  showCloseShiftModal  = signal(false);
+  showPaymentModal     = signal(false);
+  showReceiptModal     = signal(false);
+  showAddCustomerModal = signal(false);
+  showQuickSaleModal   = signal(false);
+  errorMsg            = signal<string | null>(null);
 
   // ── Payment state ─────────────────────────────────
-  paymentMethod  = signal<'cash' | 'card' | 'transfer'>('cash');
+  paymentMethod  = signal<'cash' | 'card' | 'transfer' | 'credit' | 'delivery'>('cash');
   cashTendered   = signal(0);
   buyerRnc       = signal('');
+  selectedCustomer = signal<CustomerSummary | null>(null);
+  customerSearchQuery = signal('');
+
+  // ── Quick Sale ────────────────────────────────────
+  quickSaleSearch = signal('');
+  quickSaleAmount = signal<number | null>(null);
+  selectedQuickProduct = signal<ProductDto | null>(null);
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if (event.key === 'F2') {
+      event.preventDefault();
+      if (this.showQuickSaleModal()) {
+         this.closeModals();
+      } else {
+         this.openQuickSaleModal();
+      }
+    } else if (event.key === 'F4') {
+      event.preventDefault();
+      if (!this.showPaymentModal()) this.openPaymentModal();
+    } else if (event.key === 'F8') {
+      event.preventDefault();
+      if (this.showReceiptModal()) this.printReceipt();
+    } else if (event.key === 'F9') {
+      event.preventDefault();
+      if (this.showPaymentModal()) this.submitSale();
+    } else if (event.key === 'Escape') {
+      this.closeModals();
+    }
+  }
+
+  closeModals(): void {
+    this.showQuickSaleModal.set(false);
+    this.showPaymentModal.set(false);
+    this.showReceiptModal.set(false);
+    this.showAddCustomerModal.set(false);
+    this.showOpenShiftModal.set(false);
+    this.showCloseShiftModal.set(false);
+  }
+
+  openQuickSaleModal(): void {
+    if (!this.activeShift()) {
+      this.showOpenShiftModal.set(true);
+      return;
+    }
+    this.showQuickSaleModal.set(true);
+    this.quickSaleAmount.set(null);
+    this.quickSaleSearch.set('');
+    this.selectedQuickProduct.set(null);
+    setTimeout(() => this.quickSaleAmountInput?.nativeElement?.focus(), 100);
+  }
+
+  topQuickProducts = computed(() => {
+    const q = this.quickSaleSearch().toLowerCase().trim();
+    const sorted = [...this.catalog()].sort((a, b) => b.stockQuantity - a.stockQuantity);
+    if (!q) return sorted.slice(0, 8);
+    return sorted.filter(p => p.name.toLowerCase().includes(q)).slice(0, 8);
+  });
+
+  submitQuickSale(): void {
+    const p = this.selectedQuickProduct();
+    const amt = this.quickSaleAmount();
+    if (!p || !amt || amt <= 0) return;
+
+    // Calculate quantity based on the amount the user wants to pay
+    // Price = SalePrice + (SalePrice * ItbisRate) = SalePrice * (1 + ItbisRate)
+    const unitPriceWithTax = p.salePrice * (1 + p.itbisRate);
+    const quantity = amt / unitPriceWithTax;
+
+    this.addToCart(p, quantity);
+    this.closeModals();
+  }
 
   // ── Clock ─────────────────────────────────────────
   clock = signal(new Date());
@@ -77,6 +159,32 @@ export class PosLayout implements OnInit, OnDestroy {
   closeShiftForm = this.fb.group({
     actualCashAmount: [0, [Validators.required, Validators.min(0)]],
     notes: ['']
+  });
+
+  customerForm = this.fb.group({
+    fullName: ['', [Validators.required, Validators.minLength(3)]],
+    phone:    [''],
+    documentId: ['', [Validators.required]],
+    creditLimit: [5000, [Validators.required, Validators.min(0)]],
+    province: [''],
+    sector: [''],
+    street: [''],
+    houseNumber: [''],
+    reference: ['']
+  });
+
+  deliveryAddressForm = this.fb.group({
+    province: ['', Validators.required],
+    sector: ['', Validators.required],
+    street: ['', Validators.required],
+    houseNumber: [''],
+    reference: ['', Validators.required]
+  });
+
+  expectedCash = computed(() => {
+    const s = this.activeShift();
+    if (!s) return 0;
+    return s.openingCashAmount + s.totalSalesAmount;
   });
 
   // ── Computed ──────────────────────────────────────
@@ -95,6 +203,15 @@ export class PosLayout implements OnInit, OnDestroy {
       if (!seen.has(p.categoryId)) seen.set(p.categoryId, p.categoryName);
     }
     return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
+  });
+
+  filteredCustomers = computed(() => {
+    const q = this.customerSearchQuery().toLowerCase().trim();
+    if (!q) return this.allCustomers().slice(0, 10);
+    return this.allCustomers().filter(c => 
+      c.fullName.toLowerCase().includes(q) || 
+      c.phone?.includes(q)
+    ).slice(0, 10);
   });
 
   cartSubtotal = computed(() => this.cartItems().reduce((s, i) => s + i.lineSubtotal, 0));
@@ -126,6 +243,7 @@ export class PosLayout implements OnInit, OnDestroy {
     this.loadCatalog();
     this.loadShift();
     this.loadTenantProfile();
+    this.loadCustomers();
     this.clockTimer = setInterval(() => this.clock.set(new Date()), 1000);
     // Pre-fill cashier name
     const u = this.auth.currentUser();
@@ -165,29 +283,47 @@ export class PosLayout implements OnInit, OnDestroy {
     });
   }
 
+  loadCustomers(): void {
+    this.customers.getCustomers().subscribe({
+      next: data => this.allCustomers.set(data),
+      error: () => {}
+    });
+  }
+
   // ── Cart operations ───────────────────────────────
-  addToCart(product: ProductDto): void {
+  updateStock(productId: string, delta: number): void {
+    this.catalog.update(cats => cats.map(p => 
+      p.productId === productId ? { ...p, stockQuantity: p.stockQuantity + delta } : p
+    ));
+  }
+
+  addToCart(product: ProductDto, customQuantity?: number): void {
     if (!this.activeShift()) {
       this.showOpenShiftModal.set(true);
       return;
     }
+    
+    const qtyToAdd = customQuantity ?? 1;
     const items = this.cartItems();
     const idx   = items.findIndex(i => i.productId === product.productId);
+    
     if (idx >= 0) {
-      this.setQuantity(idx, items[idx].quantity + 1);
+      this.setQuantity(idx, items[idx].quantity + qtyToAdd);
     } else {
-      const sub   = product.salePrice;
+      const sub   = product.salePrice * qtyToAdd;
       const itbis = sub * product.itbisRate;
       this.cartItems.set([...items, {
         productId:   product.productId,
         name:        product.name,
         salePrice:   product.salePrice,
         itbisRate:   product.itbisRate,
-        quantity:    1,
+        unitTypeId:  product.unitTypeId,
+        quantity:    qtyToAdd,
         lineSubtotal: sub,
         lineItbis:   itbis,
         lineTotal:   sub + itbis
       }]);
+      this.updateStock(product.productId, -qtyToAdd);
     }
     this.syncCashTendered();
   }
@@ -196,22 +332,37 @@ export class PosLayout implements OnInit, OnDestroy {
     if (qty <= 0) { this.removeItem(index); return; }
     const items   = [...this.cartItems()];
     const item    = items[index];
+    
+    const delta   = qty - item.quantity;
+    
     const sub     = item.salePrice * qty;
     const itbis   = sub * item.itbisRate;
     items[index]  = { ...item, quantity: qty, lineSubtotal: sub, lineItbis: itbis, lineTotal: sub + itbis };
     this.cartItems.set(items);
+    
+    this.updateStock(item.productId, -delta);
     this.syncCashTendered();
   }
 
   removeItem(index: number): void {
+    const item = this.cartItems()[index];
+    this.updateStock(item.productId, item.quantity);
     this.cartItems.update(items => items.filter((_, i) => i !== index));
     this.syncCashTendered();
+  }
+
+  cancelSale(): void {
+    for (const item of this.cartItems()) {
+      this.updateStock(item.productId, item.quantity);
+    }
+    this.clearCart();
   }
 
   clearCart(): void {
     this.cartItems.set([]);
     this.cashTendered.set(0);
     this.buyerRnc.set('');
+    this.selectedCustomer.set(null);
   }
 
   private syncCashTendered(): void {
@@ -243,6 +394,12 @@ export class PosLayout implements OnInit, OnDestroy {
     });
   }
 
+  openCloseShiftModal(): void {
+    this.closeShiftForm.patchValue({ actualCashAmount: this.expectedCash(), notes: '' });
+    this.errorMsg.set(null);
+    this.showCloseShiftModal.set(true);
+  }
+
   submitCloseShift(): void {
     const shift = this.activeShift();
     if (!shift || this.closeShiftForm.invalid || this.saving()) return;
@@ -265,6 +422,63 @@ export class PosLayout implements OnInit, OnDestroy {
     });
   }
 
+  // ── Customers ─────────────────────────────────────
+  selectCustomer(c: CustomerSummary): void {
+    this.selectedCustomer.set(c);
+    this.customerSearchQuery.set('');
+  }
+
+  submitAddCustomer(): void {
+    if (this.customerForm.invalid || this.saving()) return;
+    this.saving.set(true);
+    this.errorMsg.set(null);
+    const v = this.customerForm.value;
+    
+    let address = null;
+    if (v.province && v.sector && v.street && v.reference) {
+      address = {
+        province: v.province,
+        sector: v.sector,
+        street: v.street,
+        reference: v.reference,
+        houseNumber: v.houseNumber || undefined
+      };
+    }
+
+    this.customers.createCustomer({
+      fullName: v.fullName!,
+      documentId: v.documentId!,
+      phone: v.phone || null,
+      creditLimit: v.creditLimit!,
+      address: address
+    }).subscribe({
+      next: res => {
+        this.loadCustomers();
+        // Auto-select the newly created customer
+        this.selectedCustomer.set({
+          customerId: res.customerId,
+          fullName: v.fullName!,
+          phone: v.phone || '',
+          balance: 0,
+          creditLimit: v.creditLimit!,
+          isActive: true,
+          province: v.province,
+          sector: v.sector,
+          street: v.street,
+          reference: v.reference,
+          houseNumber: v.houseNumber || null
+        });
+        this.showAddCustomerModal.set(false);
+        this.customerForm.reset({ creditLimit: 5000 });
+        this.saving.set(false);
+      },
+      error: e => {
+        this.errorMsg.set(e?.error?.detail ?? 'Error al crear cliente.');
+        this.saving.set(false);
+      }
+    });
+  }
+
   // ── Checkout ──────────────────────────────────────
   openPaymentModal(): void {
     if (!this.cartItems().length || !this.activeShift()) return;
@@ -276,21 +490,67 @@ export class PosLayout implements OnInit, OnDestroy {
   submitSale(): void {
     if (this.saving() || !this.cartItems().length) return;
     const total   = this.cartTotal();
+    
+    // Validations for Credit
+    if (this.paymentMethod() === 'credit' && !this.selectedCustomer()) {
+      this.errorMsg.set('Debes seleccionar un cliente para ventas a crédito.');
+      return;
+    }
+
     const paid    = this.paymentMethod() === 'cash' ? this.cashTendered() : total;
-    if (paid < total) {
+    if (paid < total && this.paymentMethod() !== 'credit' && this.paymentMethod() !== 'delivery') {
       this.errorMsg.set('El monto recibido es menor al total.');
       return;
     }
+
     this.saving.set(true);
     this.errorMsg.set(null);
+    
     const methodId = this.paymentMethod() === 'cash' ? PM.Cash
                    : this.paymentMethod() === 'card' ? PM.Card
-                   : PM.Transfer;
+                   : this.paymentMethod() === 'transfer' ? PM.Transfer
+                   : this.paymentMethod() === 'credit' ? PM.Credit
+                   : PM.Delivery;
+
+    let deliveryAddress = null;
+    if (this.paymentMethod() === 'delivery') {
+      const c = this.selectedCustomer();
+      if (c && c.province && c.sector && c.street && c.reference) {
+        deliveryAddress = {
+          province: c.province,
+          sector: c.sector,
+          street: c.street,
+          reference: c.reference,
+          houseNumber: c.houseNumber || undefined,
+          latitude: c.latitude || undefined,
+          longitude: c.longitude || undefined
+        };
+      } else if (this.deliveryAddressForm.valid) {
+        const v = this.deliveryAddressForm.value;
+        deliveryAddress = {
+          province: v.province!,
+          sector: v.sector!,
+          street: v.street!,
+          reference: v.reference!,
+          houseNumber: v.houseNumber || undefined
+        };
+      } else {
+        this.errorMsg.set('Para delivery, selecciona un cliente con dirección o llena los datos de envío.');
+        this.saving.set(false);
+        return;
+      }
+    }
+
     this.sales.createSale({
       items:    this.cartItems().map(i => ({ productId: i.productId, quantity: i.quantity })),
-      payments: [{ paymentMethodId: methodId, amount: paid }],
+      payments: [{ 
+        paymentMethodId: methodId, 
+        amount: total, // For credit/delivery, the amount registered is the total
+        customerId: this.selectedCustomer()?.customerId 
+      }],
       buyerRnc: this.buyerRnc() || null,
-      notes:    null
+      deliveryAddress: deliveryAddress,
+      notes:    this.paymentMethod() === 'credit' ? `Fiado a ${this.selectedCustomer()?.fullName}` : null
     }).subscribe({
       next: result => {
         this.lastSale.set(result);
@@ -311,12 +571,6 @@ export class PosLayout implements OnInit, OnDestroy {
   }
 
   // ── Helpers ───────────────────────────────────────
-  pesos(v: number): string {
-    return new Intl.NumberFormat('es-DO', {
-      style: 'currency', currency: 'DOP', minimumFractionDigits: 2
-    }).format(v);
-  }
-
   fmtDate(d: Date | string = new Date()): string {
     return new Intl.DateTimeFormat('es-DO', {
       day: '2-digit', month: 'short', year: 'numeric',
@@ -334,7 +588,7 @@ export class PosLayout implements OnInit, OnDestroy {
 
   setSearch(v: string): void { this.catalogSearch.set(v); }
   selectCategory(id: string | null): void { this.selectedCategory.set(id); }
-  setPaymentMethod(m: 'cash' | 'card' | 'transfer'): void { this.paymentMethod.set(m); }
+  setPaymentMethod(m: 'cash' | 'card' | 'transfer' | 'credit' | 'delivery'): void { this.paymentMethod.set(m); }
   setCashTendered(v: number): void { this.cashTendered.set(v); }
   setBuyerRnc(v: string): void { this.buyerRnc.set(v); }
 }

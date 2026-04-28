@@ -1,3 +1,5 @@
+using TuColmadoRD.Core.Domain.Base;
+
 namespace TuColmadoRD.Core.Domain.Entities.Sales.Events;
 
 public sealed record ShiftOpenedDomainEvent(
@@ -6,4 +8,4 @@ public sealed record ShiftOpenedDomainEvent(
     Guid TerminalId,
     decimal OpeningCash,
     string CashierName,
-    DateTime OccurredAt);
+    DateTime OccurredAt) : IDomainEvent;

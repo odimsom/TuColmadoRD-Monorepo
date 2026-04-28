@@ -3,17 +3,20 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SaleService, SaleSummary } from '../../../core/services/sale.service';
 import { InventoryService } from '../../../core/services/inventory.service';
+import { CustomerService } from '../../../core/services/customer.service';
+import { RdCurrencyPipe } from '../../../core/pipes';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, RdCurrencyPipe],
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit, OnDestroy {
   private saleService = inject(SaleService);
   private inventoryService = inject(InventoryService);
+  private customerService = inject(CustomerService);
   private subs = new Subscription();
 
   sales = [] as SaleSummary[];
@@ -36,6 +39,9 @@ export class Dashboard implements OnInit, OnDestroy {
     activeCustomers: 0
   };
 
+  debtStats = { customersWithDebt: 0, totalDebt: 0 };
+  debtLoading = true;
+
   lowStock: { count: number; items: { productId: string; name: string; stockQuantity: number }[] } = { count: 0, items: [] };
   lowStockLoading = true;
 
@@ -53,6 +59,7 @@ export class Dashboard implements OnInit, OnDestroy {
     this.loadSales();
     this.loadShift();
     this.loadLowStock();
+    this.loadDebtStats();
   }
 
   ngOnDestroy(): void {
@@ -65,12 +72,27 @@ export class Dashboard implements OnInit, OnDestroy {
       next: (res) => {
         this.sales = res.items;
         this.stats.totalSales = res.totalCount;
-        this.stats.totalRevenue = res.items.reduce((acc, s) => acc + s.totalAmount, 0);
+        this.stats.totalRevenue = res.totalRevenue;
         this.loading = false;
       },
       error: (err) => {
         this.loading = false;
       }
+    });
+  }
+
+  loadDebtStats(): void {
+    this.debtLoading = true;
+    this.customerService.getCustomers().subscribe({
+      next: (customers) => {
+        const debtors = customers.filter(c => c.balance < 0);
+        this.debtStats = {
+          customersWithDebt: debtors.length,
+          totalDebt: debtors.reduce((sum, c) => sum + Math.abs(c.balance), 0),
+        };
+        this.debtLoading = false;
+      },
+      error: () => { this.debtLoading = false; },
     });
   }
 

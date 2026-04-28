@@ -88,14 +88,27 @@
         }
       </a>
 
+      <a routerLink="/portal/categories" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-label] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
+        @if (!isSidebarCollapsed()) {
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Categorías</span>
+        }
+      </a>
+
       <a routerLink="/portal/customers" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
         <span class="icon-[ic--baseline-people] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
         @if (!isSidebarCollapsed()) {
-          <div class="flex items-center justify-between flex-1 animate-in fade-in duration-200">
-            <span class="text-[0.7rem] font-black uppercase tracking-widest">Fiados</span>
-            <span class="text-[0.5rem] font-black px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20 uppercase tracking-wide">Pronto</span>
-          </div>
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Fiados</span>
+        }
+      </a>
+
+      <a routerLink="/portal/expenses" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-money-off] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
+        @if (!isSidebarCollapsed()) {
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Gastos</span>
         }
       </a>
 

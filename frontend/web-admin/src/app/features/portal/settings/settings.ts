@@ -2,11 +2,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { SettingsService, TenantProfileDto } from '../../../core/services/settings.service';
+import { RncPipe, RdPhonePipe } from '../../../core/pipes';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RncPipe, RdPhonePipe],
   templateUrl: './settings.html',
 })
 export class Settings implements OnInit {

@@ -16,6 +16,11 @@ export function roleGuard(...allowedRoles: string[]): CanActivateFn {
     const authService = inject(AuthService);
     const router = inject(Router);
 
+    if (!authService.isAuthenticated()) {
+      router.navigate(['/auth/login']);
+      return false;
+    }
+
     const user = authService.currentUser();
     if (!user) {
       router.navigate(['/auth/login']);
@@ -27,11 +32,12 @@ export function roleGuard(...allowedRoles: string[]): CanActivateFn {
       return true;
     }
 
-    // Si es cajero, lo mandamos al POS directamente
-    if (userRole.toLowerCase() === 'cashier') {
+    // Roles de punto de venta van al POS
+    const posRoles = ['seller', 'cashier', 'delivery'];
+    if (posRoles.includes(userRole.toLowerCase())) {
       router.navigate(['/pos']);
     } else {
-      router.navigate(['/portal/dashboard']);
+      router.navigate(['/auth/login']);
     }
 
     return false;

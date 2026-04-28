@@ -12,6 +12,7 @@ using TuColmadoRD.Core.Domain.Entities.System;
 using TuColmadoRD.Core.Domain.Enums.Inventory_Purchasing;
 using TuColmadoRD.Core.Domain.ValueObjects;
 using TuColmadoRD.Core.Domain.ValueObjects.Base;
+using TuColmadoRD.Core.Domain.Interfaces.Repositories.Logistics;
 using SaleQuantity = TuColmadoRD.Core.Domain.Entities.Sales.Quantity;
 using Xunit;
 
@@ -36,31 +37,9 @@ public sealed class SalesModuleTests
     private readonly TenantIdentifier _tenantId = TenantIdentifier.Validate(Guid.NewGuid()).Result!;
     private readonly Guid _terminalId  = Guid.NewGuid();
 
-    // ─── Handler factories ────────────────────────────────────────────────────
-        _createSaleHandler = new CreateSaleCommandHandler(
-            _tenantProviderMock.Object,
-            _shiftServiceMock.Object,
-            _productRepoMock.Object,
-            _saleRepoMock.Object,
-            _sequenceServiceMock.Object,
-            _shiftRepoMock.Object,
-            _outboxRepoMock.Object,
-            _unitOfWorkMock.Object,
-            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal.IFiscalSequenceRepository>().Object,
-            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal.IFiscalReceiptRepository>().Object,
-            new Mock<TuColmadoRD.Core.Application.Interfaces.Services.IEcfGeneratorClient>().Object,
-            new Mock<TuColmadoRD.Core.Application.Interfaces.Services.IEcfSignerService>().Object,
-            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.System.ITenantProfileRepository>().Object);
-
-        _voidSaleHandler = new VoidSaleCommandHandler(
-            _tenantProviderMock.Object,
-            _shiftServiceMock.Object,
-            _saleRepoMock.Object,
-            _productRepoMock.Object,
-            _shiftRepoMock.Object,
-            _outboxRepoMock.Object,
-            _unitOfWorkMock.Object,
-            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal.INcfAnnulmentLogRepository>().Object);
+    // ─── Handlers ────────────────────────────────────────────────────
+    private readonly CreateSaleCommandHandler _createSaleHandler;
+    private readonly VoidSaleCommandHandler _voidSaleHandler;
 
     // ─── Setup helpers ────────────────────────────────────────────────────────
     public SalesModuleTests()
@@ -75,6 +54,32 @@ public sealed class SalesModuleTests
         _shiftRepo.Setup(x => x.UpdateAsync(It.IsAny<Shift>(),                   It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _outboxRepo.Setup(x => x.AddAsync  (It.IsAny<OutboxMessage>(),           It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _uow.Setup(x => x.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+
+        _createSaleHandler = new CreateSaleCommandHandler(
+            _tenant.Object,
+            _shiftService.Object,
+            _productRepo.Object,
+            _saleRepo.Object,
+            _sequence.Object,
+            _shiftRepo.Object,
+            _outboxRepo.Object,
+            _uow.Object,
+            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal.IFiscalSequenceRepository>().Object,
+            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal.IFiscalReceiptRepository>().Object,
+            new Mock<TuColmadoRD.Core.Application.Interfaces.Services.IEcfGeneratorClient>().Object,
+            new Mock<TuColmadoRD.Core.Application.Interfaces.Services.IEcfSignerService>().Object,
+            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.System.ITenantProfileRepository>().Object,
+            new Mock<IDeliveryOrderRepository>().Object);
+
+        _voidSaleHandler = new VoidSaleCommandHandler(
+            _tenant.Object,
+            _shiftService.Object,
+            _saleRepo.Object,
+            _productRepo.Object,
+            _shiftRepo.Object,
+            _outboxRepo.Object,
+            _uow.Object,
+            new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal.INcfAnnulmentLogRepository>().Object);
     }
 
     // =========================================================================
@@ -102,12 +107,12 @@ public sealed class SalesModuleTests
             .ReturnsAsync(new List<Product> { product }.AsReadOnly());
 
         var command = new CreateSaleCommand(
-            Items:    new List<SaleItemRequest>    { new(product.Id, 2m)            }.AsReadOnly(),
-            Payments: new List<SalePaymentRequest> { new(1, 300m, null, null) }.AsReadOnly(),
-            Notes:    null);
+            new List<SaleItemRequest> { new(product.Id, 2m) }.AsReadOnly(),
+            new List<SalePaymentRequest> { new(1, 300m, null, null) }.AsReadOnly(),
+            null);
 
         // Act
-        var result = await CreateSaleHandler.Handle(command, CancellationToken.None);
+        var result = await _createSaleHandler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsGood.Should().BeTrue();
@@ -126,16 +131,16 @@ public sealed class SalesModuleTests
                 DomainError.Business("shift.not_found", "No hay turno abierto")));
 
         var command = new CreateSaleCommand(
-            Items:    new List<SaleItemRequest>    { new(Guid.NewGuid(), 1m) }.AsReadOnly(),
-            Payments: new List<SalePaymentRequest> { }.AsReadOnly(),
-            Notes:    null);
+            new List<SaleItemRequest> { new(Guid.NewGuid(), 1m) }.AsReadOnly(),
+            new List<SalePaymentRequest>().AsReadOnly(),
+            null);
 
         // Act
-        var result = await CreateSaleHandler.Handle(command, CancellationToken.None);
+        var result = await _createSaleHandler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsGood.Should().BeFalse();
-        result.Error.Code.Should().Be("shift.not_found");
+        result.Error!.Code.Should().Be("shift.not_found");
         _saleRepo.Verify(x => x.AddAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>()), Times.Never);
         _uow.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -167,7 +172,7 @@ public sealed class SalesModuleTests
         var command = new VoidSaleCommand(sale.Id, "Solicitud del cliente");
 
         // Act
-        var result = await VoidSaleHandler.Handle(command, CancellationToken.None);
+        var result = await _voidSaleHandler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsGood.Should().BeTrue();
@@ -193,7 +198,7 @@ public sealed class SalesModuleTests
         var command = new VoidSaleCommand(saleId, "Razón");
 
         // Act
-        var result = await VoidSaleHandler.Handle(command, CancellationToken.None);
+        var result = await _voidSaleHandler.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsGood.Should().BeFalse();

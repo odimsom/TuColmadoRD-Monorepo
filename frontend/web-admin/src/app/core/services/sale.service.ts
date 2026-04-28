@@ -3,21 +3,22 @@ import { Observable } from 'rxjs';
 import { GatewayService } from './gateway.service';
 
 export interface SaleSummary {
-  id: string;
+  saleId: string;
   receiptNumber: string;
   statusId: number;
-  totalAmount: number;
-  totalPaidAmount: number;
+  total: number;
+  totalPaid: number;
   createdAt: string;
-  itemsCount: number;
+  itemCount: number;
 }
 
 export interface PagedSalesResponse {
   items: SaleSummary[];
-  pageNumber: number;
+  page: number;
   pageSize: number;
   totalCount: number;
   totalPages: number;
+  totalRevenue: number;
 }
 
 export interface CreateSaleItemRequest {
@@ -32,11 +33,22 @@ export interface CreateSalePaymentRequest {
   customerId?: string;
 }
 
+export interface DeliveryAddressRequest {
+  province: string;
+  sector: string;
+  street: string;
+  reference: string;
+  houseNumber?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
 export interface CreateSaleRequest {
   items: CreateSaleItemRequest[];
   payments: CreateSalePaymentRequest[];
   notes?: string | null;
   buyerRnc?: string | null;
+  deliveryAddress?: DeliveryAddressRequest | null;
 }
 
 export interface CreateSaleLineResult {

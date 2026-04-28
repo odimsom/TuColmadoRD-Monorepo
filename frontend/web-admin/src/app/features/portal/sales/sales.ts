@@ -2,13 +2,14 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { SaleService, SaleSummary, ShiftDto } from '../../../core/services/sale.service';
+import { RdCurrencyPipe } from '../../../core/pipes';
 
 type ActiveTab = 'shifts' | 'transactions';
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RdCurrencyPipe],
   templateUrl: './sales.html',
 })
 export class Sales implements OnInit {
@@ -36,6 +37,13 @@ export class Sales implements OnInit {
   showOpenShift = signal(false);
   savingShift = signal(false);
   openShiftError = signal<string | null>(null);
+
+  // Void sale modal
+  showVoidModal = signal(false);
+  voidTargetId = signal<string | null>(null);
+  voidReason = signal('');
+  voidingError = signal<string | null>(null);
+  voiding = signal(false);
 
   openShiftForm = this.fb.nonNullable.group({
     openingCashAmount: [0],
@@ -120,11 +128,30 @@ export class Sales implements OnInit {
     if (this.transPage() < this.transTotalPages()) { this.transPage.update(p => p + 1); this.loadSales(); }
   }
 
-  voidSale(id: string): void {
-    const reason = prompt('Ingrese el motivo de la anulación (Requerido por DGII):');
-    if (reason && reason.trim()) {
-      this.saleService.voidSale(id, reason.trim()).subscribe({ next: () => this.loadSales() });
-    }
+  openVoidModal(saleId: string): void {
+    this.voidTargetId.set(saleId);
+    this.voidReason.set('');
+    this.voidingError.set(null);
+    this.showVoidModal.set(true);
+  }
+
+  confirmVoid(): void {
+    const id = this.voidTargetId();
+    const reason = this.voidReason().trim();
+    if (!id || !reason || this.voiding()) return;
+    this.voiding.set(true);
+    this.voidingError.set(null);
+    this.saleService.voidSale(id, reason).subscribe({
+      next: () => {
+        this.voiding.set(false);
+        this.showVoidModal.set(false);
+        this.loadSales();
+      },
+      error: (err) => {
+        this.voiding.set(false);
+        this.voidingError.set(err?.error?.detail ?? err?.error?.message ?? 'Error al anular la venta.');
+      }
+    });
   }
 
   getStatusClass(status: number): string {

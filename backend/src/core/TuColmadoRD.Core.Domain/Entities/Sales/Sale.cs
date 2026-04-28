@@ -68,11 +68,6 @@ public class Sale : ITenantEntity
             return OperationResult<Sale, DomainError>.Bad(DomainError.Validation("sale.tenant_required"));
         }
 
-        if (terminalId == Guid.Empty)
-        {
-            return OperationResult<Sale, DomainError>.Bad(DomainError.Validation("sale.terminal_required"));
-        }
-
         if (shiftId == Guid.Empty)
         {
             return OperationResult<Sale, DomainError>.Bad(DomainError.Validation("sale.shift_required"));
@@ -115,7 +110,7 @@ public class Sale : ITenantEntity
         Quantity quantity,
         TaxRate itbisRate)
     {
-        if (StatusId != SaleStatus.Completed.Id)
+        if (StatusId != SaleStatus.Completed.Id && StatusId != SaleStatus.Held.Id)
         {
             return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.cannot_modify_finalized"));
         }
@@ -148,7 +143,7 @@ public class Sale : ITenantEntity
         string? reference,
         Guid? customerId = null)
     {
-        if (StatusId != SaleStatus.Completed.Id)
+        if (StatusId != SaleStatus.Completed.Id && StatusId != SaleStatus.Held.Id)
         {
             return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.cannot_modify_finalized"));
         }
@@ -185,6 +180,11 @@ public class Sale : ITenantEntity
 
     public OperationResult<Unit, DomainError> Finalize()
     {
+        if (StatusId == SaleStatus.Held.Id)
+        {
+            return OperationResult<Unit, DomainError>.Good(Unit.Value);
+        }
+
         if (_items.Count == 0)
         {
             return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.no_items"));
@@ -200,6 +200,65 @@ public class Sale : ITenantEntity
             return OperationResult<Unit, DomainError>.Bad(
                 DomainError.Business("sale.insufficient_payment", $"Faltan RD$ {(TotalAmount - TotalPaidAmount):N2} por pagar."));
         }
+
+        var itemEventLines = _items.Select(i => new SaleItemEventLine(
+            i.ProductId,
+            i.ProductName,
+            i.QuantityValue,
+            i.UnitPriceAmount,
+            i.LineTotalAmount,
+            i.LineItbisAmount)).ToList();
+
+        var paymentEventLines = _payments.Select(p => new SalePaymentEventLine(
+            p.PaymentMethodId,
+            p.AmountValue,
+            p.Reference,
+            p.CustomerId)).ToList();
+
+        _domainEvents.Add(new SaleCompletedDomainEvent(
+            Id,
+            ShiftId,
+            TenantId,
+            TerminalId,
+            ReceiptNumber,
+            CashierName,
+            SubtotalAmount,
+            TotalItbisAmount,
+            TotalAmount,
+            TotalPaidAmount,
+            ChangeDueAmount,
+            itemEventLines.AsReadOnly(),
+            paymentEventLines.AsReadOnly(),
+            DateTime.UtcNow));
+
+        return OperationResult<Unit, DomainError>.Good(Unit.Value);
+    }
+
+    public OperationResult<Unit, DomainError> Hold()
+    {
+        if (StatusId != SaleStatus.Completed.Id)
+        {
+            return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.already_finalized_or_voided"));
+        }
+
+        StatusId = SaleStatus.Held.Id;
+        return OperationResult<Unit, DomainError>.Good(Unit.Value);
+    }
+
+    public OperationResult<Unit, DomainError> Complete()
+    {
+        if (StatusId != SaleStatus.Held.Id)
+        {
+            return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.not_held"));
+        }
+
+        if (TotalPaidAmount < TotalAmount)
+        {
+            return OperationResult<Unit, DomainError>.Bad(
+                DomainError.Business("sale.insufficient_payment", $"Faltan RD$ {(TotalAmount - TotalPaidAmount):N2} por pagar."));
+        }
+
+        StatusId = SaleStatus.Completed.Id;
 
         var itemEventLines = _items.Select(i => new SaleItemEventLine(
             i.ProductId,

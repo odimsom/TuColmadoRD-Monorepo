@@ -15,13 +15,16 @@ namespace TuColmadoRD.Core.Application.Customers.Handlers;
 public sealed class SaleCompletedDomainEventHandler : INotificationHandler<SaleCompletedDomainEvent>
 {
     private readonly ICustomerAccountRepository _customerAccountRepository;
+    private readonly TuColmadoRD.Core.Domain.Interfaces.Repositories.Customers.IDebtTransactionRepository _debtTransactionRepository;
     private readonly IOutboxRepository _outboxRepository;
 
     public SaleCompletedDomainEventHandler(
         ICustomerAccountRepository customerAccountRepository,
+        TuColmadoRD.Core.Domain.Interfaces.Repositories.Customers.IDebtTransactionRepository debtTransactionRepository,
         IOutboxRepository outboxRepository)
     {
         _customerAccountRepository = customerAccountRepository;
+        _debtTransactionRepository = debtTransactionRepository;
         _outboxRepository = outboxRepository;
     }
 
@@ -57,13 +60,21 @@ public sealed class SaleCompletedDomainEventHandler : INotificationHandler<SaleC
             string receiptRef = notification.ReceiptNumber;
             string concept = $"Fiado por venta local. Recibo: {receiptRef}";
 
-            var chargeResult = account.RecordCharge(amount, notification.TerminalId, concept, receiptRef);
-            
-            if (!chargeResult.IsGood)
+            // Creating the transaction manually instead of adding it to the account's un-included collection
+            var transactionResult = TuColmadoRD.Core.Domain.Entities.Customers.DebtTransaction.Create(
+                account.TenantId, account.Id, notification.TerminalId, amount, TuColmadoRD.Core.Domain.Enums.Customers.TransactionType.Charge, concept, receiptRef);
+
+            if (!transactionResult.IsGood)
             {
-                throw new InvalidOperationException(chargeResult.Error!);
+                throw new InvalidOperationException(transactionResult.Error!);
             }
 
+            var transaction = transactionResult.Result!;
+            
+            // Just update the balance and generate the event
+            account.ApplyBalanceChange(amount, TuColmadoRD.Core.Domain.Enums.Customers.TransactionType.Charge, transaction.Id, transaction.CreatedAt);
+
+            await _debtTransactionRepository.AddAsync(transaction, cancellationToken);
             await _customerAccountRepository.UpdateAsync(account, cancellationToken);
 
             foreach (var domainEvent in account.DomainEvents)

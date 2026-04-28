@@ -15,6 +15,8 @@ using TuColmadoRD.Core.Domain.ValueObjects;
 using TuColmadoRD.Core.Domain.ValueObjects.Base;
 using SalesQuantity = TuColmadoRD.Core.Domain.Entities.Sales.Quantity;
 using System.Collections.Generic;
+using TuColmadoRD.Core.Domain.Interfaces.Repositories.Logistics;
+using TuColmadoRD.Core.Domain.Entities.Logistics;
 
 namespace TuColmadoRD.Core.Application.Sales.Handlers;
 
@@ -36,6 +38,7 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
     private readonly IEcfGeneratorClient _ecfGeneratorClient;
     private readonly IEcfSignerService _ecfSignerService;
     private readonly ITenantProfileRepository _tenantProfileRepository;
+    private readonly IDeliveryOrderRepository _deliveryOrderRepository;
 
     public CreateSaleCommandHandler(
         ITenantProvider tenantProvider,
@@ -50,7 +53,8 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         IFiscalReceiptRepository fiscalReceiptRepository,
         IEcfGeneratorClient ecfGeneratorClient,
         IEcfSignerService ecfSignerService,
-        ITenantProfileRepository tenantProfileRepository)
+        ITenantProfileRepository tenantProfileRepository,
+        IDeliveryOrderRepository deliveryOrderRepository)
     {
         _tenantProvider = tenantProvider;
         _shiftService = shiftService;
@@ -65,6 +69,7 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         _ecfGeneratorClient = ecfGeneratorClient;
         _ecfSignerService = ecfSignerService;
         _tenantProfileRepository = tenantProfileRepository;
+        _deliveryOrderRepository = deliveryOrderRepository;
     }
 
     public async Task<OperationResult<CreateSaleResult, DomainError>> Handle(
@@ -158,13 +163,50 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
                 return OperationResult<CreateSaleResult, DomainError>.Bad(addPaymentResult.Error);
         }
 
+        var isDelivery = sale.Payments.Any(p => p.PaymentMethodId == PaymentMethod.Delivery.Id);
+        DeliveryOrder? deliveryOrder = null;
+
+        if (isDelivery)
+        {
+            var holdResult = sale.Hold();
+            if (!holdResult.IsGood)
+                return OperationResult<CreateSaleResult, DomainError>.Bad(holdResult.Error);
+
+            if (request.DeliveryAddress is null)
+                return OperationResult<CreateSaleResult, DomainError>.Bad(
+                    DomainError.Validation("delivery.address_required", "La dirección de entrega es requerida para pedidos de delivery."));
+
+            var addressResult = Address.Create(
+                request.DeliveryAddress.Province,
+                request.DeliveryAddress.Sector,
+                request.DeliveryAddress.Street,
+                request.DeliveryAddress.Reference,
+                request.DeliveryAddress.HouseNumber,
+                request.DeliveryAddress.Latitude,
+                request.DeliveryAddress.Longitude);
+
+            if (!addressResult.TryGetResult(out var address) || address is null)
+                return OperationResult<CreateSaleResult, DomainError>.Bad(DomainError.Validation("delivery.address_invalid", addressResult.Error));
+
+            // Create DeliveryOrder (DeliveryPersonId is Guid.Empty because it's not assigned yet)
+            var doResult = DeliveryOrder.Create(tenantId, sale.Id, Guid.Empty, address);
+            if (!doResult.TryGetResult(out var dOrder) || dOrder is null)
+                return OperationResult<CreateSaleResult, DomainError>.Bad(DomainError.Business("delivery.creation_failed", doResult.Error));
+
+            deliveryOrder = dOrder;
+        }
+
         var finalizeResult = sale.Finalize();
         if (!finalizeResult.IsGood)
             return OperationResult<CreateSaleResult, DomainError>.Bad(finalizeResult.Error);
 
-        var registerResult = shift.RegisterSale(Money.FromDecimal(sale.TotalAmount).Result);
-        if (!registerResult.IsGood)
-            return OperationResult<CreateSaleResult, DomainError>.Bad(registerResult.Error);
+        // Only register in shift if NOT delivery (payment is collected later)
+        if (!isDelivery)
+        {
+            var registerResult = shift.RegisterSale(Money.FromDecimal(sale.TotalAmount).Result);
+            if (!registerResult.IsGood)
+                return OperationResult<CreateSaleResult, DomainError>.Bad(registerResult.Error);
+        }
 
         var itemPayloadLines = sale.Items.Select(item => new SaleItemPayloadLine(
             item.ProductId,
@@ -287,6 +329,11 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         {
             await _fiscalReceiptRepository.AddAsync(fiscalReceipt, ct);
             await _fiscalSequenceRepository.UpdateAsync(activeSequence!, ct);
+        }
+
+        if (deliveryOrder is not null)
+        {
+            await _deliveryOrderRepository.AddAsync(deliveryOrder, ct);
         }
 
         await _unitOfWork.CommitAsync(ct);

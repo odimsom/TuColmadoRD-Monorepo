@@ -19,7 +19,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
+      const isAuthEndpoint = req.url.includes('/auth/login') || req.url.includes('/auth/register');
+      if (error.status === 401 && !isAuthEndpoint) {
         authService.logout();
       }
       return throwError(() => error);

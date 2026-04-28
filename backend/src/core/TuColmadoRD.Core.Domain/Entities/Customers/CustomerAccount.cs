@@ -66,7 +66,7 @@ namespace TuColmadoRD.Core.Domain.Entities.Customers
             if (projectedBalance.Amount > CreditLimit.Amount)
             {
                 return OperationResult<bool, string>.Bad(
-                    $"Operaci�n rechazada: El l�mite de cr�dito es {CreditLimit} y el nuevo balance de {projectedBalance} lo exceder�a.");
+                    $"Operacin rechazada: El lmite de crdito es {CreditLimit} y el nuevo balance de {projectedBalance} lo excedera.");
             }
 
             var transactionResult = DebtTransaction.Create(
@@ -77,14 +77,29 @@ namespace TuColmadoRD.Core.Domain.Entities.Customers
 
             var transaction = transactionResult.Result!;
             _transactions.Add(transaction);
-            
-            Balance = projectedBalance;
-            LastActivity = DateTime.UtcNow;
 
-            AddDomainEvent(new ChargeRegisteredDomainEvent(
-                Id, TenantId, CustomerId, amount, Balance, transaction.Id, transaction.CreatedAt));
+            ApplyBalanceChange(amount, TransactionType.Charge, transaction.Id, transaction.CreatedAt);
 
             return OperationResult<bool, string>.Good(true);
+        }
+
+        public void ApplyBalanceChange(Money amount, TransactionType type, Guid transactionId, DateTime transactionCreatedAt)
+        {
+            if (type == TransactionType.Charge)
+            {
+                Balance += amount;
+                AddDomainEvent(new ChargeRegisteredDomainEvent(
+                    Id, TenantId, CustomerId, amount, Balance, transactionId, transactionCreatedAt));
+            }
+            else if (type == TransactionType.Credit)
+            {
+                var subtractResult = Balance - amount;
+                Balance = subtractResult.IsGood ? subtractResult.Result! : Money.Zero;
+                AddDomainEvent(new PaymentRegisteredDomainEvent(
+                    Id, TenantId, CustomerId, amount, Balance, transactionId, transactionCreatedAt));
+            }
+
+            LastActivity = DateTime.UtcNow;
         }
 
         /// <summary>

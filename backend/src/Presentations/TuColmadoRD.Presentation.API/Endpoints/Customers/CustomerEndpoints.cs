@@ -47,7 +47,9 @@ public static class CustomerEndpoints
                     request.Address.Sector,
                     request.Address.Street,
                     request.Address.Reference,
-                    request.Address.HouseNumber),
+                    request.Address.HouseNumber,
+                    request.Address.Latitude,
+                    request.Address.Longitude),
             request.CreditLimit);
 
         var result = await mediator.Send(command, ct);

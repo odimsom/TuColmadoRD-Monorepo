@@ -1,3 +1,4 @@
+using TuColmadoRD.Core.Domain.Base;
 using TuColmadoRD.Core.Domain.ValueObjects;
 
 namespace TuColmadoRD.Core.Domain.Entities.Customers.Events
@@ -6,8 +7,8 @@ namespace TuColmadoRD.Core.Domain.Entities.Customers.Events
         Guid CustomerId,
         TenantIdentifier TenantId,
         string FullName,
-        DateTime OccurredOn
-    );
+        DateTime OccurredAt
+    ) : IDomainEvent;
 
     public sealed record ChargeRegisteredDomainEvent(
         Guid AccountId,
@@ -16,8 +17,8 @@ namespace TuColmadoRD.Core.Domain.Entities.Customers.Events
         Money Amount,
         Money NewBalance,
         Guid DebtTransactionId,
-        DateTime OccurredOn
-    );
+        DateTime OccurredAt
+    ) : IDomainEvent;
 
     public sealed record PaymentRegisteredDomainEvent(
         Guid AccountId,
@@ -26,6 +27,6 @@ namespace TuColmadoRD.Core.Domain.Entities.Customers.Events
         Money Amount,
         Money NewBalance,
         Guid DebtTransactionId,
-        DateTime OccurredOn
-    );
+        DateTime OccurredAt
+    ) : IDomainEvent;
 }

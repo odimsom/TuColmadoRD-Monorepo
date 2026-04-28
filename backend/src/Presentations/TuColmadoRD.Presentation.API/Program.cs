@@ -1,3 +1,6 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using TuColmadoRD.Infrastructure.CrossCutting;
 using TuColmadoRD.Infrastructure.IOC.ServiceRegistrations;
 using TuColmadoRD.Presentation.API.Endpoints.Customers;
@@ -7,6 +10,7 @@ using TuColmadoRD.Presentation.API.Endpoints.Purchasing;
 using TuColmadoRD.Presentation.API.Endpoints.Sales;
 using TuColmadoRD.Presentation.API.Endpoints.Sales.Shifts;
 using TuColmadoRD.Presentation.API.Endpoints.Settings;
+using TuColmadoRD.Presentation.API.Endpoints.Logistics;
 
 namespace TuColmadoRD.Presentation.API;
 
@@ -38,6 +42,23 @@ public static class CoreApiHostBuilder
         builder.Configuration
             .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
+        var jwtSecret = builder.Configuration["JwtSettings:Secret"]
+            ?? builder.Configuration["GatewayOptions:JwtSecret"]
+            ?? "dominican-street-premium-secret-key-2026";
+
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(opt =>
+            {
+                opt.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+                };
+            });
+
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddAuthorization();
@@ -60,6 +81,9 @@ public static class CoreApiHostBuilder
             app.UseHttpsRedirection();
         }
 
+        app.UseAuthentication();
+        app.UseAuthorization();
+
         app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
         app.MapInventoryEndpoints();
@@ -69,6 +93,7 @@ public static class CoreApiHostBuilder
         app.MapSalesEndpoints();
         app.MapShiftEndpoints();
         app.MapSettingsEndpoints();
+        app.MapDeliveryEndpoints();
 
         return app;
     }

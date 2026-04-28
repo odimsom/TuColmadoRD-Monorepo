@@ -39,7 +39,7 @@ namespace TuColmadoRD.Core.Domain.Entities.Customers
             CreatedAt = DateTime.UtcNow;
         }
 
-        internal static OperationResult<DebtTransaction, string> Create(
+        public static OperationResult<DebtTransaction, string> Create(
             TenantIdentifier tenantId,
             Guid accountId,
             Guid terminalId,

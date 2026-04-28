@@ -30,6 +30,11 @@ public sealed class PaymentMethod : Enumeration
     public static readonly PaymentMethod Credit = new(4, nameof(Credit), "Crédito");
 
     /// <summary>
+    /// Delivery (paid on delivery).
+    /// </summary>
+    public static readonly PaymentMethod Delivery = new(5, nameof(Delivery), "Delivery");
+
+    /// <summary>
     /// Display name in Spanish.
     /// </summary>
     public string DisplayName { get; }
@@ -51,6 +56,7 @@ public sealed class PaymentMethod : Enumeration
             2 => OperationResult<PaymentMethod, DomainError>.Good(Card),
             3 => OperationResult<PaymentMethod, DomainError>.Good(Transfer),
             4 => OperationResult<PaymentMethod, DomainError>.Good(Credit),
+            5 => OperationResult<PaymentMethod, DomainError>.Good(Delivery),
             _ => OperationResult<PaymentMethod, DomainError>.Bad(
                 DomainError.Validation("paymentmethod.unknown_id"))
         };

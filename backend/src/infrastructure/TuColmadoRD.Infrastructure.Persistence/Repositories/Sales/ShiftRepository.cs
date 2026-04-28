@@ -14,13 +14,13 @@ public class ShiftRepository(TuColmadoDbContext dbContext)
 	public async Task<bool> HasOpenShiftAsync(Guid tenantId, Guid terminalId, CancellationToken ct)
 	{
 		return await _dbContext.Shifts
-			.AnyAsync(x => x.TenantId == tenantId && x.TerminalId == terminalId && x.Status == ShiftStatus.Open, ct);
+			.AnyAsync(x => x.TenantId.Value == tenantId && x.TerminalId == terminalId && x.Status == ShiftStatus.Open, ct);
 	}
 
 	public async Task<Shift?> GetOpenShiftAsync(Guid shiftId, Guid tenantId, CancellationToken ct)
 	{
 		return await _dbContext.Shifts
-			.FirstOrDefaultAsync(x => x.Id == shiftId && x.TenantId == tenantId && x.Status == ShiftStatus.Open, ct);
+			.FirstOrDefaultAsync(x => x.Id == shiftId && x.TenantId.Value == tenantId && x.Status == ShiftStatus.Open, ct);
 	}
 
 	public new async Task AddAsync(Shift shift, CancellationToken ct)
@@ -30,7 +30,10 @@ public class ShiftRepository(TuColmadoDbContext dbContext)
 
 	public new Task UpdateAsync(Shift shift, CancellationToken ct)
 	{
-		_dbContext.Shifts.Update(shift);
-		return Task.CompletedTask;
+	    if (_dbContext.Entry(shift).State == EntityState.Detached)
+	    {
+	        _dbContext.Set<Shift>().Update(shift);
+	    }
+	    return Task.CompletedTask;
 	}
 }

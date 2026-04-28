@@ -22,11 +22,11 @@ internal sealed class GetCurrentShiftSummaryQueryHandler : IRequestHandler<GetCu
 
     public async Task<OperationResult<ShiftSummaryReportDto, DomainError>> Handle(GetCurrentShiftSummaryQuery request, CancellationToken cancellationToken)
     {
-        var tenantId = _tenantProvider.TenantId;
+        var tenantId = (Guid)_tenantProvider.TenantId;
 
         var shift = await _dbContext.Set<Shift>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.TenantId == tenantId && s.TerminalId == request.TerminalId && s.Status == TuColmadoRD.Core.Domain.Enums.Sales.ShiftStatus.Open, cancellationToken);
+            .FirstOrDefaultAsync(s => s.TenantId.Value == tenantId && s.TerminalId == request.TerminalId && s.Status == TuColmadoRD.Core.Domain.Enums.Sales.ShiftStatus.Open, cancellationToken);
 
         if (shift == null)
             return OperationResult<ShiftSummaryReportDto, DomainError>.Bad(DomainError.NotFound("Shift.NotFound", "No hay turno activo para este terminal."));

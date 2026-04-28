@@ -18,24 +18,21 @@ public sealed class SaleSequenceService(TuColmadoDbContext dbContext) : ISaleSeq
             return OperationResult<string, DomainError>.Bad(DomainError.Validation("sale.tenant_required"));
         }
 
-        if (terminalId == Guid.Empty)
-        {
-            return OperationResult<string, DomainError>.Bad(DomainError.Validation("sale.terminal_required"));
-        }
-
         var now = DateTime.UtcNow;
         var startOfDay = now.Date;
         var endOfDay = startOfDay.AddDays(1);
 
         var dailyCount = await dbContext.Sales
-            .Where(s => s.TenantId == tenantId
+            .Where(s => s.TenantId.Value == tenantId
                 && s.TerminalId == terminalId
                 && s.CreatedAt >= startOfDay
                 && s.CreatedAt < endOfDay)
             .CountAsync(ct);
 
         var sequence = dailyCount + 1;
-        var terminalPart = terminalId.ToString("N")[..4].ToUpperInvariant();
+        var terminalPart = terminalId == Guid.Empty
+            ? "WEB0"
+            : terminalId.ToString("N")[..4].ToUpperInvariant();
         var receipt = $"REC-{terminalPart}-{now:yyyyMMdd}-{sequence:D5}";
 
         return OperationResult<string, DomainError>.Good(receipt);

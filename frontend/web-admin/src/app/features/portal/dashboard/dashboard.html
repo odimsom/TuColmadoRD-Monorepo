@@ -12,7 +12,7 @@
       </div>
       <div class="flex items-end justify-between">
         <div class="flex flex-col">
-          <span class="text-2xl font-mono font-bold text-white tracking-tighter">RD$ {{ stats.totalRevenue | number:'1.2-2' }}</span>
+          <span class="text-2xl font-mono font-bold text-white tracking-tighter">{{ stats.totalRevenue | rdCurrency }}</span>
           <div class="flex items-center gap-1 mt-1">
             <span class="text-[0.6rem] text-slate-500 font-medium">{{ stats.totalSales }} transacciones</span>
           </div>
@@ -56,20 +56,33 @@
       </div>
     </div>
 
-    <!-- Stat 3: Fiados Pendientes (pendiente de endpoint /credits/summary) -->
-    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-amber-500/30 transition-colors group opacity-60">
+    <!-- Stat 3: Fiados Pendientes -->
+    <div [class.opacity-60]="debtLoading"
+         class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-amber-500/30 transition-colors group">
       <div class="flex justify-between items-start mb-3">
         <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Fiados Pendientes</span>
-        <span class="p-1.5 bg-amber-500/10 rounded-lg text-amber-500">
+        <span class="p-1.5 bg-amber-500/10 rounded-lg" [class.text-amber-500]="!debtLoading" [class.text-slate-600]="debtLoading">
           <span class="icon-[ic--baseline-people] text-sm"></span>
         </span>
       </div>
       <div class="flex items-end justify-between">
         <div class="flex flex-col">
-          <span class="text-2xl font-mono font-bold text-slate-500 tracking-tighter">—</span>
-          <div class="flex items-center gap-1 mt-1">
-            <span class="text-[0.6rem] text-slate-600 font-medium italic">Próximamente</span>
-          </div>
+          @if (debtLoading) {
+            <span class="text-2xl font-mono font-bold text-slate-600 tracking-tighter animate-pulse">···</span>
+          } @else {
+            <span class="text-2xl font-mono font-bold tracking-tighter"
+              [class.text-amber-400]="debtStats.customersWithDebt > 0"
+              [class.text-emerald-400]="debtStats.customersWithDebt === 0">
+              {{ debtStats.customersWithDebt }}
+            </span>
+          }
+          <span class="text-[0.6rem] text-slate-500 font-medium mt-1">
+            @if (!debtLoading && debtStats.totalDebt > 0) {
+              {{ debtStats.totalDebt | rdCurrency }} pendiente
+            } @else {
+              clientes con deuda
+            }
+          </span>
         </div>
       </div>
     </div>
@@ -143,7 +156,7 @@
               </td>
             </tr>
           } @else {
-            @for (sale of filteredSales; track sale.id; let odd = $odd) {
+            @for (sale of filteredSales; track sale.saleId; let odd = $odd) {
               <tr [class.bg-white/[0.02]]="odd" class="hover:bg-pos-accent/5 transition-colors group cursor-default">
                 <td class="px-6 py-3 font-mono font-bold text-white tracking-tighter">#{{ sale.receiptNumber }}</td>
                 <td class="px-6 py-3 text-center">
@@ -152,11 +165,11 @@
                 <td class="px-6 py-3 text-slate-400 font-medium tracking-tight">{{ sale.createdAt | date:'dd/MM/yy - HH:mm' }}</td>
                 <td class="px-6 py-3">
                   <div class="flex items-center gap-2">
-                    <span class="text-white font-bold">{{ sale.itemsCount }}</span>
+                    <span class="text-white font-bold">{{ sale.itemCount }}</span>
                     <span class="text-slate-500">productos</span>
                   </div>
                 </td>
-                <td class="px-6 py-3 text-right font-mono font-bold text-white">RD$ {{ sale.totalAmount | number:'1.2-2' }}</td>
+                <td class="px-6 py-3 text-right font-mono font-bold text-white">{{ sale.total | rdCurrency }}</td>
                 <td class="px-6 py-3 text-center">
                   <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full {{ getStatusClass(sale.statusId) }} text-[0.6rem] font-black uppercase tracking-tighter ring-1 ring-current/20">
                     <span class="w-1 h-1 rounded-full bg-current"></span>

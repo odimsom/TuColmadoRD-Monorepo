@@ -9,7 +9,9 @@ public sealed record CreateCustomerAddressRequest(
     string Sector,
     string Street,
     string Reference,
-    string? HouseNumber);
+    string? HouseNumber,
+    double? Latitude = null,
+    double? Longitude = null);
 
 public sealed record CreateCustomerCommand(
     string FullName,

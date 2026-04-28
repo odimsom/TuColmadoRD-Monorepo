@@ -14,7 +14,7 @@ public class ProductRepository(TuColmadoDbContext dbContext) : GenericRepository
     public async Task<OperationResult<Product, DomainError>> GetByIdAsync(Guid id, Guid tenantId, CancellationToken ct)
     {
         var product = await _dbContext.Set<Product>()
-            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenantId, ct);
+            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId.Value == tenantId, ct);
 
         return product is null
             ? OperationResult<Product, DomainError>.Bad(DomainError.NotFound("product.not_found"))
@@ -34,7 +34,7 @@ public class ProductRepository(TuColmadoDbContext dbContext) : GenericRepository
         }
 
         return await _dbContext.Set<Product>()
-            .Where(p => ids.Contains(p.Id) && p.TenantId == tenantId)
+            .Where(p => ids.Contains(p.Id) && p.TenantId.Value == tenantId)
             .ToListAsync(ct);
     }
 
@@ -47,6 +47,6 @@ public class ProductRepository(TuColmadoDbContext dbContext) : GenericRepository
     public async Task<bool> CategoryExistsAsync(Guid categoryId, Guid tenantId, CancellationToken ct)
     {
         return await _dbContext.Set<Category>()
-            .AnyAsync(c => c.Id == categoryId && c.TenantId == tenantId, ct);
+            .AnyAsync(c => c.Id == categoryId && c.TenantId.Value == tenantId, ct);
     }
 }
