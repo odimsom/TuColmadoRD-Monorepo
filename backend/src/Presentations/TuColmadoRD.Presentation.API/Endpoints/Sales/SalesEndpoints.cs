@@ -5,6 +5,7 @@ using TuColmadoRD.Core.Application.Sales.Commands;
 using TuColmadoRD.Presentation.API.Extensions;
 using ApplicationSaleItemRequest = TuColmadoRD.Core.Application.Sales.Commands.SaleItemRequest;
 using ApplicationSalePaymentRequest = TuColmadoRD.Core.Application.Sales.Commands.SalePaymentRequest;
+using ApplicationDeliveryAddressRequest = TuColmadoRD.Core.Application.Sales.Commands.DeliveryAddressRequest;
 
 namespace TuColmadoRD.Presentation.API.Endpoints.Sales;
 
@@ -43,8 +44,12 @@ public static class SalesEndpoints
     {
         var commandItems = request.Items.Select(i => new ApplicationSaleItemRequest(i.ProductId, i.Quantity)).ToList();
         var commandPayments = request.Payments.Select(p => new ApplicationSalePaymentRequest(p.PaymentMethodId, p.Amount, p.Reference, p.CustomerId)).ToList();
-        
-        var command = new CreateSaleCommand(commandItems, commandPayments, request.Notes, request.BuyerRnc);
+
+        ApplicationDeliveryAddressRequest? deliveryAddress = null;
+        if (request.DeliveryAddress is { } da)
+            deliveryAddress = new ApplicationDeliveryAddressRequest(da.Province, da.Sector, da.Street, da.Reference, da.HouseNumber, da.Latitude, da.Longitude);
+
+        var command = new CreateSaleCommand(commandItems, commandPayments, request.Notes, request.BuyerRnc, deliveryAddress);
 
         var result = await mediator.Send(command, ct);
         if (!result.TryGetResult(out var created) || created is null)

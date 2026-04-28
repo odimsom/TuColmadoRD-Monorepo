@@ -1,9 +1,8 @@
 using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
-using TuColmadoRD.Core.Application.DTOs.Sync;
+using TuColmadoRD.Core.Application.Sales.Outbox;
 using TuColmadoRD.Core.Application.Interfaces.Sync;
-using TuColmadoRD.Core.Application.Interfaces.Tenancy;
 using TuColmadoRD.Core.Domain.ValueObjects.Base;
 using TuColmadoRD.Core.Domain.Base.Result;
 using TuColmadoRD.Core.Domain.Entities.System;
@@ -14,12 +13,10 @@ namespace TuColmadoRD.Infrastructure.CrossCutting.Sync;
 public class SaleCreatedOutboxHandler : IOutboxMessageHandler
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ITenantProvider _tenantProvider;
 
-    public SaleCreatedOutboxHandler(IHttpClientFactory httpClientFactory, ITenantProvider tenantProvider)
+    public SaleCreatedOutboxHandler(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory;
-        _tenantProvider = tenantProvider;
     }
 
     public async Task<OperationResult<Unit, DomainError>> HandleAsync(OutboxMessage message, CancellationToken ct)
@@ -45,8 +42,8 @@ public class SaleCreatedOutboxHandler : IOutboxMessageHandler
         {
             Content = JsonContent.Create(payload)
         };
-        request.Headers.Add("X-Tenant-Id", _tenantProvider.TenantId.ToString());
-        request.Headers.Add("X-Terminal-Id", _tenantProvider.TerminalId.ToString());
+        request.Headers.Add("X-Tenant-Id", payload.TenantId.ToString());
+        request.Headers.Add("X-Terminal-Id", payload.TerminalId.ToString());
 
         try
         {

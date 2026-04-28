@@ -84,8 +84,10 @@ services:
       GatewayOptions__AuthApiUrl: http://auth:3000
       GatewayOptions__CoreApiUrl: http://api:8080
       GatewayOptions__JwtSecret: ${JWT_SECRET:-dominican-street-premium-secret-key-2026}
-      GatewayOptions__AllowedOrigins__0: http://localhost:5209
-      GatewayOptions__AllowedOrigins__1: ${PUBLIC_WEB_DOMAIN:-https://tucolmadord.synsetsolutions.com}
+      GatewayOptions__AllowedOrigins__0: http://localhost:4200
+      GatewayOptions__AllowedOrigins__1: http://localhost:5173
+      GatewayOptions__AllowedOrigins__2: http://localhost:5209
+      GatewayOptions__AllowedOrigins__3: ${PUBLIC_WEB_DOMAIN:-https://tucolmadord.synsetsolutions.com}
     depends_on:
       - auth
       - api

@@ -39,8 +39,11 @@ public static class CoreApiHostBuilder
             builder.Configuration["AuthApi:BaseUrl"] = "http://localhost:5300";
         }
 
-        builder.Configuration
-            .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+        if (builder.Environment.IsEnvironment("Local") || builder.Environment.IsDevelopment())
+        {
+            builder.Configuration
+                .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+        }
 
         var jwtSecret = builder.Configuration["JwtSettings:Secret"]
             ?? builder.Configuration["GatewayOptions:JwtSecret"]

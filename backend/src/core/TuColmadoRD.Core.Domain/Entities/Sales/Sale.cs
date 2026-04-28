@@ -195,7 +195,7 @@ public class Sale : ITenantEntity
             return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.no_payments"));
         }
 
-        if (TotalPaidAmount < TotalAmount)
+        if (Math.Round(TotalPaidAmount, 2) < Math.Round(TotalAmount, 2))
         {
             return OperationResult<Unit, DomainError>.Bad(
                 DomainError.Business("sale.insufficient_payment", $"Faltan RD$ {(TotalAmount - TotalPaidAmount):N2} por pagar."));
@@ -252,7 +252,7 @@ public class Sale : ITenantEntity
             return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.not_held"));
         }
 
-        if (TotalPaidAmount < TotalAmount)
+        if (Math.Round(TotalPaidAmount, 2) < Math.Round(TotalAmount, 2))
         {
             return OperationResult<Unit, DomainError>.Bad(
                 DomainError.Business("sale.insufficient_payment", $"Faltan RD$ {(TotalAmount - TotalPaidAmount):N2} por pagar."));
