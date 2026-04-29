@@ -55,6 +55,7 @@ export class PosLayout implements OnInit, OnDestroy {
   lastSale      = signal<CreateSaleResult | null>(null);
   lastSalePaymentMethod = signal<string>('');
   lastSaleCustomerName  = signal<string>('');
+  lastSaleCustomerPhone = signal<string>('');
   tenantProfile = signal<TenantProfileDto | null>(null);
   allCustomers  = signal<CustomerSummary[]>([]);
 
@@ -77,6 +78,12 @@ export class PosLayout implements OnInit, OnDestroy {
   buyerRnc       = signal('');
   selectedCustomer = signal<CustomerSummary | null>(null);
   customerSearchQuery = signal('');
+
+  // ── Geocoding (Nominatim) ─────────────────────────
+  geocodeLat     = signal<number | null>(null);
+  geocodeLon     = signal<number | null>(null);
+  geocodeLoading = signal(false);
+  geocodeError   = signal<string | null>(null);
 
   // ── Quick Sale ────────────────────────────────────
   quickSaleSearch = signal('');
@@ -226,6 +233,18 @@ export class PosLayout implements OnInit, OnDestroy {
       return Math.max(0, this.cashTendered() - this.cartTotal());
     }
     return 0;
+  });
+
+  whatsAppDeliveryUrl = computed(() => {
+    const sale = this.lastSale();
+    const phone = this.lastSaleCustomerPhone().replace(/\D/g, '');
+    const name  = this.lastSaleCustomerName();
+    if (!sale?.confirmationCode || !phone) return null;
+    const total = new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(sale.total);
+    const text  = encodeURIComponent(
+      `Hola ${name}! Tu pedido de ${total} está en camino. Tu código de confirmación de entrega es: *${sale.confirmationCode}*. Dáselo al repartidor cuando recibas el pedido.`
+    );
+    return `https://wa.me/${phone}?text=${text}`;
   });
 
   itbisBreakdown = computed(() => {
@@ -534,7 +553,9 @@ export class PosLayout implements OnInit, OnDestroy {
           sector: v.sector!,
           street: v.street!,
           reference: v.reference!,
-          houseNumber: v.houseNumber || undefined
+          houseNumber: v.houseNumber || undefined,
+          latitude: this.geocodeLat() ?? undefined,
+          longitude: this.geocodeLon() ?? undefined
         };
       } else {
         this.errorMsg.set('Para delivery, selecciona un cliente con dirección o llena los datos de envío.');
@@ -558,6 +579,7 @@ export class PosLayout implements OnInit, OnDestroy {
         this.lastSale.set(result);
         this.lastSalePaymentMethod.set(this.paymentMethod());
         this.lastSaleCustomerName.set(this.selectedCustomer()?.fullName ?? '');
+        this.lastSaleCustomerPhone.set(this.selectedCustomer()?.phone ?? '');
         this.showPaymentModal.set(false);
         this.showReceiptModal.set(true);
         this.clearCart();
@@ -572,6 +594,40 @@ export class PosLayout implements OnInit, OnDestroy {
 
   printReceipt(): void {
     window.print();
+  }
+
+  async geocodeAddress(): Promise<void> {
+    const v = this.deliveryAddressForm.value;
+    if (!v.street || !v.sector || !v.province) {
+      this.geocodeError.set('Completa al menos calle, sector y provincia.');
+      return;
+    }
+    this.geocodeLoading.set(true);
+    this.geocodeError.set(null);
+    this.geocodeLat.set(null);
+    this.geocodeLon.set(null);
+
+    const query = encodeURIComponent(
+      `${v.street}${v.houseNumber ? ' ' + v.houseNumber : ''}, ${v.sector}, ${v.province}, República Dominicana`
+    );
+
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=do`,
+        { headers: { 'Accept-Language': 'es' } }
+      );
+      const data = await res.json();
+      if (data?.length > 0) {
+        this.geocodeLat.set(parseFloat(data[0].lat));
+        this.geocodeLon.set(parseFloat(data[0].lon));
+      } else {
+        this.geocodeError.set('No se encontraron coordenadas. La entrega será sin verificación GPS.');
+      }
+    } catch {
+      this.geocodeError.set('Error al obtener coordenadas.');
+    } finally {
+      this.geocodeLoading.set(false);
+    }
   }
 
   // ── Helpers ───────────────────────────────────────

@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using TuColmadoRD.Core.Domain.Base;
 using TuColmadoRD.Core.Domain.Base.Result;
 using TuColmadoRD.Core.Domain.Enums.Logistics;
@@ -15,8 +16,12 @@ namespace TuColmadoRD.Core.Domain.Entities.Logistics
 
         public Address Destination { get; private set; }
         public DeliveryStatus Status { get; private set; }
+        public string ConfirmationCode { get; private set; }
         public DateTime? DispatchedAt { get; private set; }
         public DateTime? DeliveredAt { get; private set; }
+
+        // Unambiguous charset — excludes 0/O, 1/I/L to avoid visual confusion
+        private const string CodeChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
         private DeliveryOrder(TenantIdentifier tenantId, Guid saleId, Guid? deliveryId, Address destination)
         {
@@ -26,6 +31,15 @@ namespace TuColmadoRD.Core.Domain.Entities.Logistics
             DeliveryPersonId = deliveryId;
             Destination = destination;
             Status = DeliveryStatus.Pending;
+            ConfirmationCode = GenerateCode();
+        }
+
+        private static string GenerateCode()
+        {
+            var chars = new char[6];
+            for (int i = 0; i < 6; i++)
+                chars[i] = CodeChars[RandomNumberGenerator.GetInt32(CodeChars.Length)];
+            return new string(chars);
         }
 
         public static OperationResult<DeliveryOrder, string> Create(
