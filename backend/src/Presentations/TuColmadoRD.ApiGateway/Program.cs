@@ -213,6 +213,23 @@ public static class GatewayHostBuilder
             await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/pair-device"))
             .RequireAuthorization();
 
+        // Employee management — proxied to auth service
+        authGroup.MapGet("/employees", async (HttpContext ctx, IHttpClientFactory factory) =>
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/employees"))
+            .RequireAuthorization();
+
+        authGroup.MapPost("/employees", async (HttpContext ctx, IHttpClientFactory factory) =>
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/employees"))
+            .RequireAuthorization();
+
+        authGroup.MapPut("/employees/{id}", async (string id, HttpContext ctx, IHttpClientFactory factory) =>
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), $"/api/auth/employees/{id}"))
+            .RequireAuthorization();
+
+        authGroup.MapMethods("/employees/{id}", ["PATCH"], async (string id, HttpContext ctx, IHttpClientFactory factory) =>
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), $"/api/auth/employees/{id}"))
+            .RequireAuthorization();
+
         app.Map("/gateway/{**path}", async (string path, HttpContext ctx, IHttpClientFactory factory) =>
         {
             return await ProxyRequest(ctx, factory.CreateClient("CoreClient"), $"/{path}");

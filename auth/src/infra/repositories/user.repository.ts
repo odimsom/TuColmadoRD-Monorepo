@@ -55,4 +55,26 @@ export class UserRepository {
     const count = await UserModel.countDocuments({ email, tenantId });
     return count > 0;
   }
+
+  async findAllByTenant(tenantId: string): Promise<IUser[]> {
+    const docs = await UserModel.find({ tenantId }).sort({ createdAt: -1 }).lean();
+    return docs.map(d => toIUser(d as UserDoc));
+  }
+
+  async updateById(id: string, tenantId: string, data: Partial<Pick<IUser, "firstName" | "lastName" | "role" | "isActive">>): Promise<IUser | null> {
+    const doc = await UserModel.findOneAndUpdate(
+      { _id: id, tenantId },
+      { $set: data },
+      { new: true, lean: true },
+    );
+    return doc ? toIUser(doc as UserDoc) : null;
+  }
+
+  async deactivate(id: string, tenantId: string): Promise<void> {
+    await UserModel.updateOne({ _id: id, tenantId }, { $set: { isActive: false } });
+  }
+
+  async activate(id: string, tenantId: string): Promise<void> {
+    await UserModel.updateOne({ _id: id, tenantId }, { $set: { isActive: true } });
+  }
 }

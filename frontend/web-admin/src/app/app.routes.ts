@@ -78,6 +78,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/portal/settings/settings').then(m => m.Settings)
       },
       {
+        path: 'employees',
+        loadComponent: () => import('./features/portal/employees/employees').then(m => m.Employees)
+      },
+      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'

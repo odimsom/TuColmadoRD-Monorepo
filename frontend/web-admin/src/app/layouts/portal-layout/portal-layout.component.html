@@ -112,6 +112,14 @@
         }
       </a>
 
+      <a routerLink="/portal/employees" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-badge] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
+        @if (!isSidebarCollapsed()) {
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Empleados</span>
+        }
+      </a>
+
       <!-- Divider -->
       <div class="my-3 mx-3 border-t border-white/[0.05]"></div>
 
