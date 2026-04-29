@@ -32,9 +32,9 @@ export function roleGuard(...allowedRoles: string[]): CanActivateFn {
       return true;
     }
 
-    // Roles de punto de venta van al POS
-    const posRoles = ['seller', 'cashier', 'delivery'];
-    if (posRoles.includes(userRole.toLowerCase())) {
+    if (userRole.toLowerCase() === 'delivery') {
+      router.navigate(['/delivery']);
+    } else if (['seller', 'cashier'].includes(userRole.toLowerCase())) {
       router.navigate(['/pos']);
     } else {
       router.navigate(['/auth/login']);

@@ -695,15 +695,39 @@
 
         <!-- Payment -->
         <div class="px-4 py-2 border-b border-dashed border-gray-300 space-y-0.5">
-          <div class="flex justify-between">
-            <span class="text-gray-500">Pago recibido</span>
-            <span class="tabular-nums font-semibold">{{ lastSale()!.totalPaid | rdCurrency }}</span>
-          </div>
-          @if (lastSale()!.changeDue > 0) {
+          @if (lastSalePaymentMethod() === 'credit') {
             <div class="flex justify-between">
-              <span class="text-gray-500">Cambio</span>
-              <span class="tabular-nums font-semibold">{{ lastSale()!.changeDue | rdCurrency }}</span>
+              <span class="text-gray-500">Forma de pago</span>
+              <span class="font-semibold text-amber-700">Fiado (Crédito)</span>
             </div>
+            @if (lastSaleCustomerName()) {
+              <div class="flex justify-between">
+                <span class="text-gray-500">Cliente</span>
+                <span class="font-semibold">{{ lastSaleCustomerName() }}</span>
+              </div>
+            }
+          } @else if (lastSalePaymentMethod() === 'delivery') {
+            <div class="flex justify-between">
+              <span class="text-gray-500">Forma de pago</span>
+              <span class="font-semibold text-blue-700">Delivery (Pendiente)</span>
+            </div>
+            @if (lastSaleCustomerName()) {
+              <div class="flex justify-between">
+                <span class="text-gray-500">Cliente</span>
+                <span class="font-semibold">{{ lastSaleCustomerName() }}</span>
+              </div>
+            }
+          } @else {
+            <div class="flex justify-between">
+              <span class="text-gray-500">Pago recibido</span>
+              <span class="tabular-nums font-semibold">{{ lastSale()!.totalPaid | rdCurrency }}</span>
+            </div>
+            @if (lastSale()!.changeDue > 0) {
+              <div class="flex justify-between">
+                <span class="text-gray-500">Cambio</span>
+                <span class="tabular-nums font-semibold">{{ lastSale()!.changeDue | rdCurrency }}</span>
+              </div>
+            }
           }
         </div>
 

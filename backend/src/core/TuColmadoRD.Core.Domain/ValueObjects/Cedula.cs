@@ -19,11 +19,6 @@ namespace TuColmadoRD.Core.Domain.ValueObjects
                 return OperationResult<Cedula, string>.Bad("La cédula debe tener exactamente 11 dígitos numéricos.");
             }
 
-            if (!VerifyDigit(sanitized))
-            {
-                return OperationResult<Cedula, string>.Bad("El número de cédula no es válido según el algoritmo de la JCE.");
-            }
-
             return OperationResult<Cedula, string>.Good(new Cedula(sanitized));
         }
         private static string Sanitize(string? value)

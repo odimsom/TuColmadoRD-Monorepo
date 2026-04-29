@@ -62,4 +62,17 @@ public sealed class SalePayment
         CustomerId = customerId;
         ReceivedAt = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Replaces the placeholder payment data with real settlement values.
+    /// Called only by Sale.SettleDeliveryPayment().
+    /// </summary>
+    internal void Settle(PaymentMethod method, decimal amount, string? reference, Guid? customerId)
+    {
+        PaymentMethodId = method.Id;
+        AmountValue = amount;
+        Reference = reference;
+        CustomerId = customerId;
+        ReceivedAt = DateTime.UtcNow;
+    }
 }

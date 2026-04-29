@@ -188,8 +188,7 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
             if (!addressResult.TryGetResult(out var address) || address is null)
                 return OperationResult<CreateSaleResult, DomainError>.Bad(DomainError.Validation("delivery.address_invalid", addressResult.Error));
 
-            // Create DeliveryOrder (DeliveryPersonId is Guid.Empty because it's not assigned yet)
-            var doResult = DeliveryOrder.Create(tenantId, sale.Id, Guid.Empty, address);
+            var doResult = DeliveryOrder.Create(tenantId, sale.Id, null, address);
             if (!doResult.TryGetResult(out var dOrder) || dOrder is null)
                 return OperationResult<CreateSaleResult, DomainError>.Bad(DomainError.Business("delivery.creation_failed", doResult.Error));
 
@@ -200,8 +199,10 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         if (!finalizeResult.IsGood)
             return OperationResult<CreateSaleResult, DomainError>.Bad(finalizeResult.Error);
 
-        // Only register in shift if NOT delivery (payment is collected later)
-        if (!isDelivery)
+        // Only register in shift for sales that collect cash/card/transfer immediately.
+        // Credit = debt recorded via SaleCompletedDomainEvent; Delivery = collected on completion.
+        var isCredit = sale.Payments.Any(p => p.PaymentMethodId == PaymentMethod.Credit.Id);
+        if (!isDelivery && !isCredit)
         {
             var registerResult = shift.RegisterSale(Money.FromDecimal(sale.TotalAmount).Result);
             if (!registerResult.IsGood)

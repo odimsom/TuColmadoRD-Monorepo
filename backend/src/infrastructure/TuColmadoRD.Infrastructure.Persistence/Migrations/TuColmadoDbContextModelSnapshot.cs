@@ -411,7 +411,7 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("DeliveredAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("DeliveryPersonId")
+                    b.Property<Guid?>("DeliveryPersonId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("DispatchedAt")
@@ -1544,7 +1544,7 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("DeliveryPersonId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired(false);
 
                     b.OwnsOne("TuColmadoRD.Core.Domain.ValueObjects.Address", "Destination", b1 =>
                         {

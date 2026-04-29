@@ -32,6 +32,7 @@ public class DeliveryOrderConfiguration : IEntityTypeConfiguration<DeliveryOrder
         builder.HasOne<DeliveryPerson>()
             .WithMany()
             .HasForeignKey(d => d.DeliveryPersonId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

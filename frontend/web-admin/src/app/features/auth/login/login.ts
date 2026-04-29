@@ -41,9 +41,9 @@ export class Login {
     this.authService.login(payload).subscribe({
       next: () => {
         const role = this.authService.currentUser()?.role?.toLowerCase();
-        const dest = (role === 'seller' || role === 'delivery')
-          ? '/pos'
-          : '/portal/dashboard';
+        const dest = role === 'delivery' ? '/delivery'
+                   : (role === 'seller' || role === 'cashier') ? '/pos'
+                   : '/portal/dashboard';
         this.router.navigate([dest]);
       },
       error: (err) => {

@@ -85,10 +85,17 @@ export const routes: Routes = [
     ]
   },
 
-  // POS — requiere autenticación (cualquier rol)
+  // POS — requiere autenticación (seller, cashier, owner, admin)
   {
     path: 'pos',
     loadComponent: () => import('./layouts/pos-layout/pos-layout').then(m => m.PosLayout),
-    canActivate: [authGuard]
+    canActivate: [authGuard, roleGuard('Owner', 'Admin', 'Seller', 'Cashier')]
+  },
+
+  // Delivery — vista del repartidor
+  {
+    path: 'delivery',
+    loadComponent: () => import('./layouts/delivery-layout/delivery-layout').then(m => m.DeliveryLayout),
+    canActivate: [authGuard, roleGuard('Delivery', 'Owner', 'Admin')]
   }
 ];

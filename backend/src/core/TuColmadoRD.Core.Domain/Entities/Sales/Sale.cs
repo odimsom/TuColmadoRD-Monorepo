@@ -245,6 +245,34 @@ public class Sale : ITenantEntity
         return OperationResult<Unit, DomainError>.Good(Unit.Value);
     }
 
+    /// <summary>
+    /// Replaces the delivery placeholder payment with the actual collected payment.
+    /// Used when a delivery order is completed and cash is collected on delivery.
+    /// </summary>
+    public OperationResult<Unit, DomainError> SettleDeliveryPayment(
+        PaymentMethod method,
+        Money amount,
+        string? reference,
+        Guid? customerId = null)
+    {
+        if (StatusId != SaleStatus.Held.Id)
+            return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.not_held"));
+
+        if (amount.Amount <= 0)
+            return OperationResult<Unit, DomainError>.Bad(DomainError.Validation("sale.payment_amount_must_be_positive"));
+
+        var placeholder = _payments.FirstOrDefault(p => p.PaymentMethodId == PaymentMethod.Delivery.Id);
+        if (placeholder is null)
+            return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.no_delivery_payment"));
+
+        placeholder.Settle(method, amount.Amount, reference, customerId);
+
+        TotalPaidAmount = _payments.Sum(p => p.AmountValue);
+        ChangeDueAmount = Math.Max(0m, TotalPaidAmount - TotalAmount);
+
+        return OperationResult<Unit, DomainError>.Good(Unit.Value);
+    }
+
     public OperationResult<Unit, DomainError> Complete()
     {
         if (StatusId != SaleStatus.Held.Id)

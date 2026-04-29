@@ -53,6 +53,8 @@ export class PosLayout implements OnInit, OnDestroy {
   cartItems     = signal<CartItem[]>([]);
   activeShift   = signal<ShiftDto | null>(null);
   lastSale      = signal<CreateSaleResult | null>(null);
+  lastSalePaymentMethod = signal<string>('');
+  lastSaleCustomerName  = signal<string>('');
   tenantProfile = signal<TenantProfileDto | null>(null);
   allCustomers  = signal<CustomerSummary[]>([]);
 
@@ -554,6 +556,8 @@ export class PosLayout implements OnInit, OnDestroy {
     }).subscribe({
       next: result => {
         this.lastSale.set(result);
+        this.lastSalePaymentMethod.set(this.paymentMethod());
+        this.lastSaleCustomerName.set(this.selectedCustomer()?.fullName ?? '');
         this.showPaymentModal.set(false);
         this.showReceiptModal.set(true);
         this.clearCart();

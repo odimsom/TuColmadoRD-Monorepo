@@ -57,14 +57,14 @@ public sealed class CompleteDeliveryOrderCommandHandler : IRequestHandler<Comple
         // 1. Mark Delivery as Completed
         order.MarkAsDelivered();
 
-        // 2. Add real payments to the Sale
+        // 2. Replace the delivery placeholder with the real collected payment
         foreach (var p in request.Payments)
         {
             var method = PaymentMethod.FromId(p.PaymentMethodId).Result;
             var amount = Money.FromDecimal(p.Amount).Result;
-            var addResult = sale.AddPayment(method, amount, p.Reference, p.CustomerId);
-            if (!addResult.IsGood) 
-                return OperationResult<TuColmadoRD.Core.Domain.Base.Result.Unit, DomainError>.Bad(addResult.Error);
+            var settleResult = sale.SettleDeliveryPayment(method, amount, p.Reference, p.CustomerId);
+            if (!settleResult.IsGood)
+                return OperationResult<TuColmadoRD.Core.Domain.Base.Result.Unit, DomainError>.Bad(settleResult.Error);
         }
 
         // 3. Complete the Sale
