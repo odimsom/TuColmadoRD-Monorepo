@@ -24,7 +24,10 @@ public sealed class UnitOfWork : IUnitOfWork
 
         foreach (var domainEvent in domainEvents)
         {
-            await _mediator.Publish(domainEvent, ct);
+            if (domainEvent is INotification notification)
+            {
+                await _mediator.Publish(notification, ct);
+            }
         }
 
         await _dbContext.SaveChangesAsync(ct);

@@ -1,1 +1,94 @@
-<p>subscription works!</p>
+<div class="px-8 py-8 space-y-8 animate-in fade-in duration-500 max-w-4xl">
+
+  <!-- Header -->
+  <div>
+    <h1 class="text-2xl font-black text-white uppercase tracking-tighter">Suscripción</h1>
+    <p class="text-slate-500 text-xs mt-1">Estado de tu licencia y planes disponibles</p>
+  </div>
+
+  <!-- Status banner -->
+  @if (isExpired()) {
+    <div class="flex items-center gap-4 px-5 py-4 rounded-xl bg-red-500/10 border border-red-500/25">
+      <span class="icon-[ic--baseline-lock] text-2xl text-red-400 shrink-0"></span>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-black text-red-400">Tu licencia ha expirado</p>
+        <p class="text-xs text-slate-400 mt-0.5">Reactiva tu plan para recuperar el acceso completo. Contáctanos por WhatsApp con tu número de cuenta.</p>
+      </div>
+      <a [href]="whatsappUrl" target="_blank" rel="noopener noreferrer"
+         class="shrink-0 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-colors">
+        Reactivar
+      </a>
+    </div>
+  } @else {
+    <div class="flex items-center gap-4 px-5 py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+      <span class="icon-[ic--baseline-check-circle] text-2xl text-emerald-400 shrink-0"></span>
+      <div>
+        <p class="text-sm font-black text-emerald-400">
+          Licencia {{ getStatusLabel(user()?.subscriptionStatus) }}
+        </p>
+        <p class="text-xs text-slate-400 mt-0.5">Tu cuenta está activa. Para cambiar de plan contáctanos por WhatsApp.</p>
+      </div>
+    </div>
+  }
+
+  <!-- Plans -->
+  <div>
+    <h2 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Planes disponibles</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      @for (plan of plans; track plan.id) {
+        <div class="rounded-2xl border p-6 flex flex-col gap-4 transition-all"
+             [class.border-blue-500]="plan.highlighted"
+             [class.bg-blue-500\/5]="plan.highlighted"
+             [class.border-white\/10]="!plan.highlighted"
+             [class.bg-pos-surface]="!plan.highlighted">
+
+          @if (plan.highlighted) {
+            <span class="self-start text-[0.55rem] font-black px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 uppercase tracking-widest border border-blue-500/30">
+              Más popular
+            </span>
+          }
+
+          <div>
+            <h3 class="text-lg font-black text-white">{{ plan.name }}</h3>
+            <div class="mt-1 flex items-baseline gap-1">
+              <span class="text-2xl font-black text-white">RD$ {{ plan.monthlyPrice | number }}</span>
+              <span class="text-xs text-slate-500">/mes</span>
+            </div>
+            <p class="text-[0.6rem] text-slate-600 mt-0.5">
+              o RD$ {{ plan.yearlyPrice | number }}/año (ahorra {{ (100 - (plan.yearlyPrice / (plan.monthlyPrice * 12)) * 100) | number:'1.0-0' }}%)
+            </p>
+          </div>
+
+          <ul class="space-y-2 flex-1">
+            @for (feat of plan.features; track feat) {
+              <li class="flex items-center gap-2 text-xs text-slate-300">
+                <span class="icon-[ic--baseline-check] text-emerald-400 shrink-0"></span>
+                {{ feat }}
+              </li>
+            }
+          </ul>
+
+          <a [href]="whatsappUrl + '?text=Hola,%20quiero%20suscribirme%20al%20plan%20' + plan.name"
+             target="_blank" rel="noopener noreferrer"
+             class="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors"
+             [ngClass]="plan.highlighted
+               ? 'bg-blue-600 hover:bg-blue-500 text-white'
+               : 'border border-white/10 text-slate-300 hover:border-white/30 hover:text-white'">
+            <span class="icon-[ic--baseline-whatsapp]"></span>
+            Contratar por WhatsApp
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Support note -->
+  <div class="flex items-start gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/5">
+    <span class="icon-[ic--baseline-info] text-blue-400 text-base shrink-0 mt-0.5"></span>
+    <p class="text-xs text-slate-500 leading-relaxed">
+      Los pagos se gestionan directamente con soporte. Una vez confirmado el pago, tu licencia se activa en menos de 24 horas.
+      Contáctanos al <strong class="text-slate-400">+1 (829) 693-2458</strong>.
+    </p>
+  </div>
+
+</div>

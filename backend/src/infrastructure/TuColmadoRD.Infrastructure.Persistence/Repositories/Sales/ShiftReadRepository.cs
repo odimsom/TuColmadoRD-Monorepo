@@ -22,7 +22,7 @@ public sealed class ShiftReadRepository : IShiftReadRepository
     {
         return await _dbContext.Shifts
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId && x.TerminalId == terminalId && x.Status == ShiftStatus.Open)
+            .Where(x => x.TenantId.Value == tenantId && x.TerminalId == terminalId && x.Status == ShiftStatus.Open)
             .Select(MapShiftDto())
             .FirstOrDefaultAsync(ct);
     }
@@ -31,7 +31,7 @@ public sealed class ShiftReadRepository : IShiftReadRepository
     {
         return await _dbContext.Shifts
             .AsNoTracking()
-            .Where(x => x.Id == shiftId && x.TenantId == tenantId)
+            .Where(x => x.Id == shiftId && x.TenantId.Value == tenantId)
             .Select(MapShiftDto())
             .FirstOrDefaultAsync(ct);
     }
@@ -43,7 +43,7 @@ public sealed class ShiftReadRepository : IShiftReadRepository
 
         var source = _dbContext.Shifts
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId);
+            .Where(x => x.TenantId.Value == tenantId);
 
         if (query.From.HasValue)
         {
@@ -86,7 +86,7 @@ public sealed class ShiftReadRepository : IShiftReadRepository
     {
         return x => new ShiftDto(
             x.Id,
-            x.TenantId,
+            x.TenantId.Value,
             x.TerminalId,
             x.CashierName,
             x.Status.Name,

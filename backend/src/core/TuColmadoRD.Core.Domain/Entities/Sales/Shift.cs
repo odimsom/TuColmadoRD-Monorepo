@@ -78,11 +78,6 @@ namespace TuColmadoRD.Core.Domain.Entities.Sales
                 return OperationResult<Shift, DomainError>.Bad(DomainError.Validation("shift.tenant_required"));
             }
 
-            if (terminalId == Guid.Empty)
-            {
-                return OperationResult<Shift, DomainError>.Bad(DomainError.Validation("shift.terminal_required"));
-            }
-
             if (string.IsNullOrWhiteSpace(cashierName))
             {
                 return OperationResult<Shift, DomainError>.Bad(DomainError.Validation("shift.cashier_name_required"));

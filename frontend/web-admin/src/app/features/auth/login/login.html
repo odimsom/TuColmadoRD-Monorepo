@@ -1,45 +1,212 @@
-<div class="card w-96 bg-base-200/80 backdrop-blur-xl border border-white/10 shadow-2xl">
-  <div class="card-body">
-    <div class="text-center mb-4">
-      <h2 class="text-3xl font-bold text-white tracking-tight">Acceso VIP</h2>
-      <p class="text-slate-400 text-sm mt-1">Gestiona tu colmado</p>
+<div class="min-h-screen flex bg-[#060d1a]">
+
+  <!-- ======================== LEFT PANEL ======================== -->
+  <div class="hidden lg:flex lg:w-[46%] relative flex-col justify-between overflow-hidden bg-[#080f1e] border-r border-white/5">
+
+    <!-- Ambient glows -->
+    <div class="absolute top-[-15%] left-[-15%] w-[500px] h-[500px] bg-blue-800/20 rounded-full blur-[130px] pointer-events-none"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-blue-900/15 rounded-full blur-[100px] pointer-events-none"></div>
+
+    <!-- Subtle grid overlay -->
+    <div class="absolute inset-0 opacity-[0.025] pointer-events-none">
+      <svg width="100%" height="100%">
+        <defs><pattern id="lgrid" width="48" height="48" patternUnits="userSpaceOnUse">
+          <path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" stroke-width="0.8"/>
+        </pattern></defs>
+        <rect width="100%" height="100%" fill="url(#lgrid)"/>
+      </svg>
     </div>
 
-    @if (error) {
-      <div class="alert alert-error text-xs py-2 rounded-lg mb-4" data-testid="login-error-alert">
-        <span>{{ error }}</span>
+    <!-- Top: Logo -->
+    <div class="relative z-10 p-10">
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-10 h-10" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb"/>
+            <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626"/>
+          </svg>
+          <div class="absolute inset-0 bg-blue-500/20 blur-xl rounded-full -z-10 scale-150"></div>
+        </div>
+        <div class="flex flex-col leading-none">
+          <span class="text-2xl font-bebas text-white tracking-wider uppercase leading-none">TuColmado</span>
+          <span class="text-[0.6rem] font-black text-blue-500 uppercase tracking-[0.4em] mt-0.5">RD</span>
+        </div>
       </div>
-    }
+    </div>
 
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4" data-testid="login-form">
-      <div class="form-control w-full">
-        <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Correo Electrónico</span></label>
-        <input type="email" formControlName="email" placeholder="tu@colmado.com" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="login-email" />
+    <!-- Center: Hero text -->
+    <div class="relative z-10 px-10 pb-4">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[0.65rem] font-black uppercase tracking-[0.25em] mb-8">
+        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+        Sistema POS para Colmados
       </div>
+      <h1 class="text-6xl xl:text-7xl font-bebas text-white leading-[0.88] tracking-tight uppercase mb-6">
+        Tu negocio<br/>
+        bajo<br/>
+        <span class="text-blue-500 drop-shadow-[0_0_25px_rgba(37,99,235,0.5)]">control total</span>
+      </h1>
+      <p class="text-slate-400 text-base leading-relaxed max-w-sm">
+        Factura en segundos, controla tu inventario y cierra caja sin errores. Diseñado para colmados dominicanos.
+      </p>
 
-      <div class="form-control w-full">
-        <label class="label"><span class="label-text text-slate-300 text-xs uppercase tracking-wider font-semibold">Contraseña</span></label>
-        <input type="password" formControlName="password" placeholder="••••••••" class="input bg-[#0f172a] border-white/5 focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all text-sm" data-testid="login-password" />
+      <!-- Feature pills -->
+      <div class="flex flex-wrap gap-2 mt-8">
+        @for (tag of desktopApp
+          ? ['Funciona sin internet', 'Sync automático', 'Impresión térmica', 'Soporte 24/7']
+          : ['Sin internet', 'Soporte 24/7', '14 días gratis', 'Cancela cuando quieras'];
+          track $index) {
+          <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-400 text-[0.65rem] font-bold uppercase tracking-wide">{{ tag }}</span>
+        }
       </div>
+    </div>
 
-      <div class="card-actions mt-8">
-        <button type="submit" [disabled]="loginForm.invalid || loading" class="btn btn-primary w-full border-none shadow-lg shadow-blue-500/20" data-testid="login-submit-btn">
-          @if (loading) {
-            <span class="loading loading-spinner loading-sm"></span>
-          } @else {
-            Entrar al Sistema
+    <!-- Bottom: Testimonial + Synset -->
+    <div class="relative z-10 px-10 pb-10 space-y-5">
+      <div class="p-6 rounded-2xl bg-white/[0.03] border border-white/8 backdrop-blur-sm">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-xs font-black shadow-lg">JP</div>
+          <div>
+            <p class="text-sm font-bold text-white leading-none">Juan Pérez</p>
+            <p class="text-[0.6rem] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Colmado El Buen Precio · SDO</p>
+          </div>
+        </div>
+        <p class="text-slate-300 text-sm italic leading-relaxed">"Antes perdía RD$3,000 al mes en errores de suma. Ahora todo me cuadra al centavo."</p>
+        <div class="flex gap-0.5 mt-3">
+          @for (i of [1,2,3,4,5]; track $index) {
+            <span class="icon-[ic--baseline-star] text-amber-400 text-xs"></span>
           }
-        </button>
+        </div>
       </div>
-    </form>
 
-    <div class="text-center mt-6">
-      @if (!desktopApp) {
-        <p class="text-sm text-slate-400">¿No tienes cuenta? <a routerLink="/auth/register" class="text-blue-500 hover:text-blue-400 font-medium transition-colors">Crea tu colmado</a></p>
-      } @else {
-        <p class="text-sm text-slate-500">Acceso exclusivo para cuentas con licencia activa.</p>
-      }
-      <div class="mt-4"><a routerLink="/" class="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center justify-center gap-1"><span class="icon-[ic--baseline-arrow-back]"></span> Volver</a></div>
+      <!-- Synset attribution -->
+      <div class="flex items-center justify-between pt-2 border-t border-white/5">
+        <p class="text-[0.6rem] text-slate-600 font-bold uppercase tracking-[0.3em]">Producto de</p>
+        <a href="https://synsetsolutions.com" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 opacity-40 hover:opacity-80 transition-opacity group">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb"/>
+            <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626"/>
+          </svg>
+          <span class="text-[0.65rem] font-black text-slate-300 uppercase tracking-[0.3em] group-hover:text-blue-400 transition-colors">Synset Solutions</span>
+        </a>
+      </div>
     </div>
   </div>
+
+  <!-- ======================== RIGHT PANEL ======================== -->
+  <div class="flex-1 flex flex-col items-center justify-center px-6 py-12 relative">
+
+    <!-- Ambient glow right side -->
+    <div class="absolute top-0 right-0 w-96 h-96 bg-blue-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="absolute bottom-0 left-0 w-64 h-64 bg-red-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+    <!-- Mobile logo (visible only on small screens) -->
+    <div class="lg:hidden flex items-center gap-3 mb-10">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-9 h-9" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb"/>
+        <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626"/>
+      </svg>
+      <div class="flex flex-col leading-none">
+        <span class="text-xl font-bebas text-white tracking-wider uppercase">TuColmado<span class="text-blue-500">RD</span></span>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="w-full max-w-md relative z-10">
+      <div class="mb-8">
+        <h2 class="text-3xl font-black text-white tracking-tight">Bienvenido de vuelta</h2>
+        <p class="text-slate-500 text-sm mt-1.5">
+          @if (!desktopApp) {
+            Inicia sesión en tu cuenta para continuar.
+          } @else {
+            Acceso exclusivo · Licencia activa requerida.
+          }
+        </p>
+      </div>
+
+      <!-- Error -->
+      @if (error) {
+        <div class="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm mb-6 animate-in fade-in slide-in-from-top-2 duration-300" data-testid="login-error-alert">
+          <span class="icon-[ic--baseline-error-outline] text-lg shrink-0"></span>
+          <span>{{ error }}</span>
+        </div>
+      }
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-5" data-testid="login-form">
+
+        <!-- Email -->
+        <div class="space-y-1.5">
+          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Correo Electrónico</label>
+          <div class="relative">
+            <span class="icon-[ic--baseline-email] absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-base pointer-events-none"></span>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="tu@colmado.com"
+              class="w-full bg-white/[0.04] border border-white/8 hover:border-white/15 focus:border-blue-500/60 focus:bg-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all"
+              data-testid="login-email"
+            />
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="space-y-1.5">
+          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Contraseña</label>
+          <div class="relative">
+            <span class="icon-[ic--baseline-lock] absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-base pointer-events-none"></span>
+            <input
+              type="password"
+              formControlName="password"
+              placeholder="••••••••"
+              class="w-full bg-white/[0.04] border border-white/8 hover:border-white/15 focus:border-blue-500/60 focus:bg-white/[0.06] rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all"
+              data-testid="login-password"
+            />
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          [disabled]="loginForm.invalid || loading"
+          class="w-full mt-2 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-black text-sm uppercase tracking-widest transition-all shadow-lg shadow-blue-600/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          data-testid="login-submit-btn"
+        >
+          @if (loading) {
+            <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            <span>Verificando...</span>
+          } @else {
+            <span class="icon-[ic--baseline-login] text-base"></span>
+            <span>Entrar al Sistema</span>
+          }
+        </button>
+      </form>
+
+      <!-- Footer links -->
+      <div class="mt-8 pt-6 border-t border-white/5 flex flex-col items-center gap-4">
+        @if (!desktopApp) {
+          <p class="text-sm text-slate-500">
+            ¿No tienes cuenta?
+            <a routerLink="/auth/register" class="text-blue-400 hover:text-blue-300 font-bold transition-colors ml-1">Empieza gratis →</a>
+          </p>
+          <a routerLink="/" class="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-400 transition-colors">
+            <span class="icon-[ic--baseline-arrow-back] text-sm"></span>
+            Volver al inicio
+          </a>
+        } @else {
+          <p class="text-xs text-slate-600 text-center max-w-xs">
+            Acceso exclusivo para cuentas con licencia activa. Contacta soporte si tienes problemas para ingresar.
+          </p>
+          <a href="https://wa.me/18296932458" target="_blank" class="flex items-center gap-2 text-xs text-green-500 hover:text-green-400 transition-colors font-bold">
+            <span class="icon-[ic--baseline-whatsapp]"></span>
+            Contactar soporte
+          </a>
+        }
+      </div>
+    </div>
+
+    <!-- Bottom: version / Synset -->
+    <p class="absolute bottom-6 text-[0.55rem] text-slate-700 font-bold uppercase tracking-[0.3em]">
+      TuColmadoRD &nbsp;·&nbsp; <a href="https://synsetsolutions.com" target="_blank" class="hover:text-slate-500 transition-colors">Synset Solutions</a>
+    </p>
+  </div>
+
 </div>

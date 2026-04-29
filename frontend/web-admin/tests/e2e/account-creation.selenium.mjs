@@ -118,9 +118,8 @@ async function run() {
 
     await driver.get(APP_URL);
 
-    await (await findByTestId(driver, 'register-full-name')).sendKeys('Usuario Selenium');
     await (await findByTestId(driver, 'register-business-name')).sendKeys('Colmado Prueba Selenium');
-    await (await findByTestId(driver, 'register-whatsapp')).sendKeys('+18095551234');
+    await (await findByTestId(driver, 'register-email')).sendKeys('selenium@colmado.com');
     await (await findByTestId(driver, 'register-password')).sendKeys('clave1234');
 
     const continueButton = await findByTestId(driver, 'register-continue-btn');
@@ -137,15 +136,19 @@ async function run() {
       'Create account button should be disabled before accepting terms',
     );
 
-    await (await findByTestId(driver, 'terms-checkbox')).click();
+    const checkbox = await findByTestId(driver, 'terms-checkbox');
+    await driver.executeScript(
+      `const el = arguments[0]; if (!el.checked) { el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); }`,
+      checkbox,
+    );
     await driver.wait(async () => createAccountButton.isEnabled(), TIMEOUT_MS);
-    await createAccountButton.click();
+    await driver.executeScript('arguments[0].click();', createAccountButton);
 
-    const successTitle = await findByTestId(driver, 'register-success-title');
-    await driver.wait(until.elementIsVisible(successTitle), TIMEOUT_MS);
-
-    const successText = await successTitle.getText();
-    assert.match(successText, /Todo listo/i);
+    await driver.wait(
+      async () => (await driver.getCurrentUrl()).includes('/portal/welcome'),
+      TIMEOUT_MS,
+      'Expected navigation to /portal/welcome after successful registration',
+    );
 
     const token = await driver.executeScript("return window.localStorage.getItem('tc_token');");
     assert.ok(token, 'Expected tc_token in localStorage after successful registration');

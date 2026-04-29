@@ -6,11 +6,13 @@ export interface IUserDocument extends Omit<IUser, "_id">, Document {}
 
 const UserSchema = new Schema<IUserDocument>(
   {
-    tenantId: { type: String, required: true, index: true },
-    email: { type: String, required: true, trim: true, lowercase: true },
-    password: { type: String, required: true },
-    role: { type: String, enum: Object.values(Role), required: true },
-    isActive: { type: Boolean, default: true },
+    tenantId:  { type: String, required: true, index: true },
+    email:     { type: String, required: true, trim: true, lowercase: true },
+    password:  { type: String, required: true },
+    firstName: { type: String, default: null },
+    lastName:  { type: String, default: null },
+    role:      { type: String, enum: Object.values(Role), required: true },
+    isActive:  { type: Boolean, default: true },
   },
   {
     timestamps: true,

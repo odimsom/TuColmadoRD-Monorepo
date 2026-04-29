@@ -21,13 +21,13 @@ public class SaleRepository(TuColmadoDbContext dbContext) : GenericRepository<Sa
 		return await _dbContext.Set<Sale>()
 			.Include(s => s.Items)
 			.Include(s => s.Payments)
-			.FirstOrDefaultAsync(s => s.Id == saleId && s.TenantId == tenantId, ct);
+			.FirstOrDefaultAsync(s => s.Id == saleId && s.TenantId.Value == tenantId, ct);
 	}
 
 	public async Task<IReadOnlyList<Sale>> GetByTerminalIdAsync(Guid terminalId, Guid tenantId, CancellationToken ct)
 	{
 		return await _dbContext.Set<Sale>()
-			.Where(s => s.TerminalId == terminalId && s.TenantId == tenantId)
+			.Where(s => s.TerminalId == terminalId && s.TenantId.Value == tenantId)
 			.OrderByDescending(s => s.CreatedAt)
 			.ToListAsync(ct);
 	}
@@ -35,34 +35,44 @@ public class SaleRepository(TuColmadoDbContext dbContext) : GenericRepository<Sa
 	public async Task<IReadOnlyList<Sale>> GetByShiftIdAsync(Guid shiftId, Guid tenantId, CancellationToken ct)
 	{
 		return await _dbContext.Set<Sale>()
-			.Where(s => s.ShiftId == shiftId && s.TenantId == tenantId)
+			.Where(s => s.ShiftId == shiftId && s.TenantId.Value == tenantId)
 			.OrderByDescending(s => s.CreatedAt)
 			.ToListAsync(ct);
 	}
 
-	public async Task<(IReadOnlyList<Sale> Items, int TotalCount)> GetPagedAsync(
+	public async Task<(IReadOnlyList<Sale> Items, int TotalCount, decimal TotalRevenue)> GetPagedAsync(
 		Guid tenantId,
 		int pageNumber,
 		int pageSize,
 		CancellationToken ct)
 	{
 		var query = _dbContext.Set<Sale>()
-			.Where(s => s.TenantId == tenantId)
+			.Where(s => s.TenantId.Value == tenantId)
 			.OrderByDescending(s => s.CreatedAt);
 
 		var totalCount = await query.CountAsync(ct);
+		var totalRevenue = totalCount > 0 ? await query.SumAsync(s => s.TotalAmount, ct) : 0m;
 		var items = await query
+			.Include(s => s.Items)
 			.Skip((pageNumber - 1) * pageSize)
 			.Take(pageSize)
 			.ToListAsync(ct);
 
-		return (items, totalCount);
+		return (items, totalCount, totalRevenue);
 	}
 
 	public new Task UpdateAsync(Sale sale, CancellationToken ct)
 	{
-		_dbContext.Set<Sale>().Update(sale);
+		if (_dbContext.Entry(sale).State == EntityState.Detached)
+		{
+			_dbContext.Set<Sale>().Update(sale);
+		}
 		return Task.CompletedTask;
+	}
+
+	public IQueryable<Sale> GetQueryable()
+	{
+		return _dbContext.Set<Sale>().AsQueryable();
 	}
 }
 

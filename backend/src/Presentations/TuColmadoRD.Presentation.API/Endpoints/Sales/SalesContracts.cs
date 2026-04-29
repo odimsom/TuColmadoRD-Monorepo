@@ -4,14 +4,28 @@ public sealed record SaleItemRequest(Guid ProductId, decimal Quantity);
 
 public sealed record SalePaymentRequest(int PaymentMethodId, decimal Amount, string? Reference, Guid? CustomerId);
 
+public sealed record DeliveryAddressRequest(
+    string Province,
+    string Sector,
+    string Street,
+    string Reference,
+    string? HouseNumber = null,
+    double? Latitude = null,
+    double? Longitude = null);
+
 public sealed record CreateSaleRequest(
     IReadOnlyList<SaleItemRequest> Items,
     IReadOnlyList<SalePaymentRequest> Payments,
-    string? Notes);
+    string? Notes,
+    /// <summary>RNC del comprador. Si se envía, se emite B01 (crédito fiscal); de lo contrario B02 (consumidor final).</summary>
+    string? BuyerRnc = null,
+    DeliveryAddressRequest? DeliveryAddress = null);
 
 public sealed record CreateSaleResponse(
     Guid SaleId,
     string ReceiptNumber,
+    /// <summary>NCF asignado (ej. B0200000001). Null si el tenant no tiene secuencia fiscal activa.</summary>
+    string? NcfNumber,
     decimal Subtotal,
     decimal TotalItbis,
     decimal Total,
@@ -80,4 +94,5 @@ public sealed record PagedSalesResponse(
     int Page,
     int PageSize,
     int TotalCount,
-    int TotalPages);
+    int TotalPages,
+    decimal TotalRevenue);

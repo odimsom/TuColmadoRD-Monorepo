@@ -5,6 +5,7 @@ using TuColmadoRD.Core.Application.Sales.Commands;
 using TuColmadoRD.Presentation.API.Extensions;
 using ApplicationSaleItemRequest = TuColmadoRD.Core.Application.Sales.Commands.SaleItemRequest;
 using ApplicationSalePaymentRequest = TuColmadoRD.Core.Application.Sales.Commands.SalePaymentRequest;
+using ApplicationDeliveryAddressRequest = TuColmadoRD.Core.Application.Sales.Commands.DeliveryAddressRequest;
 
 namespace TuColmadoRD.Presentation.API.Endpoints.Sales;
 
@@ -18,6 +19,7 @@ public static class SalesEndpoints
 
         group.MapPost(string.Empty, CreateSale)
             .WithName("CreateSale")
+            .AllowAnonymous()
             .WithOpenApi();
 
         group.MapPost("/{saleId:guid}/void", VoidSale)
@@ -42,8 +44,12 @@ public static class SalesEndpoints
     {
         var commandItems = request.Items.Select(i => new ApplicationSaleItemRequest(i.ProductId, i.Quantity)).ToList();
         var commandPayments = request.Payments.Select(p => new ApplicationSalePaymentRequest(p.PaymentMethodId, p.Amount, p.Reference, p.CustomerId)).ToList();
-        
-        var command = new CreateSaleCommand(commandItems, commandPayments, request.Notes);
+
+        ApplicationDeliveryAddressRequest? deliveryAddress = null;
+        if (request.DeliveryAddress is { } da)
+            deliveryAddress = new ApplicationDeliveryAddressRequest(da.Province, da.Sector, da.Street, da.Reference, da.HouseNumber, da.Latitude, da.Longitude);
+
+        var command = new CreateSaleCommand(commandItems, commandPayments, request.Notes, request.BuyerRnc, deliveryAddress);
 
         var result = await mediator.Send(command, ct);
         if (!result.TryGetResult(out var created) || created is null)
@@ -54,6 +60,7 @@ public static class SalesEndpoints
         var response = new CreateSaleResponse(
             created.SaleId,
             created.ReceiptNumber,
+            created.NcfNumber,
             created.Subtotal,
             created.TotalItbis,
             created.Total,
@@ -163,7 +170,7 @@ public static class SalesEndpoints
             .ToList();
 
         var totalPages = (int)Math.Ceiling((double)paged.TotalCount / paged.PageSize);
-        var response = new PagedSalesResponse(items, paged.PageNumber, paged.PageSize, paged.TotalCount, totalPages);
+        var response = new PagedSalesResponse(items, paged.PageNumber, paged.PageSize, paged.TotalCount, totalPages, paged.TotalRevenue);
 
         return TypedResults.Ok(response);
     }

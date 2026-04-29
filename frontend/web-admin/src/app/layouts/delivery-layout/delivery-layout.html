@@ -1,0 +1,134 @@
+<div class="min-h-screen bg-slate-950 text-white flex flex-col">
+
+  <!-- Header -->
+  <header class="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-white/[0.06]">
+    <div class="flex items-center gap-2">
+      <span class="icon-[ic--baseline-delivery-dining] text-2xl text-blue-400"></span>
+      <div>
+        <p class="text-xs font-bold text-white">Vista Repartidor</p>
+        <p class="text-[0.65rem] text-slate-400">{{ cashierName }}</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button (click)="loadOrders()"
+        [disabled]="loading()"
+        class="p-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition-colors disabled:opacity-40">
+        <span class="icon-[ic--baseline-refresh] text-lg" [class.animate-spin]="loading()"></span>
+      </button>
+      <button (click)="logout()"
+        class="p-2 rounded-lg bg-white/[0.05] hover:bg-red-500/20 transition-colors text-slate-400 hover:text-red-400">
+        <span class="icon-[ic--baseline-logout] text-lg"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="flex-1 p-4 space-y-3 overflow-y-auto">
+
+    @if (errorMsg()) {
+      <div class="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+        <span class="icon-[ic--baseline-error]"></span>
+        {{ errorMsg() }}
+        <button (click)="errorMsg.set(null)" class="ml-auto text-red-300 hover:text-white">
+          <span class="icon-[ic--baseline-close]"></span>
+        </button>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center py-16 gap-3 text-slate-500">
+        <span class="icon-[ic--baseline-hourglass-empty] text-4xl animate-pulse"></span>
+        <p class="text-sm">Cargando pedidos...</p>
+      </div>
+    } @else if (orders().length === 0) {
+      <div class="flex flex-col items-center justify-center py-16 gap-3 text-slate-500">
+        <span class="icon-[ic--baseline-check-circle] text-5xl text-emerald-600/50"></span>
+        <p class="text-sm font-semibold">No hay pedidos pendientes</p>
+        <p class="text-xs text-slate-600">Todos los deliveries han sido completados</p>
+        <button (click)="loadOrders()"
+          class="mt-2 px-4 py-2 rounded-lg bg-blue-600/20 text-blue-400 text-sm font-semibold hover:bg-blue-600/30 transition-colors">
+          Actualizar
+        </button>
+      </div>
+    } @else {
+      <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider px-1">
+        {{ orders().length }} pedido{{ orders().length !== 1 ? 's' : '' }} pendiente{{ orders().length !== 1 ? 's' : '' }}
+      </p>
+
+      @for (order of orders(); track order.id) {
+        <div class="rounded-2xl bg-slate-900 border border-white/[0.06] overflow-hidden">
+
+          <!-- Order header -->
+          <div class="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
+            <div class="flex items-center gap-2">
+              <span class="text-[0.65rem] font-mono bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">
+                #{{ order.receiptNumber }}
+              </span>
+              @if (order.status === 'InTransit') {
+                <span class="text-[0.6rem] font-bold bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20">
+                  EN CAMINO
+                </span>
+              } @else {
+                <span class="text-[0.6rem] font-bold bg-slate-700/50 text-slate-400 px-2 py-0.5 rounded-full border border-slate-600/20">
+                  PENDIENTE
+                </span>
+              }
+            </div>
+            <span class="text-base font-black text-white tabular-nums">{{ order.totalAmount | rdCurrency }}</span>
+          </div>
+
+          <!-- Customer -->
+          <div class="px-4 py-2.5 flex items-center gap-3 border-b border-white/[0.04]">
+            <span class="icon-[ic--baseline-person] text-slate-500 text-lg shrink-0"></span>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-white truncate">{{ order.customerName }}</p>
+              @if (order.customerPhone) {
+                <a [href]="'tel:' + order.customerPhone"
+                  class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                  <span class="icon-[ic--baseline-phone] text-sm"></span>
+                  {{ order.customerPhone }}
+                </a>
+              }
+            </div>
+          </div>
+
+          <!-- Address -->
+          <div class="px-4 py-2.5 flex items-start gap-3 border-b border-white/[0.04]">
+            <span class="icon-[ic--baseline-location-on] text-slate-500 text-lg shrink-0 mt-0.5"></span>
+            <div class="min-w-0">
+              <p class="text-sm text-white leading-snug">
+                {{ order.street }}{{ order.houseNumber ? ' #' + order.houseNumber : '' }},
+                {{ order.sector }}, {{ order.province }}
+              </p>
+              <p class="text-xs text-slate-400 mt-0.5">Ref: {{ order.reference }}</p>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="px-4 py-3 flex gap-2">
+            @if (order.status === 'Pending') {
+              <button
+                (click)="accept(order)"
+                [disabled]="actingOn() === order.id"
+                class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-bold transition-colors flex items-center justify-center gap-1.5">
+                <span class="icon-[ic--baseline-directions-bike]"></span>
+                Salir a entregar
+              </button>
+            } @else if (order.status === 'InTransit') {
+              <button
+                (click)="complete(order)"
+                [disabled]="actingOn() === order.id"
+                class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-bold transition-colors flex items-center justify-center gap-1.5">
+                <span class="icon-[ic--baseline-check-circle]"></span>
+                Entregado — Cobrar {{ order.totalAmount | rdCurrency }}
+              </button>
+            }
+          </div>
+
+        </div>
+      }
+    }
+
+  </main>
+
+</div>

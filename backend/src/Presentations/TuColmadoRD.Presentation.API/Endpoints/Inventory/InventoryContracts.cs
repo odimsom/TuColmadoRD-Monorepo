@@ -30,3 +30,8 @@ public sealed record CreatedProductResponse(Guid ProductId);
 /// Standard API error payload.
 /// </summary>
 public sealed record ApiErrorResponse(string Error, string Message, int StatusCode);
+
+/// <summary>
+/// Request body for category creation.
+/// </summary>
+public sealed record CreateCategoryRequest(string Name);

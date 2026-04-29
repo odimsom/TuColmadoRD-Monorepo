@@ -1,4 +1,4 @@
-using MediatR;
+using TuColmadoRD.Core.Domain.Base;
 using TuColmadoRD.Core.Domain.ValueObjects;
 
 namespace TuColmadoRD.Core.Domain.Entities.Purchasing.Events;
@@ -14,4 +14,4 @@ public sealed record PurchaseCompletedDomainEvent(
     Guid ShiftId,
     decimal TotalAmount,
     IReadOnlyCollection<PurchaseDetailEventData> Details,
-    DateTime OccurredAt) : INotification;
+    DateTime OccurredAt) : IDomainEvent;

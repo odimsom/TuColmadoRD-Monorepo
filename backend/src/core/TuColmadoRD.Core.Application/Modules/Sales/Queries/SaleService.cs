@@ -51,14 +51,15 @@ public sealed class SaleService : ISaleService
                 DomainError.Business("pagination.invalid_params",
                     "Número o tamaño de página inválido."));
 
-        var (sales, totalCount) = await _saleRepository
+        var (sales, totalCount, totalRevenue) = await _saleRepository
             .GetPagedAsync(tenantId, pageNumber, pageSize, ct);
 
         var result = new SalePaginationResult(
             sales,
             pageNumber,
             pageSize,
-            totalCount);
+            totalCount,
+            totalRevenue);
 
         return OperationResult<SalePaginationResult, DomainError>.Good(result);
     }
@@ -71,4 +72,5 @@ public sealed record SalePaginationResult(
     IEnumerable<Sale> Items,
     int PageNumber,
     int PageSize,
-    int TotalCount);
+    int TotalCount,
+    decimal TotalRevenue);

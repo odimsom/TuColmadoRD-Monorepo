@@ -5,7 +5,9 @@ public sealed record CreateCustomerAddressDto(
     string Sector,
     string Street,
     string Reference,
-    string? HouseNumber);
+    string? HouseNumber,
+    double? Latitude = null,
+    double? Longitude = null);
 
 public sealed record CreateCustomerRequest(
     string FullName,

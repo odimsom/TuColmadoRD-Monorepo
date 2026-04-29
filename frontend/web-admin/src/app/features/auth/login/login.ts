@@ -40,12 +40,15 @@ export class Login {
 
     this.authService.login(payload).subscribe({
       next: () => {
-        this.router.navigate(['/portal/dashboard']);
+        const role = this.authService.currentUser()?.role?.toLowerCase();
+        const dest = role === 'delivery' ? '/delivery'
+                   : (role === 'seller' || role === 'cashier') ? '/pos'
+                   : '/portal/dashboard';
+        this.router.navigate([dest]);
       },
       error: (err) => {
         this.loading = false;
         this.error = 'Credenciales inválidas.';
-        console.error('Login error:', err);
       }
     });
   }

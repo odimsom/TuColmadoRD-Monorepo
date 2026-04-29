@@ -38,6 +38,10 @@ public sealed record SaleItemResult(
 public sealed record CreateSaleResult(
     Guid SaleId,
     string ReceiptNumber,
+    /// <summary>
+    /// NCF asignado por DGI. Null si el tenant no tiene secuencia fiscal configurada.
+    /// </summary>
+    string? NcfNumber,
     decimal Subtotal,
     decimal TotalItbis,
     decimal Total,
@@ -46,10 +50,28 @@ public sealed record CreateSaleResult(
     IReadOnlyList<SaleItemResult> Items);
 
 /// <summary>
+/// Request address for delivery.
+/// </summary>
+public sealed record DeliveryAddressRequest(
+    string Province,
+    string Sector,
+    string Street,
+    string Reference,
+    string? HouseNumber = null,
+    double? Latitude = null,
+    double? Longitude = null);
+
+/// <summary>
 /// Command to create a new sale with items and payments.
 /// </summary>
 public sealed record CreateSaleCommand(
     IReadOnlyList<SaleItemRequest> Items,
     IReadOnlyList<SalePaymentRequest> Payments,
-    string? Notes
+    string? Notes,
+    /// <summary>
+    /// RNC del comprador (9 dígitos). Si se provee, se emite B01 (crédito fiscal).
+    /// Si es null, se emite B02 (consumidor final).
+    /// </summary>
+    string? BuyerRnc = null,
+    DeliveryAddressRequest? DeliveryAddress = null
 ) : IRequest<OperationResult<CreateSaleResult, DomainError>>, ICommandMarker;

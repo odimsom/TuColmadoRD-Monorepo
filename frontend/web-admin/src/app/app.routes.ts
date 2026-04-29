@@ -1,10 +1,13 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { desktopRegistrationGuard } from './core/guards/desktop-registration.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
+  // Ruta pública — bloqueada en desktop (redirige a login)
   {
     path: '',
+    canActivate: [desktopRegistrationGuard],
     loadComponent: () => import('./layouts/public-layout/public-layout').then(m => m.PublicLayout),
     children: [
       {
@@ -13,6 +16,8 @@ export const routes: Routes = [
       }
     ]
   },
+
+  // Auth
   {
     path: 'auth',
     loadComponent: () => import('./layouts/auth-layout/auth-layout').then(m => m.AuthLayout),
@@ -22,16 +27,19 @@ export const routes: Routes = [
         loadComponent: () => import('./features/auth/login/login').then(m => m.Login)
       },
       {
+        // Registro bloqueado en desktop (ya hay licencia activa)
         path: 'register',
         canActivate: [desktopRegistrationGuard],
         loadComponent: () => import('./features/auth/register/register').then(m => m.Register)
       }
     ]
   },
+
+  // Portal Admin — requiere autenticación + rol Owner o Admin
   {
     path: 'portal',
     loadComponent: () => import('./layouts/portal-layout/portal-layout').then(m => m.PortalLayout),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard('Owner', 'Admin')],
     children: [
       {
         path: 'welcome',
@@ -42,8 +50,32 @@ export const routes: Routes = [
         loadComponent: () => import('./features/portal/dashboard/dashboard').then(m => m.Dashboard)
       },
       {
+        path: 'inventory',
+        loadComponent: () => import('./features/portal/inventory/inventory').then(m => m.Inventory)
+      },
+      {
+        path: 'categories',
+        loadComponent: () => import('./features/portal/categories/categories').then(m => m.Categories)
+      },
+      {
+        path: 'sales',
+        loadComponent: () => import('./features/portal/sales/sales').then(m => m.Sales)
+      },
+      {
+        path: 'customers',
+        loadComponent: () => import('./features/portal/customers/customers').then(m => m.Customers)
+      },
+      {
+        path: 'expenses',
+        loadComponent: () => import('./features/portal/expenses/expenses').then(m => m.Expenses)
+      },
+      {
         path: 'subscription',
         loadComponent: () => import('./features/portal/subscription/subscription').then(m => m.Subscription)
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('./features/portal/settings/settings').then(m => m.Settings)
       },
       {
         path: '',
@@ -52,9 +84,18 @@ export const routes: Routes = [
       }
     ]
   },
+
+  // POS — requiere autenticación (seller, cashier, owner, admin)
   {
     path: 'pos',
     loadComponent: () => import('./layouts/pos-layout/pos-layout').then(m => m.PosLayout),
-    canActivate: [authGuard]
+    canActivate: [authGuard, roleGuard('Owner', 'Admin', 'Seller', 'Cashier')]
+  },
+
+  // Delivery — vista del repartidor
+  {
+    path: 'delivery',
+    loadComponent: () => import('./layouts/delivery-layout/delivery-layout').then(m => m.DeliveryLayout),
+    canActivate: [authGuard, roleGuard('Delivery', 'Owner', 'Admin')]
   }
 ];

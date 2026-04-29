@@ -2,65 +2,92 @@
   
   <!-- Quick Stats Bar (Compact & Data-Dense) -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <!-- Stat 1: Ventas -->
+    <!-- Stat 1: Ingresos del turno (real desde API) -->
     <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-pos-accent transition-colors group">
       <div class="flex justify-between items-start mb-3">
-        <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Ventas del Día</span>
+        <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Ingresos del Turno</span>
         <span class="p-1.5 bg-blue-500/10 rounded-lg text-blue-500">
           <span class="icon-[ic--baseline-shopping-cart] text-sm"></span>
         </span>
       </div>
       <div class="flex items-end justify-between">
         <div class="flex flex-col">
-          <span class="text-2xl font-mono font-bold text-white tracking-tighter">RD$ {{ stats.totalSales * 150 | number:'1.0-0' }}</span>
+          <span class="text-2xl font-mono font-bold text-white tracking-tighter">{{ stats.totalRevenue | rdCurrency }}</span>
           <div class="flex items-center gap-1 mt-1">
-            <span class="icon-[ic--baseline-trending-up] text-xs text-green-500"></span>
-            <span class="text-[0.65rem] font-bold text-green-500">12.5%</span>
-            <span class="text-[0.6rem] text-slate-500 font-medium ml-1">vs ayer</span>
+            <span class="text-[0.6rem] text-slate-500 font-medium">{{ stats.totalSales }} transacciones</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Stat 2: Stock Bajo -->
-    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-red-500/30 transition-colors group">
+    <!-- Stat 2: Stock Crítico -->
+    <div [class.opacity-60]="lowStockLoading"
+         [class.border-red-500\/30]="!lowStockLoading && lowStock.count > 0"
+         class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-red-500/30 transition-all group">
       <div class="flex justify-between items-start mb-3">
         <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Stock Crítico</span>
-        <span class="p-1.5 bg-red-500/10 rounded-lg text-red-500">
+        <span class="p-1.5 bg-red-500/10 rounded-lg" [class.text-red-500]="!lowStockLoading" [class.text-slate-600]="lowStockLoading">
           <span class="icon-[ic--baseline-inventory-2] text-sm"></span>
         </span>
       </div>
       <div class="flex items-end justify-between">
         <div class="flex flex-col">
-          <span class="text-2xl font-mono font-bold text-white tracking-tighter">04</span>
-          <div class="flex items-center gap-1 mt-1">
-            <span class="icon-[ic--baseline-warning] text-xs text-red-500"></span>
-            <span class="text-[0.65rem] font-bold text-red-500">Acción Requerida</span>
-          </div>
+          @if (lowStockLoading) {
+            <span class="text-2xl font-mono font-bold text-slate-600 tracking-tighter animate-pulse">···</span>
+          } @else {
+            <span class="text-2xl font-mono font-bold tracking-tighter"
+              [class.text-red-400]="lowStock.count > 0"
+              [class.text-emerald-400]="lowStock.count === 0">
+              {{ lowStock.count }}
+            </span>
+          }
+          <span class="text-[0.6rem] text-slate-500 font-medium mt-1">≤ 5 unidades</span>
         </div>
+        @if (!lowStockLoading && lowStock.count > 0) {
+          <div class="text-right max-w-[100px]">
+            @for (p of lowStock.items.slice(0, 2); track p.productId) {
+              <p class="text-[0.55rem] text-red-400/70 truncate leading-tight">{{ p.name }}</p>
+            }
+            @if (lowStock.count > 2) {
+              <p class="text-[0.5rem] text-slate-600">+{{ lowStock.count - 2 }} más</p>
+            }
+          </div>
+        }
       </div>
     </div>
 
-    <!-- Stat 3: Fiados -->
-    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-amber-500/30 transition-colors group">
+    <!-- Stat 3: Fiados Pendientes -->
+    <div [class.opacity-60]="debtLoading"
+         class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-amber-500/30 transition-colors group">
       <div class="flex justify-between items-start mb-3">
         <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Fiados Pendientes</span>
-        <span class="p-1.5 bg-amber-500/10 rounded-lg text-amber-500">
+        <span class="p-1.5 bg-amber-500/10 rounded-lg" [class.text-amber-500]="!debtLoading" [class.text-slate-600]="debtLoading">
           <span class="icon-[ic--baseline-people] text-sm"></span>
         </span>
       </div>
       <div class="flex items-end justify-between">
         <div class="flex flex-col">
-          <span class="text-2xl font-mono font-bold text-white tracking-tighter">RD$ 8,420</span>
-          <div class="flex items-center gap-1 mt-1">
-            <span class="icon-[ic--baseline-trending-down] text-xs text-amber-500"></span>
-            <span class="text-[0.65rem] font-bold text-amber-500">3 pendientes</span>
-          </div>
+          @if (debtLoading) {
+            <span class="text-2xl font-mono font-bold text-slate-600 tracking-tighter animate-pulse">···</span>
+          } @else {
+            <span class="text-2xl font-mono font-bold tracking-tighter"
+              [class.text-amber-400]="debtStats.customersWithDebt > 0"
+              [class.text-emerald-400]="debtStats.customersWithDebt === 0">
+              {{ debtStats.customersWithDebt }}
+            </span>
+          }
+          <span class="text-[0.6rem] text-slate-500 font-medium mt-1">
+            @if (!debtLoading && debtStats.totalDebt > 0) {
+              {{ debtStats.totalDebt | rdCurrency }} pendiente
+            } @else {
+              clientes con deuda
+            }
+          </span>
         </div>
       </div>
     </div>
 
-    <!-- Stat 4: Tiempo Turno -->
+    <!-- Stat 4: Tiempo de Turno (real desde API /shifts/current) -->
     <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-pos-accent transition-colors group">
       <div class="flex justify-between items-start mb-3">
         <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Tiempo de Turno</span>
@@ -70,10 +97,16 @@
       </div>
       <div class="flex items-end justify-between">
         <div class="flex flex-col">
-          <span class="text-2xl font-mono font-bold text-white tracking-tighter">04:22:15</span>
-          <div class="flex items-center gap-1 mt-1 text-slate-500 text-[0.65rem] font-bold">
-            RESTANTE: 03:37:45
-          </div>
+          @if (shift.hasActiveShift) {
+            <span class="text-2xl font-mono font-bold text-white tracking-tighter">{{ shift.elapsedDisplay }}</span>
+            <div class="flex items-center gap-1 mt-1 text-green-500 text-[0.65rem] font-bold">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+              TURNO ACTIVO
+            </div>
+          } @else {
+            <span class="text-2xl font-mono font-bold text-slate-500 tracking-tighter">—</span>
+            <div class="flex items-center gap-1 mt-1 text-slate-600 text-[0.65rem] font-bold">SIN TURNO ABIERTO</div>
+          }
         </div>
       </div>
     </div>
@@ -88,10 +121,10 @@
       </div>
       <div class="flex items-center gap-4">
         <div class="relative">
-          <input type="text" placeholder="Buscar ticket..." class="bg-white/5 border border-white/5 rounded-md px-3 py-1 text-[0.65rem] w-48 focus:outline-none focus:border-pos-accent transition-all">
+          <input type="text" placeholder="Buscar ticket..." (input)="onSearch($event)" class="bg-white/5 border border-white/5 rounded-md px-3 py-1 text-[0.65rem] w-48 focus:outline-none focus:border-pos-accent transition-all">
           <span class="icon-[ic--baseline-search] absolute right-2 top-1.5 text-slate-500"></span>
         </div>
-        <button class="text-[0.6rem] font-bold text-pos-accent hover:underline uppercase tracking-tighter">Ver Reporte Completo</button>
+        <a routerLink="/portal/sales" class="text-[0.6rem] font-bold text-pos-accent hover:underline uppercase tracking-tighter">Ver Reporte Completo</a>
       </div>
     </div>
 
@@ -105,24 +138,25 @@
             <th class="px-6 py-3 border-b border-white/5">Artículos</th>
             <th class="px-6 py-3 border-b border-white/5 text-right">Total</th>
             <th class="px-6 py-3 border-b border-white/5 text-center">Estado</th>
-            <th class="px-6 py-3 border-b border-white/5 text-right">Acciones</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-white/5">
           @if (loading) {
             @for (i of [1,2,3,4,5]; track i) {
               <tr class="animate-pulse">
-                <td colspan="7" class="px-6 py-4">
+                <td colspan="6" class="px-6 py-4">
                   <div class="h-4 bg-white/5 rounded w-full"></div>
                 </td>
               </tr>
             }
-          } @else if (sales.length === 0) {
+          } @else if (filteredSales.length === 0) {
             <tr>
-              <td colspan="7" class="text-center py-12 text-slate-500 italic">No hay actividad reciente en este turno.</td>
+              <td colspan="6" class="text-center py-12 text-slate-500 italic">
+                {{ searchTerm ? 'Sin resultados para "' + searchTerm + '".' : 'No hay actividad reciente en este turno.' }}
+              </td>
             </tr>
           } @else {
-            @for (sale of sales; track sale.id; let odd = $odd) {
+            @for (sale of filteredSales; track sale.saleId; let odd = $odd) {
               <tr [class.bg-white/[0.02]]="odd" class="hover:bg-pos-accent/5 transition-colors group cursor-default">
                 <td class="px-6 py-3 font-mono font-bold text-white tracking-tighter">#{{ sale.receiptNumber }}</td>
                 <td class="px-6 py-3 text-center">
@@ -131,26 +165,16 @@
                 <td class="px-6 py-3 text-slate-400 font-medium tracking-tight">{{ sale.createdAt | date:'dd/MM/yy - HH:mm' }}</td>
                 <td class="px-6 py-3">
                   <div class="flex items-center gap-2">
-                    <span class="text-white font-bold">{{ sale.itemsCount }}</span>
+                    <span class="text-white font-bold">{{ sale.itemCount }}</span>
                     <span class="text-slate-500">productos</span>
                   </div>
                 </td>
-                <td class="px-6 py-3 text-right font-mono font-bold text-white">RD$ {{ sale.totalAmount | number:'1.2-2' }}</td>
+                <td class="px-6 py-3 text-right font-mono font-bold text-white">{{ sale.total | rdCurrency }}</td>
                 <td class="px-6 py-3 text-center">
                   <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full {{ getStatusClass(sale.statusId) }} text-[0.6rem] font-black uppercase tracking-tighter ring-1 ring-current/20">
                     <span class="w-1 h-1 rounded-full bg-current"></span>
                     {{ getStatusText(sale.statusId) }}
                   </span>
-                </td>
-                <td class="px-6 py-3 text-right">
-                  <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button class="p-1.5 hover:bg-white/10 rounded text-slate-400 hover:text-white transition-colors" title="Ver Detalles">
-                      <span class="icon-[ic--baseline-visibility] text-sm"></span>
-                    </button>
-                    <button class="p-1.5 hover:bg-white/10 rounded text-slate-400 hover:text-white transition-colors" title="Imprimir Ticket">
-                      <span class="icon-[ic--baseline-print] text-sm"></span>
-                    </button>
-                  </div>
                 </td>
               </tr>
             }

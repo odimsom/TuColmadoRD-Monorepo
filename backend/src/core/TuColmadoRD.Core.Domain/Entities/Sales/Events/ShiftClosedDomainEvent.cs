@@ -1,3 +1,5 @@
+using TuColmadoRD.Core.Domain.Base;
+
 namespace TuColmadoRD.Core.Domain.Entities.Sales.Events;
 
 public sealed record ShiftClosedDomainEvent(
@@ -9,4 +11,4 @@ public sealed record ShiftClosedDomainEvent(
     decimal CashDifference,
     int TotalSalesCount,
     decimal TotalSalesAmount,
-    DateTime OccurredAt);
+    DateTime OccurredAt) : IDomainEvent;

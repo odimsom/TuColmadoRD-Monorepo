@@ -4,7 +4,20 @@ using TuColmadoRD.Core.Domain.ValueObjects.Base;
 
 namespace TuColmadoRD.Core.Application.Customers.Queries;
 
-public sealed record CustomerSummaryDto(Guid CustomerId, string FullName, string Phone, decimal Balance, decimal CreditLimit, bool IsActive);
+public sealed record CustomerSummaryDto(
+    Guid CustomerId, 
+    string FullName, 
+    string Phone, 
+    decimal Balance, 
+    decimal CreditLimit, 
+    bool IsActive,
+    string? Province = null,
+    string? Sector = null,
+    string? Street = null,
+    string? HouseNumber = null,
+    string? Reference = null,
+    double? Latitude = null,
+    double? Longitude = null);
 
 public sealed record GetCustomersWithBalanceQuery() : IRequest<OperationResult<IReadOnlyList<CustomerSummaryDto>, DomainError>>;
 

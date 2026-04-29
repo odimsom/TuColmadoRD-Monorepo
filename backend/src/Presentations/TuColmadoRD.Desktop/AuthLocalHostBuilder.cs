@@ -87,10 +87,11 @@ public static class AuthLocalHostBuilder
         var key = Encoding.UTF8.GetBytes("dominican-street-premium-secret-key-2026");
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[] 
-            { 
+            Subject = new ClaimsIdentity(new[]
+            {
                 new Claim(ClaimTypes.Name, username),
-                new Claim("tenantId", tenantId)
+                new Claim("tenant_id", tenantId),
+                new Claim("terminal_id", "00000000-0000-0000-0000-000000000000")
             }),
             Expires = DateTime.UtcNow.AddDays(7),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

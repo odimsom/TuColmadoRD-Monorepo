@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TuColmadoRD.Core.Domain.Interfaces.Repositories.Audit;
+using TuColmadoRD.Core.Domain.Interfaces.Repositories.System;
+using TuColmadoRD.Infrastructure.Persistence.Repositories.System;
 using TuColmadoRD.Core.Domain.Interfaces.Repositories.Base;
 using TuColmadoRD.Core.Domain.Interfaces.Repositories.Customers;
 using TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal;
@@ -76,6 +78,7 @@ public static class ServiceRegistration
         #region Registration of repositories for each module
         // System
         services.AddTransient<ISystemConfigRepository, SystemConfigRepository>();
+        services.AddScoped<ITenantProfileRepository, TenantProfileRepository>();
         
         // Audit
         services.AddScoped<IAuditTrailRepository, AuditTrailRepository>();
@@ -86,8 +89,9 @@ public static class ServiceRegistration
         services.AddScoped<IDebtTransactionRepository, DebtTransactionRepository>();
 
         // Fiscal
-        services.AddScoped<IFiscalReceiptRepository, FiscalReceiptRepository>();
         services.AddScoped<IFiscalSequenceRepository, FiscalSequenceRepository>();
+        services.AddScoped<IFiscalReceiptRepository, FiscalReceiptRepository>();
+        services.AddScoped<INcfAnnulmentLogRepository, NcfAnnulmentLogRepository>();
         services.AddScoped<ITaxRepository, TaxRepository>();
 
         // HumanResources

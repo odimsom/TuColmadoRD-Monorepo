@@ -1,0 +1,161 @@
+<div class="px-8 py-8 space-y-6 animate-in fade-in duration-500">
+
+  <!-- Stats bar -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm">
+      <div class="flex justify-between items-start mb-3">
+        <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Gastos de Hoy</span>
+        <span class="p-1.5 bg-red-500/10 rounded-lg text-red-400">
+          <span class="icon-[ic--baseline-money-off] text-sm"></span>
+        </span>
+      </div>
+      <p class="text-2xl font-mono font-bold text-white tracking-tighter">{{ totalToday() | rdCurrency }}</p>
+      <p class="text-[0.6rem] text-slate-500 mt-1">{{ countToday() }} transacciones hoy</p>
+    </div>
+
+    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm">
+      <div class="flex justify-between items-start mb-3">
+        <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Total Período</span>
+        <span class="p-1.5 bg-amber-500/10 rounded-lg text-amber-400">
+          <span class="icon-[ic--baseline-receipt] text-sm"></span>
+        </span>
+      </div>
+      <p class="text-2xl font-mono font-bold text-white tracking-tighter">{{ totalAll() | rdCurrency }}</p>
+      <p class="text-[0.6rem] text-slate-500 mt-1">{{ expenses().length }} registros cargados</p>
+    </div>
+
+    <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm flex items-center justify-end">
+      <button
+        (click)="openModal()"
+        class="flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-sm transition-colors shadow-lg shadow-blue-900/20">
+        <span class="icon-[ic--baseline-add]"></span>
+        Registrar Gasto
+      </button>
+    </div>
+  </div>
+
+  <!-- Expense list -->
+  <div class="bg-pos-surface border border-pos-border rounded-xl overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-white/5 flex items-center gap-3 bg-[#1e293b]/20">
+      <span class="icon-[ic--baseline-receipt-long] text-red-400"></span>
+      <h2 class="text-xs font-black text-white uppercase tracking-widest">Gastos Registrados</h2>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[0.7rem] border-collapse">
+        <thead class="bg-white/5 text-slate-500 uppercase font-black tracking-tighter">
+          <tr>
+            <th class="px-6 py-3 border-b border-white/5">Fecha y Hora</th>
+            <th class="px-6 py-3 border-b border-white/5">Categoría</th>
+            <th class="px-6 py-3 border-b border-white/5">Descripción</th>
+            <th class="px-6 py-3 border-b border-white/5 text-right">Monto</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          @if (loading()) {
+            @for (i of [1,2,3,4,5]; track i) {
+              <tr class="animate-pulse">
+                <td colspan="4" class="px-6 py-4">
+                  <div class="h-4 bg-white/5 rounded w-full"></div>
+                </td>
+              </tr>
+            }
+          } @else if (expenses().length === 0) {
+            <tr>
+              <td colspan="4" class="text-center py-16 text-slate-500 italic">
+                No hay gastos registrados aún.
+              </td>
+            </tr>
+          } @else {
+            @for (expense of expenses(); track expense.id; let odd = $odd) {
+              <tr [class.bg-white\/\[0\.02\]]="odd" class="hover:bg-pos-accent/5 transition-colors">
+                <td class="px-6 py-3 text-slate-400 font-medium tracking-tight">
+                  {{ expense.date | date:'dd/MM/yy - HH:mm' }}
+                </td>
+                <td class="px-6 py-3">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full {{ categoryColor(expense.category) }} text-[0.6rem] font-black uppercase tracking-tighter ring-1 ring-current/20">
+                    {{ categoryLabel(expense.category) }}
+                  </span>
+                </td>
+                <td class="px-6 py-3 text-slate-300 max-w-xs truncate">{{ expense.description }}</td>
+                <td class="px-6 py-3 text-right font-mono font-bold text-red-400 tabular-nums">
+                  {{ expense.amount | rdCurrency }}
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Registrar Gasto -->
+@if (showModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="w-full max-w-sm bg-[#0f1929] border border-white/[0.1] rounded-2xl shadow-2xl p-6">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center">
+          <span class="icon-[ic--baseline-money-off] text-red-400 text-xl"></span>
+        </div>
+        <div>
+          <h2 class="text-base font-black text-white">Registrar Gasto</h2>
+          <p class="text-xs text-slate-500">Se descuenta del turno activo</p>
+        </div>
+        <button (click)="showModal.set(false)" class="ml-auto text-slate-600 hover:text-white transition-colors">
+          <span class="icon-[ic--baseline-close]"></span>
+        </button>
+      </div>
+
+      <div class="mb-4 px-3 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-2">
+        <span class="icon-[ic--baseline-info] text-amber-400 text-base mt-0.5 shrink-0"></span>
+        <p class="text-[0.7rem] text-amber-300 leading-relaxed">Los gastos deben registrarse desde el <strong>terminal POS</strong> durante un turno activo. Aquí solo puedes consultarlos.</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Monto (RD$)</label>
+          <input formControlName="amount" type="number" min="0.01" step="0.01"
+            class="w-full px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.1] text-sm text-white focus:outline-none focus:border-blue-500/60 transition-all" />
+          @if (form.controls.amount.invalid && form.controls.amount.touched) {
+            <p class="text-xs text-red-400 mt-1">Ingresa un monto mayor a cero.</p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Categoría</label>
+          <select formControlName="category"
+            class="w-full px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.1] text-sm text-white focus:outline-none focus:border-blue-500/60 transition-all">
+            @for (cat of categories; track cat.value) {
+              <option [value]="cat.value" class="bg-[#0f1929]">{{ cat.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Descripción</label>
+          <input formControlName="description" type="text" placeholder="Ej: Factura EDENORTE mayo"
+            class="w-full px-3 py-2.5 rounded-lg bg-white/[0.05] border border-white/[0.1] text-sm text-white placeholder-slate-700 focus:outline-none focus:border-blue-500/60 transition-all" />
+          @if (form.controls.description.invalid && form.controls.description.touched) {
+            <p class="text-xs text-red-400 mt-1">Ingresa una descripción (mínimo 3 caracteres).</p>
+          }
+        </div>
+
+        @if (errorMsg()) {
+          <p class="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg">{{ errorMsg() }}</p>
+        }
+
+        <div class="flex gap-2 pt-1">
+          <button type="button" (click)="showModal.set(false)"
+            class="flex-1 py-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.08] text-sm text-slate-300 font-semibold transition-colors">
+            Cancelar
+          </button>
+          <button type="submit" disabled
+            class="flex-1 py-2.5 rounded-lg bg-slate-700 text-slate-500 font-black text-sm cursor-not-allowed opacity-60">
+            Solo desde POS
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -24,6 +24,7 @@ export class RegisterUseCase {
       _id: tenantId,
       name: dto.tenantName,
       isActive: true,
+      subscriptionStatus: 'trialing',
     });
 
     let user;
@@ -54,14 +55,29 @@ export class RegisterUseCase {
     }
 
     const token = jwt.sign(
-      { sub: user._id, tenantId, role: Role.OWNER, email: normalizedEmail },
+      {
+        sub: user._id,
+        tenant_id: tenantId,
+        terminal_id: "00000000-0000-0000-0000-000000000000",
+        role: Role.OWNER,
+        email: normalizedEmail,
+        subscription_status: 'trialing',
+      },
       envConfig.jwt.secret,
       { expiresIn: envConfig.jwt.expiresIn as jwt.SignOptions["expiresIn"] },
     );
 
     return {
       accessToken: token,
-      user: { id: user._id, email: user.email, role: Role.OWNER, tenantId },
+      user: {
+        id:                 user._id,
+        email:              user.email,
+        firstName:          user.firstName ?? null,
+        lastName:           user.lastName  ?? null,
+        role:               Role.OWNER,
+        tenantId,
+        subscriptionStatus: 'trialing',
+      },
     };
   }
 }

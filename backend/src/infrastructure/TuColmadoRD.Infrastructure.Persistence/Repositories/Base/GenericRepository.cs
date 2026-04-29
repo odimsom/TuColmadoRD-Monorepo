@@ -55,7 +55,10 @@ public class GenericRepository<TEntity>(DbContext dbContext) : IGenericRepositor
     }
     public virtual Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
-        _dbContext.Set<TEntity>().Update(entity);
+        if (_dbContext.Entry(entity).State == EntityState.Detached)
+        {
+            _dbContext.Set<TEntity>().Update(entity);
+        }
         return Task.CompletedTask;
     }
     public virtual Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)

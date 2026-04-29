@@ -23,6 +23,8 @@ public class DeliveryOrderConfiguration : IEntityTypeConfiguration<DeliveryOrder
             b.Property(a => a.Street).HasColumnName("Destination_Street").HasMaxLength(100);
             b.Property(a => a.HouseNumber).HasColumnName("Destination_HouseNumber").HasMaxLength(20);
             b.Property(a => a.Reference).HasColumnName("Destination_Reference").HasMaxLength(200);
+            b.Property(a => a.Latitude).HasColumnName("Destination_Latitude");
+            b.Property(a => a.Longitude).HasColumnName("Destination_Longitude");
         });
 
         builder.Property(d => d.Status).IsRequired().HasConversion<string>();
@@ -30,6 +32,7 @@ public class DeliveryOrderConfiguration : IEntityTypeConfiguration<DeliveryOrder
         builder.HasOne<DeliveryPerson>()
             .WithMany()
             .HasForeignKey(d => d.DeliveryPersonId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

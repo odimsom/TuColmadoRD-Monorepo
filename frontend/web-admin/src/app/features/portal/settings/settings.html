@@ -1,0 +1,209 @@
+<div class="px-8 py-8 space-y-8 animate-in fade-in duration-500 max-w-4xl">
+
+  <!-- Page header -->
+  <div class="flex items-start justify-between">
+    <div>
+      <h1 class="text-xl font-black text-white tracking-tight">Configuración del Negocio</h1>
+      <p class="text-[0.7rem] text-slate-500 mt-1">Información fiscal requerida por la DGII para los recibos NCF (Norma 06-18).</p>
+    </div>
+    @if (isNewProfile()) {
+      <span class="text-[0.6rem] font-black px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-widest">
+        Sin configurar
+      </span>
+    } @else {
+      <span class="text-[0.6rem] font-black px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-widest">
+        Configurado
+      </span>
+    }
+  </div>
+
+  <!-- Loading skeleton -->
+  @if (loading()) {
+    <div class="bg-pos-surface border border-pos-border rounded-xl p-6 space-y-4 animate-pulse">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="h-10 bg-white/5 rounded-lg"></div>
+      }
+    </div>
+  } @else {
+
+    <!-- Alerts -->
+    @if (successMsg()) {
+      <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+        <span class="icon-[ic--baseline-check-circle] text-base shrink-0"></span>
+        {{ successMsg() }}
+      </div>
+    }
+    @if (errorMsg()) {
+      <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold">
+        <span class="icon-[ic--baseline-error] text-base shrink-0"></span>
+        {{ errorMsg() }}
+      </div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+      <!-- Form card -->
+      <div class="lg:col-span-3 bg-pos-surface border border-pos-border rounded-xl">
+        <div class="px-6 py-4 border-b border-white/5 flex items-center gap-3">
+          <span class="icon-[ic--baseline-store] text-blue-500"></span>
+          <h2 class="text-xs font-black text-white uppercase tracking-widest">Datos del Negocio</h2>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="save()" class="p-6 space-y-5">
+
+          <!-- Business Name -->
+          <div class="space-y-1.5">
+            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">
+              Nombre del Negocio <span class="text-red-400">*</span>
+            </label>
+            <input
+              formControlName="businessName"
+              type="text"
+              placeholder="Ej: Colmado El Progreso"
+              class="w-full bg-white/5 border rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+              [class.border-red-500]="form.get('businessName')?.invalid && form.get('businessName')?.touched"
+              [class.border-white/10]="!(form.get('businessName')?.invalid && form.get('businessName')?.touched)"
+            >
+            @if (form.get('businessName')?.hasError('required') && form.get('businessName')?.touched) {
+              <p class="text-[0.6rem] text-red-400 mt-1">El nombre del negocio es requerido.</p>
+            }
+          </div>
+
+          <!-- RNC -->
+          <div class="space-y-1.5">
+            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">
+              RNC <span class="text-slate-600 font-normal normal-case">(9 dígitos — opcional)</span>
+            </label>
+            <input
+              formControlName="rnc"
+              type="text"
+              maxlength="9"
+              placeholder="Ej: 101234567"
+              class="w-full bg-white/5 border rounded-lg px-3 py-2.5 text-sm font-mono text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+              [class.border-red-500]="form.get('rnc')?.invalid && form.get('rnc')?.touched"
+              [class.border-white/10]="!(form.get('rnc')?.invalid && form.get('rnc')?.touched)"
+            >
+            @if (form.get('rnc')?.hasError('pattern') && form.get('rnc')?.touched) {
+              <p class="text-[0.6rem] text-red-400 mt-1">El RNC debe tener exactamente 9 dígitos numéricos.</p>
+            }
+            <p class="text-[0.6rem] text-slate-600">Requerido para emitir facturas B01 (Crédito Fiscal).</p>
+          </div>
+
+          <!-- Business Address -->
+          <div class="space-y-1.5">
+            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">
+              Dirección Fiscal <span class="text-red-400">*</span>
+            </label>
+            <textarea
+              formControlName="businessAddress"
+              rows="2"
+              placeholder="Ej: Calle Principal #12, Sector Los Pinos, Santo Domingo"
+              class="w-full bg-white/5 border rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+              [class.border-red-500]="form.get('businessAddress')?.invalid && form.get('businessAddress')?.touched"
+              [class.border-white/10]="!(form.get('businessAddress')?.invalid && form.get('businessAddress')?.touched)"
+            ></textarea>
+            @if (form.get('businessAddress')?.hasError('required') && form.get('businessAddress')?.touched) {
+              <p class="text-[0.6rem] text-red-400 mt-1">La dirección es requerida.</p>
+            }
+          </div>
+
+          <!-- Phone & Email row -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Teléfono</label>
+              <input
+                formControlName="phone"
+                type="tel"
+                placeholder="Ej: 809-555-0100"
+                class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+              >
+            </div>
+            <div class="space-y-1.5">
+              <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Email</label>
+              <input
+                formControlName="email"
+                type="email"
+                placeholder="Ej: info@colmado.com"
+                class="w-full bg-white/5 border rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                [class.border-red-500]="form.get('email')?.invalid && form.get('email')?.touched"
+                [class.border-white/10]="!(form.get('email')?.invalid && form.get('email')?.touched)"
+              >
+              @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+                <p class="text-[0.6rem] text-red-400 mt-1">Email inválido.</p>
+              }
+            </div>
+          </div>
+
+          <!-- Submit -->
+          <div class="flex justify-end pt-2">
+            <button
+              type="submit"
+              [disabled]="form.invalid || saving()"
+              class="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-black uppercase tracking-widest rounded-lg transition-colors"
+            >
+              @if (saving()) {
+                <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                Guardando...
+              } @else {
+                <span class="icon-[ic--baseline-save] text-base"></span>
+                {{ isNewProfile() ? 'Crear Perfil' : 'Guardar Cambios' }}
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Receipt preview card -->
+      <div class="lg:col-span-2 space-y-4">
+        <div class="bg-pos-surface border border-pos-border rounded-xl">
+          <div class="px-5 py-4 border-b border-white/5 flex items-center gap-3">
+            <span class="icon-[ic--baseline-receipt] text-blue-500 text-sm"></span>
+            <h2 class="text-xs font-black text-white uppercase tracking-widest">Vista Previa del Recibo</h2>
+          </div>
+          <div class="p-5">
+            <!-- Simulated 80mm receipt header -->
+            <div class="bg-white rounded-lg p-4 text-center font-mono text-gray-800 text-[0.6rem] leading-relaxed shadow-inner">
+              <p class="font-black text-[0.75rem] uppercase leading-tight">{{ profileForReceipt.businessName }}</p>
+              @if (profileForReceipt.rnc) {
+                <p class="text-gray-600">RNC: {{ profileForReceipt.rnc | rnc }}</p>
+              }
+              <p class="text-gray-500 text-[0.55rem] leading-snug mt-0.5">{{ profileForReceipt.businessAddress }}</p>
+              @if (profileForReceipt.phone) {
+                <p class="text-gray-500">Tel: {{ profileForReceipt.phone | rdPhone }}</p>
+              }
+              <div class="border-t border-dashed border-gray-400 my-2"></div>
+              <p class="font-black text-[0.65rem]">NCF: B02 00000001</p>
+              <p class="text-gray-500 text-[0.55rem]">Fecha: 19/04/2026 10:30</p>
+              <div class="border-t border-dashed border-gray-400 my-2"></div>
+              <div class="text-left space-y-0.5">
+                <div class="flex justify-between"><span>1x Arroz 5lb</span><span>RD$ 250.00</span></div>
+                <div class="flex justify-between"><span>2x Huevo</span><span>RD$ 60.00</span></div>
+              </div>
+              <div class="border-t border-dashed border-gray-400 my-2"></div>
+              <div class="text-left text-[0.55rem] space-y-0.5">
+                <div class="flex justify-between"><span>Subtotal:</span><span>RD$ 310.00</span></div>
+                <div class="flex justify-between"><span>ITBIS (0%):</span><span>RD$ 0.00</span></div>
+              </div>
+              <div class="border-t border-gray-400 my-1.5"></div>
+              <div class="flex justify-between font-black text-[0.7rem]"><span>TOTAL:</span><span>RD$ 310.00</span></div>
+              <div class="border-t border-dashed border-gray-400 my-2"></div>
+              <p class="text-[0.5rem] text-gray-500">Gracias por su compra</p>
+              <p class="text-[0.45rem] text-gray-400 mt-0.5">Norma 06-18 DGII</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- DGI compliance note -->
+        <div class="bg-amber-500/5 border border-amber-500/15 rounded-xl p-4 space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="icon-[ic--baseline-info] text-amber-400 text-sm shrink-0"></span>
+            <p class="text-[0.65rem] font-black text-amber-400 uppercase tracking-wide">Cumplimiento DGII</p>
+          </div>
+          <p class="text-[0.6rem] text-slate-500 leading-relaxed">
+            Según la <strong class="text-slate-400">Norma 06-18</strong>, cada recibo fiscal debe incluir: nombre del negocio, RNC del emisor, dirección, NCF y desglose de ITBIS. Configure su perfil para cumplir con estos requisitos.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+</div>

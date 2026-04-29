@@ -31,15 +31,16 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             b.Property(p => p.Value).HasColumnName("ContactPhone").HasMaxLength(20);
         });
 
-        builder.OwnsOne(c => c.HomeAddress, b => 
+        builder.OwnsOne(c => c.HomeAddress, b =>
         {
             b.Property(a => a.Province).HasColumnName("Address_Province").HasMaxLength(100);
             b.Property(a => a.Sector).HasColumnName("Address_Sector").HasMaxLength(100);
             b.Property(a => a.Street).HasColumnName("Address_Street").HasMaxLength(100);
             b.Property(a => a.HouseNumber).HasColumnName("Address_HouseNumber").HasMaxLength(20);
             b.Property(a => a.Reference).HasColumnName("Address_Reference").HasMaxLength(200);
+            b.Property(a => a.Latitude).HasColumnName("Address_Latitude");
+            b.Property(a => a.Longitude).HasColumnName("Address_Longitude");
         });
-
 
     }
 }

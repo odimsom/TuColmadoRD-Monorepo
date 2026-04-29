@@ -46,6 +46,13 @@ public class Sale : ITenantEntity
     public DateTime? VoidedAt { get; private set; }
     public string? VoidReason { get; private set; }
 
+    /// <summary>
+    /// NCF asignado por DGI (Número de Comprobante Fiscal).
+    /// Null si la secuencia fiscal no está configurada para este tenant.
+    /// Requerido para cumplir con Norma 06-18 DGII / Ley 32-23 e-CF.
+    /// </summary>
+    public string? NcfNumber { get; private set; }
+
     public IReadOnlyCollection<object> DomainEvents => _domainEvents.AsReadOnly();
 
     public static OperationResult<Sale, DomainError> Create(
@@ -59,11 +66,6 @@ public class Sale : ITenantEntity
         if (tenantId == Guid.Empty)
         {
             return OperationResult<Sale, DomainError>.Bad(DomainError.Validation("sale.tenant_required"));
-        }
-
-        if (terminalId == Guid.Empty)
-        {
-            return OperationResult<Sale, DomainError>.Bad(DomainError.Validation("sale.terminal_required"));
         }
 
         if (shiftId == Guid.Empty)
@@ -108,7 +110,7 @@ public class Sale : ITenantEntity
         Quantity quantity,
         TaxRate itbisRate)
     {
-        if (StatusId != SaleStatus.Completed.Id)
+        if (StatusId != SaleStatus.Completed.Id && StatusId != SaleStatus.Held.Id)
         {
             return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.cannot_modify_finalized"));
         }
@@ -141,7 +143,7 @@ public class Sale : ITenantEntity
         string? reference,
         Guid? customerId = null)
     {
-        if (StatusId != SaleStatus.Completed.Id)
+        if (StatusId != SaleStatus.Completed.Id && StatusId != SaleStatus.Held.Id)
         {
             return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.cannot_modify_finalized"));
         }
@@ -178,6 +180,11 @@ public class Sale : ITenantEntity
 
     public OperationResult<Unit, DomainError> Finalize()
     {
+        if (StatusId == SaleStatus.Held.Id)
+        {
+            return OperationResult<Unit, DomainError>.Good(Unit.Value);
+        }
+
         if (_items.Count == 0)
         {
             return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.no_items"));
@@ -188,11 +195,98 @@ public class Sale : ITenantEntity
             return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.no_payments"));
         }
 
-        if (TotalPaidAmount < TotalAmount)
+        if (Math.Round(TotalPaidAmount, 2) < Math.Round(TotalAmount, 2))
         {
             return OperationResult<Unit, DomainError>.Bad(
                 DomainError.Business("sale.insufficient_payment", $"Faltan RD$ {(TotalAmount - TotalPaidAmount):N2} por pagar."));
         }
+
+        var itemEventLines = _items.Select(i => new SaleItemEventLine(
+            i.ProductId,
+            i.ProductName,
+            i.QuantityValue,
+            i.UnitPriceAmount,
+            i.LineTotalAmount,
+            i.LineItbisAmount)).ToList();
+
+        var paymentEventLines = _payments.Select(p => new SalePaymentEventLine(
+            p.PaymentMethodId,
+            p.AmountValue,
+            p.Reference,
+            p.CustomerId)).ToList();
+
+        _domainEvents.Add(new SaleCompletedDomainEvent(
+            Id,
+            ShiftId,
+            TenantId,
+            TerminalId,
+            ReceiptNumber,
+            CashierName,
+            SubtotalAmount,
+            TotalItbisAmount,
+            TotalAmount,
+            TotalPaidAmount,
+            ChangeDueAmount,
+            itemEventLines.AsReadOnly(),
+            paymentEventLines.AsReadOnly(),
+            DateTime.UtcNow));
+
+        return OperationResult<Unit, DomainError>.Good(Unit.Value);
+    }
+
+    public OperationResult<Unit, DomainError> Hold()
+    {
+        if (StatusId != SaleStatus.Completed.Id)
+        {
+            return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.already_finalized_or_voided"));
+        }
+
+        StatusId = SaleStatus.Held.Id;
+        return OperationResult<Unit, DomainError>.Good(Unit.Value);
+    }
+
+    /// <summary>
+    /// Replaces the delivery placeholder payment with the actual collected payment.
+    /// Used when a delivery order is completed and cash is collected on delivery.
+    /// </summary>
+    public OperationResult<Unit, DomainError> SettleDeliveryPayment(
+        PaymentMethod method,
+        Money amount,
+        string? reference,
+        Guid? customerId = null)
+    {
+        if (StatusId != SaleStatus.Held.Id)
+            return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.not_held"));
+
+        if (amount.Amount <= 0)
+            return OperationResult<Unit, DomainError>.Bad(DomainError.Validation("sale.payment_amount_must_be_positive"));
+
+        var placeholder = _payments.FirstOrDefault(p => p.PaymentMethodId == PaymentMethod.Delivery.Id);
+        if (placeholder is null)
+            return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.no_delivery_payment"));
+
+        placeholder.Settle(method, amount.Amount, reference, customerId);
+
+        TotalPaidAmount = _payments.Sum(p => p.AmountValue);
+        ChangeDueAmount = Math.Max(0m, TotalPaidAmount - TotalAmount);
+
+        return OperationResult<Unit, DomainError>.Good(Unit.Value);
+    }
+
+    public OperationResult<Unit, DomainError> Complete()
+    {
+        if (StatusId != SaleStatus.Held.Id)
+        {
+            return OperationResult<Unit, DomainError>.Bad(DomainError.Business("sale.not_held"));
+        }
+
+        if (Math.Round(TotalPaidAmount, 2) < Math.Round(TotalAmount, 2))
+        {
+            return OperationResult<Unit, DomainError>.Bad(
+                DomainError.Business("sale.insufficient_payment", $"Faltan RD$ {(TotalAmount - TotalPaidAmount):N2} por pagar."));
+        }
+
+        StatusId = SaleStatus.Completed.Id;
 
         var itemEventLines = _items.Select(i => new SaleItemEventLine(
             i.ProductId,
@@ -258,6 +352,16 @@ public class Sale : ITenantEntity
             DateTime.UtcNow));
 
         return OperationResult<Unit, DomainError>.Good(Unit.Value);
+    }
+
+    /// <summary>
+    /// Assigns the NCF after the fiscal sequence has been consumed.
+    /// Called by the application handler once <see cref="FiscalSequence.GetNextNcf"/> succeeds.
+    /// </summary>
+    public void AssignNcf(string ncf)
+    {
+        if (!string.IsNullOrWhiteSpace(ncf))
+            NcfNumber = ncf.Trim();
     }
 
     public void ClearDomainEvents() => _domainEvents.Clear();

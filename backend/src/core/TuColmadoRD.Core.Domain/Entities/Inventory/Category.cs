@@ -45,6 +45,11 @@ public class Category : ITenantEntity
     public bool IsActive { get; private set; }
 
     /// <summary>
+    /// Deactivates this category.
+    /// </summary>
+    public void Deactivate() => IsActive = false;
+
+    /// <summary>
     /// Creates a category.
     /// </summary>
     public static OperationResult<Category, DomainError> Create(Guid tenantId, string name)

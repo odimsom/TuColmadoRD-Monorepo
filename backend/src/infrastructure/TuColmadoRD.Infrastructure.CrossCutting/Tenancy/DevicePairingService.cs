@@ -27,7 +27,7 @@ public sealed class DevicePairingService : IDevicePairingService
         try
         {
             var response = await _http.PostAsJsonAsync(
-                "/auth/pair-device",
+                "/api/auth/pair-device",
                 new { email, password, deviceName },
                 cancellationToken);
 

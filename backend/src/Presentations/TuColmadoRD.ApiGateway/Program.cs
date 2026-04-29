@@ -39,9 +39,6 @@ public static class GatewayHostBuilder
     public static WebApplication BuildGateway(string[] args, GatewayOptions? options = null)
     {
         var builder = WebApplication.CreateBuilder(args);
-        var webRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot");
-        Directory.CreateDirectory(webRootPath);
-        builder.WebHost.UseWebRoot(webRootPath);
 
         var configOptions = builder.Configuration.GetSection("GatewayOptions").Get<GatewayOptions>() ?? new GatewayOptions();
         var authApiUrl = options?.AuthApiUrl ?? configOptions.AuthApiUrl;
@@ -207,13 +204,13 @@ public static class GatewayHostBuilder
         var authGroup = app.MapGroup("/gateway/auth");
 
         authGroup.MapPost("/register", async (HttpContext ctx, IHttpClientFactory factory) =>
-            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/auth/register"));
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/register"));
 
         authGroup.MapPost("/login", async (HttpContext ctx, IHttpClientFactory factory) =>
-            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/auth/login"));
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/login"));
 
         app.MapPost("/gateway/devices/pair", async (HttpContext ctx, IHttpClientFactory factory) =>
-            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/pair-device"))
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/pair-device"))
             .RequireAuthorization();
 
         app.Map("/gateway/{**path}", async (string path, HttpContext ctx, IHttpClientFactory factory) =>
@@ -233,7 +230,10 @@ public static class GatewayHostBuilder
 
         if (request.ContentLength > 0 || request.HasJsonContentType())
         {
-            proxyRequest.Content = new StreamContent(request.Body);
+            using var requestBodyBuffer = new MemoryStream();
+            await request.Body.CopyToAsync(requestBodyBuffer);
+            proxyRequest.Content = new ByteArrayContent(requestBodyBuffer.ToArray());
+
             if (request.ContentType != null)
             {
                 proxyRequest.Content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(request.ContentType);
@@ -242,7 +242,10 @@ public static class GatewayHostBuilder
 
         foreach (var header in request.Headers)
         {
-            if (header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
+            if (header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase)
+                || header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase)
+                || header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase)
+                || header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

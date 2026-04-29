@@ -33,11 +33,16 @@ public interface ISaleRepository
     Task<IReadOnlyList<Sale>> GetByShiftIdAsync(Guid shiftId, Guid tenantId, CancellationToken ct);
 
     /// <summary>
-    /// Retrieves paged sales and total count.
+    /// Retrieves paged sales, total count, and total revenue across all pages.
     /// </summary>
-    Task<(IReadOnlyList<Sale> Items, int TotalCount)> GetPagedAsync(
+    Task<(IReadOnlyList<Sale> Items, int TotalCount, decimal TotalRevenue)> GetPagedAsync(
         Guid tenantId,
         int pageNumber,
         int pageSize,
         CancellationToken ct);
+
+    /// <summary>
+    /// Gets queryable for custom joins and filters.
+    /// </summary>
+    IQueryable<Sale> GetQueryable();
 }

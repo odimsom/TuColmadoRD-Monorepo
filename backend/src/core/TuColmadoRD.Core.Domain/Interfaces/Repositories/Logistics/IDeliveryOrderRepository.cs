@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TuColmadoRD.Core.Domain.Entities.Logistics;
@@ -7,4 +8,5 @@ namespace TuColmadoRD.Core.Domain.Interfaces.Repositories.Logistics;
 
 public interface IDeliveryOrderRepository : IGenericRepository<DeliveryOrder>
 {
+    IQueryable<DeliveryOrder> GetQueryable();
 }

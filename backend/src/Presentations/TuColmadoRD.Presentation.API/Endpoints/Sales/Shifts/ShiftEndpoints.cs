@@ -15,25 +15,31 @@ public static class ShiftEndpoints
 
         group.MapPost("/open", OpenShift)
             .WithName("OpenShift")
+            .AllowAnonymous()
             .WithOpenApi();
 
         group.MapPost("/{id:guid}/close", CloseShift)
             .WithName("CloseShift")
+            .AllowAnonymous()
             .WithOpenApi();
 
         group.MapGet("/current", GetCurrentShift)
             .WithName("GetCurrentShift")
+            .AllowAnonymous()
             .WithOpenApi();
 
         group.MapGet("/{id:guid}", GetShiftById)
             .WithName("GetShiftById")
+            .AllowAnonymous()
             .WithOpenApi();
 
         group.MapGet("", GetShiftsPaged)
             .WithName("GetShiftsPaged")
             .WithOpenApi();
+            
         group.MapGet("/current/summary", GetCurrentShiftSummary)
             .WithName("GetCurrentShiftSummary")
+            .AllowAnonymous()
             .WithOpenApi();
         return app;
     }

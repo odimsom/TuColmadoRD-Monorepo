@@ -5,6 +5,8 @@ export interface AuthUser {
   lastName: string | null;
   role: string | null;
   tenantId: string | null;
+  /** Populated by the auth API response. undefined/null = status unknown (treat as active). */
+  subscriptionStatus?: 'active' | 'expired' | 'trialing' | null;
 }
 
 export interface LoginRequest {

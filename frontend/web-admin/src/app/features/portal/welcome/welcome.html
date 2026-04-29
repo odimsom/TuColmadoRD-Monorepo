@@ -11,19 +11,16 @@
       <a routerLink="/portal/dashboard" class="btn btn-primary mt-8 w-full">Entrar al portal</a>
     </article>
 
-    <article class="rounded-2xl border border-blue-500/30 bg-slate-950/80 p-8">
+    <article class="rounded-2xl border border-white/10 bg-slate-950/80 p-8">
       <h2 class="text-2xl font-bold text-white">App Local (.exe)</h2>
-      <p class="text-slate-400 mt-3">Instala la aplicacion de caja para trabajar con mejor rendimiento y modo offline.</p>
-
-      <ng-container *ngIf="downloadInfo(); let info; else noRelease">
-        <a [href]="info.downloadUrl" class="btn btn-outline btn-primary mt-8 w-full" target="_blank" rel="noopener noreferrer">
-          Descargar {{ info.version }} ({{ info.fileSize }})
-        </a>
-      </ng-container>
-
-      <ng-template #noRelease>
-        <button type="button" disabled class="btn btn-ghost mt-8 w-full">Sin release test disponible</button>
-      </ng-template>
+      <p class="text-slate-400 mt-3">La aplicación de escritorio se entrega directamente con tu licencia activa.</p>
+      <div class="mt-8 flex items-start gap-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+        <span class="text-blue-400 mt-0.5">ℹ</span>
+        <p class="text-sm text-slate-300">Para obtener el instalador, contacta a soporte por WhatsApp con tu número de licencia.</p>
+      </div>
+      <a href="https://wa.me/18296932458" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm mt-6 text-xs text-slate-400 hover:text-white">
+        Contactar soporte →
+      </a>
     </article>
   </div>
 </section>

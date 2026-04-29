@@ -1,0 +1,57 @@
+/* POS Layout styles — screen + print */
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+/* ── Print styles ────────────────────────────────────────────── */
+@media print {
+  /* Hide everything except the receipt */
+  body > * { display: none !important; }
+
+  .receipt-backdrop {
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: white !important;
+    z-index: 9999 !important;
+    backdrop-filter: none !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 0 !important;
+  }
+
+  .no-print { display: none !important; }
+
+  /* Receipt paper: thermal ticket style */
+  #receipt-paper {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-size: 0.7rem !important;
+    background: white !important;
+    color: black !important;
+    page-break-inside: avoid;
+  }
+
+  /* NCF prints in blue */
+  #receipt-paper .text-blue-700 {
+    color: #1d4ed8 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 4mm 2mm;
+  }
+}
+
+/* Prevent tap highlight on POS grid buttons */
+.pos-screen {
+  -webkit-tap-highlight-color: transparent;
+}

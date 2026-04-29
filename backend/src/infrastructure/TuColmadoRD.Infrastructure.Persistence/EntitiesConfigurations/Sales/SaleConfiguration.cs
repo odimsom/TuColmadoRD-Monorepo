@@ -23,6 +23,7 @@ public class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.Property(s => s.TotalPaidAmount).HasColumnType("decimal(18,2)").IsRequired();
         builder.Property(s => s.ChangeDueAmount).HasColumnType("decimal(18,2)").IsRequired();
 
+        builder.Property(s => s.NcfNumber).HasMaxLength(20);
         builder.Property(s => s.Notes).HasMaxLength(300);
         builder.Property(s => s.VoidReason).HasMaxLength(200);
         builder.Property(s => s.CreatedAt).IsRequired();

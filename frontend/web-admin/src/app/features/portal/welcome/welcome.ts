@@ -1,7 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { DownloadInfo, DownloadService } from '../../../core/services/download.service';
 
 @Component({
   selector: 'app-welcome',
@@ -10,14 +9,4 @@ import { DownloadInfo, DownloadService } from '../../../core/services/download.s
   templateUrl: './welcome.html',
   styleUrl: './welcome.scss'
 })
-export class Welcome implements OnInit {
-  private readonly downloadService = inject(DownloadService);
-
-  downloadInfo = signal<DownloadInfo | null>(null);
-
-  ngOnInit(): void {
-    this.downloadService.getLatestTestRelease().subscribe(info => {
-      this.downloadInfo.set(info);
-    });
-  }
-}
+export class Welcome {}

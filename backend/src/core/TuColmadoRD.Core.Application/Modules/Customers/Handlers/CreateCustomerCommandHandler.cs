@@ -66,7 +66,9 @@ public sealed class CreateCustomerCommandHandler : IRequestHandler<CreateCustome
                 request.Address.Sector,
                 request.Address.Street,
                 request.Address.Reference,
-                request.Address.HouseNumber);
+                request.Address.HouseNumber,
+                request.Address.Latitude,
+                request.Address.Longitude);
 
             if (!addressResult.TryGetResult(out address) || address is null)
             {

@@ -8,6 +8,22 @@ A complete, production-ready Point-of-Sale (POS) sales module implementing clean
 
 ## What's Been Built
 
+### 7. Logistics & Credit Extensions ✅ (New)
+
+**Features Added:**
+- **Fiado (Credit) Payments:** Sales can now be processed as "Credit" by linking them to an existing customer. The system automatically registers a charge (debt) on the customer's account upon sale completion.
+- **Delivery Orders:** Sales with the "Delivery" payment method are placed on `Held` (suspended) status. A `DeliveryOrder` is generated with full geolocalization (`Latitude`, `Longitude`). The sale is only finalized when the delivery is marked as `Complete`.
+- **Geolocalization:** `Address` value objects now support `Latitude` and `Longitude`, fully mapped to the database via EF Core migrations.
+- **Delivery Module Endpoints:** Added endpoints for `Pending Orders`, `Accept Order`, and `Complete Order` to support the mobile-first delivery interface.
+
+### 8. POS Enhancements & Quick Sales ⚡ (New)
+
+**Features Added:**
+- **Keyboard Shortcuts:** `[F2]` Quick Sale, `[F4]` Checkout, `[F8]` Print, `[F9]` Submit Sale, `[Esc]` Cancel.
+- **Quick Sale Modal (Venta Rápida):** Instantly search or pick from the most stocked items to sell by "Amount in Pesos". The system automatically calculates the exact decimal quantity (e.g., "$50 pesos de arroz" -> `0.5 lbs`).
+- **Real-Time Stock Updates:** Adding/removing items from the cart instantly deducts/restores stock in the local UI, preventing overselling in real-time.
+- **Decimal & Unit Handling:** Cart inputs now support decimal quantities (`0.25`, `1.5`) natively for products measured in Pounds (lbs) or Liters (L), complete with UI badges.
+
 ### 1. Domain Layer ✅ (100%)
 
 **Location**: `Entities/Sales/`, `ValueObjects/`

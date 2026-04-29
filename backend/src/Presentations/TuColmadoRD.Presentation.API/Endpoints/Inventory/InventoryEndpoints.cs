@@ -42,10 +42,32 @@ public static class InventoryEndpoints
 
         group.MapGet("/products", GetProductsPaged)
             .WithName("GetProductsPaged")
+            .AllowAnonymous()
             .WithOpenApi();
 
         group.MapGet("/catalog", GetCatalog)
             .WithName("GetCatalog")
+            .AllowAnonymous()
+            .WithOpenApi();
+
+        group.MapGet("/products/low-stock", GetLowStock)
+            .WithName("GetLowStockProducts")
+            .WithOpenApi();
+
+        group.MapGet("/categories", GetCategories)
+            .WithName("GetCategories")
+            .WithOpenApi();
+
+        group.MapPost("/categories", CreateCategory)
+            .WithName("CreateCategory")
+            .WithOpenApi();
+
+        group.MapPost("/categories/seed-defaults", SeedDefaultCategories)
+            .WithName("SeedDefaultCategories")
+            .WithOpenApi();
+
+        group.MapDelete("/categories/{id:guid}", DeactivateCategory)
+            .WithName("DeactivateCategory")
             .WithOpenApi();
 
         return app;
@@ -169,5 +191,66 @@ public static class InventoryEndpoints
         }
 
         return TypedResults.Ok(dtos);
+    }
+
+    private static async Task<IResult> GetLowStock(
+        IMediator mediator,
+        int threshold = 5,
+        CancellationToken ct = default)
+    {
+        threshold = Math.Clamp(threshold, 0, 100);
+        var result = await mediator.Send(new GetLowStockQuery(threshold), ct);
+        if (!result.TryGetResult(out var response))
+        {
+            return result.Error.MapDomainError();
+        }
+
+        return TypedResults.Ok(response);
+    }
+
+    private static async Task<IResult> GetCategories(
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetCategoriesQuery(), ct);
+        if (!result.TryGetResult(out var categories))
+            return result.Error.MapDomainError();
+
+        return TypedResults.Ok(categories);
+    }
+
+    private static async Task<IResult> CreateCategory(
+        CreateCategoryRequest request,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var result = await mediator.Send(new CreateCategoryCommand(request.Name), ct);
+        if (!result.TryGetResult(out var id))
+            return result.Error.MapDomainError();
+
+        return TypedResults.Created($"/api/v1/inventory/categories/{id}", new { id });
+    }
+
+    private static async Task<IResult> SeedDefaultCategories(
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var result = await mediator.Send(new SeedDefaultCategoriesCommand(), ct);
+        if (!result.TryGetResult(out var count))
+            return result.Error.MapDomainError();
+
+        return TypedResults.Ok(new { created = count });
+    }
+
+    private static async Task<IResult> DeactivateCategory(
+        Guid id,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var result = await mediator.Send(new DeactivateCategoryCommand(id), ct);
+        if (!result.IsGood)
+            return result.Error.MapDomainError();
+
+        return TypedResults.NoContent();
     }
 }

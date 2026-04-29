@@ -74,13 +74,12 @@ const faqs = [
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-9 h-9 transition-transform duration-500 group-hover:rotate-12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb" />
               <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626" />
-              <path d="M9 15v-6h6" stroke="#2563eb" stroke-opacity="0.2" />
             </svg>
             <div class="absolute inset-0 bg-blue-500/20 blur-lg rounded-full scale-0 group-hover:scale-150 transition-transform duration-500"></div>
           </div>
-          <div class="flex flex-col justify-center">
-            <span class="text-2xl font-bold text-white tracking-tight leading-none">TuColmado</span>
-            <span class="text-[0.65rem] font-bold text-blue-500 uppercase tracking-[0.4em] mt-0.5">RD</span>
+          <div class="flex flex-col justify-center leading-none">
+            <span class="text-[1.35rem] font-bebas text-white tracking-wider uppercase leading-none">TuColmado<span class="text-blue-500">RD</span></span>
+            <span class="text-[0.5rem] font-bold text-slate-600 uppercase tracking-[0.35em] mt-0.5">by Synset Solutions</span>
           </div>
         </div>
         <nav class="hidden md:flex space-x-10">
@@ -88,12 +87,12 @@ const faqs = [
           <a href="#como-funciona" class="text-slate-400 hover:text-white transition-colors font-medium text-sm uppercase tracking-widest">Cómo Funciona</a>
           <a href="#precios" class="text-slate-400 hover:text-white transition-colors font-medium text-sm uppercase tracking-widest">Precios</a>
         </nav>
-        <div class="flex items-center gap-6">
-          <a :href="webAdminHomeUrl" class="text-slate-300 hover:text-white transition-all text-sm font-bold uppercase tracking-wider">
-            Acceso
+        <div class="flex items-center gap-5">
+          <a :href="webAdminHomeUrl" class="text-slate-400 hover:text-white transition-all text-xs font-black uppercase tracking-widest">
+            Iniciar Sesión
           </a>
-          <a :href="webAdminRegisterUrl" class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] text-xs uppercase tracking-widest border border-blue-400/30">
-            Hazte Cliente
+          <a :href="webAdminRegisterUrl" class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] text-xs uppercase tracking-widest border border-blue-400/20">
+            Empezar Gratis →
           </a>
         </div>
       </div>
@@ -118,14 +117,29 @@ const faqs = [
               Moderniza tu tienda con la tecnología urbana más potente del país. 
               Factura en segundos, controla tu inventario y elimina el desorden de la libreta.
             </p>
-            <div class="flex flex-wrap gap-6">
-              <a :href="webAdminRegisterUrl" class="group relative px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-sm transition-all shadow-[0_0_40px_rgba(37,99,235,0.4)] text-lg uppercase tracking-wider overflow-hidden">
-                <span class="relative z-10">Empezar Ahora</span>
+            <div class="flex flex-wrap gap-4 mb-10">
+              <a :href="webAdminRegisterUrl" class="group relative px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-lg transition-all shadow-[0_0_40px_rgba(37,99,235,0.4)] text-sm uppercase tracking-widest overflow-hidden flex items-center gap-2">
+                <span class="relative z-10">Empezar 14 días gratis</span>
+                <span class="relative z-10 text-blue-300">→</span>
                 <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               </a>
-              <a href="#beneficios" class="px-10 py-5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-sm transition-all text-lg uppercase tracking-wider">
-                Ver Sistema
+              <a href="#como-funciona" class="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-lg transition-all text-sm uppercase tracking-widest">
+                Ver Demo
               </a>
+            </div>
+            <!-- Social proof inline -->
+            <div class="flex items-center gap-4 flex-wrap">
+              <div class="flex -space-x-2">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 ring-2 ring-[#0f172a] flex items-center justify-center text-[0.55rem] font-black text-white">JP</div>
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-red-600 to-red-800 ring-2 ring-[#0f172a] flex items-center justify-center text-[0.55rem] font-black text-white">MA</div>
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-green-600 to-green-800 ring-2 ring-[#0f172a] flex items-center justify-center text-[0.55rem] font-black text-white">LR</div>
+                <div class="w-7 h-7 rounded-full bg-[#1e293b] ring-2 ring-[#0f172a] flex items-center justify-center text-[0.55rem] font-black text-slate-400">+</div>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="icon-[ic--baseline-star] text-amber-400 text-xs"></span>
+                <span class="text-white font-bold text-sm">4.9</span>
+                <span class="text-slate-400 text-xs ml-1">· 200+ colmados activos en RD</span>
+              </div>
             </div>
           </div>
         </div>
@@ -403,13 +417,16 @@ const faqs = [
         <div class="grid grid-cols-1 md:grid-cols-4 gap-24 mb-24 text-left">
           <div class="col-span-1 md:col-span-2">
             <div class="flex items-center gap-4 mb-10 group cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-10 h-10 transition-transform duration-500 group-hover:rotate-12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb" />
-                <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626" />
-              </svg>
-              <div class="flex flex-col">
-                <span class="text-3xl font-bebas tracking-wider text-white leading-none">TU COLMADO</span>
-                <span class="text-[0.6rem] font-bold text-blue-500 uppercase tracking-[0.4em] mt-1">RD</span>
+              <div class="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-10 h-10 transition-transform duration-500 group-hover:rotate-12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb" />
+                  <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626" />
+                </svg>
+                <div class="absolute inset-0 bg-blue-500/15 blur-xl rounded-full scale-0 group-hover:scale-150 transition-transform duration-500"></div>
+              </div>
+              <div class="flex flex-col leading-none">
+                <span class="text-2xl font-bebas tracking-wider text-white leading-none">TuColmado<span class="text-blue-500">RD</span></span>
+                <span class="text-[0.55rem] font-bold text-slate-600 uppercase tracking-[0.35em] mt-1">by Synset Solutions</span>
               </div>
             </div>
             <p class="text-slate-400 text-lg leading-relaxed max-w-md">
@@ -444,16 +461,21 @@ const faqs = [
             </ul>
           </div>
         </div>
-        <div class="pt-16 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
-          <p class="text-slate-600 text-sm font-bold uppercase tracking-widest">
-            © 2026 TuColmado RD. Orgullosamente Dominicano 🇩🇴
+        <div class="pt-16 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p class="text-slate-600 text-xs font-bold uppercase tracking-widest">
+            © 2026 TuColmado RD &nbsp;·&nbsp; Orgullosamente Dominicano 🇩🇴
           </p>
-          <div class="flex items-center gap-4 grayscale-0 opacity-40 hover:opacity-100 transition-opacity">
-            <span class="text-slate-400 text-[10px] uppercase font-black tracking-[0.4em] italic">Diseñado por</span>
-            <a href="https://synsetsolutions.com" target="_blank" class="flex items-center gap-2 group">
-              <span class="text-slate-300 text-[10px] font-black uppercase tracking-[0.3em] group-hover:text-blue-500 transition-colors">Synset Solutions</span>
-            </a>
-          </div>
+          <a href="https://synsetsolutions.com" target="_blank" rel="noopener noreferrer"
+             class="flex items-center gap-3 opacity-35 hover:opacity-80 transition-all group">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 group-hover:rotate-12 transition-transform duration-500" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb" />
+              <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626" />
+            </svg>
+            <div class="flex flex-col leading-none">
+              <span class="text-[0.55rem] font-bold text-slate-500 uppercase tracking-[0.35em]">Desarrollado por</span>
+              <span class="text-xs font-black text-slate-300 group-hover:text-blue-400 transition-colors uppercase tracking-[0.2em]">Synset Solutions</span>
+            </div>
+          </a>
         </div>
       </div>
     </footer>

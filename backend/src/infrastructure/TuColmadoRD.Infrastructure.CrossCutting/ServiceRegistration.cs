@@ -25,6 +25,13 @@ public static class ServiceRegistration
         services.AddScoped<TuColmadoRD.Core.Application.Interfaces.Security.ITimeGuard, TimeGuardService>();
         services.AddScoped<TuColmadoRD.Core.Application.Interfaces.Security.ILicenseVerifier, LicenseVerifierService>();
         services.AddSingleton<TuColmadoRD.Core.Application.Interfaces.Security.IClock, SystemClock>();
+        services.AddScoped<TuColmadoRD.Core.Application.Interfaces.Services.IEcfSignerService, EcfSignerService>();
+
+        services.AddHttpClient<TuColmadoRD.Core.Application.Interfaces.Services.IEcfGeneratorClient, EcfGeneratorClient>(client => 
+        {
+            var baseUrl = configuration["EcfGenerator:BaseUrl"] ?? "http://ecf-generator:5000";
+            client.BaseAddress = new Uri(baseUrl);
+        });
 
         var applicationAssembly = typeof(TuColmadoRD.Core.Application.Behaviors.ICommandMarker).Assembly;
         services.AddMediatR(cfg =>

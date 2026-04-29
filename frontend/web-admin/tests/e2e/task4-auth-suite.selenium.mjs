@@ -193,25 +193,16 @@ async function fillLoginForm(driver, {
 }
 
 async function fillRegisterForm(driver, {
-  fullName = 'Usuario Selenium',
   businessName = 'Colmado Suite QA',
   email = 'qa@e2e.local',
-  whatsapp = '+18095551234',
   password = 'clave1234',
 } = {}) {
-  await (await findByTestId(driver, 'register-full-name')).clear();
-  await (await findByTestId(driver, 'register-full-name')).sendKeys(fullName);
-
   await (await findByTestId(driver, 'register-business-name')).clear();
   await (await findByTestId(driver, 'register-business-name')).sendKeys(businessName);
   await pauseBetweenSteps();
 
   await (await findByTestId(driver, 'register-email')).clear();
   await (await findByTestId(driver, 'register-email')).sendKeys(email);
-  await pauseBetweenSteps();
-
-  await (await findByTestId(driver, 'register-whatsapp')).clear();
-  await (await findByTestId(driver, 'register-whatsapp')).sendKeys(whatsapp);
   await pauseBetweenSteps();
 
   await (await findByTestId(driver, 'register-password')).clear();
@@ -414,10 +405,13 @@ function createScenarios() {
         await pauseBetweenSteps();
         await clickByJs(driver, createAccountButton);
 
-        const successTitle = await findByTestId(driver, 'register-success-title');
-        await driver.wait(until.elementIsVisible(successTitle), TIMEOUT_MS);
-        const successText = await successTitle.getText();
-        assert.match(successText, /Todo listo/i);
+        await driver.wait(
+          async () => (await driver.getCurrentUrl()).includes('/portal/welcome'),
+          TIMEOUT_MS,
+          'Expected navigation to /portal/welcome after successful registration',
+        );
+        const token = await driver.executeScript("return window.localStorage.getItem('tc_token');");
+        assert.ok(token, 'Debe guardar token en localStorage luego del registro correcto');
       },
     },
     {
@@ -429,9 +423,8 @@ function createScenarios() {
         await clearSession(driver);
 
         await fillRegisterForm(driver, {
-          fullName: 'AA',
           businessName: 'BB',
-          whatsapp: '809555',
+          email: 'noemail',
           password: '123',
         });
 
@@ -440,10 +433,8 @@ function createScenarios() {
         assert.notEqual(disabled, null, 'Boton continuar debe estar deshabilitado con datos fuera de limite');
 
         await fillRegisterForm(driver, {
-          fullName: 'Usuario Error API',
           businessName: 'Colmado Error API',
           email: 'error-api@e2e.local',
-          whatsapp: '+18095559999',
           password: 'clave1234',
         });
 

@@ -1,4 +1,5 @@
 using MediatR;
+using TuColmadoRD.Core.Domain.Base;
 
 namespace TuColmadoRD.Core.Domain.Entities.Sales.Events;
 
@@ -39,7 +40,7 @@ public sealed record SaleCompletedDomainEvent(
     decimal ChangeDue,
     IReadOnlyList<SaleItemEventLine> Items,
     IReadOnlyList<SalePaymentEventLine> Payments,
-    DateTime OccurredAt) : INotification;
+    DateTime OccurredAt) : IDomainEvent;
 
 /// <summary>
 /// Domain event raised when a sale is voided/cancelled.
@@ -51,4 +52,4 @@ public sealed record SaleVoidedDomainEvent(
     Guid TerminalId,
     string ReceiptNumber,
     string VoidReason,
-    DateTime OccurredAt);
+    DateTime OccurredAt) : IDomainEvent;
