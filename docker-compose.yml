@@ -148,8 +148,10 @@ services:
       - tucolmadord-network
 
   traefik:
-    image: traefik:v2.10
+    image: traefik:v2.10.7
     restart: unless-stopped
+    environment:
+      - DOCKER_API_VERSION=1.40
     command:
       - "--log.level=DEBUG"
       - "--api.insecure=true" # Enable dashboard for debugging
