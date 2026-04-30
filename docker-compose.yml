@@ -156,6 +156,7 @@ services:
       - "--log.level=DEBUG"
       - "--api.insecure=true" # Enable dashboard for debugging
       - "--providers.docker=true"
+      - "--providers.docker.version=1.40"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
