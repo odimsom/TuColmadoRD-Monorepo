@@ -16,9 +16,22 @@ git reset --hard origin/main  # Hard reset to ensure we have the latest code
 
 # 2. Update submodules (non-critical - continue if fails)
 echo "📦 Updating submodules..."
+# First, try to deinit any corrupted submodules
+git submodule deinit -f --all 2>/dev/null || true
+
+# Then reinitialize and update
 git submodule update --recursive --init 2>/dev/null || {
-  echo "⚠️  Warning: Submodule update encountered issues (non-critical, continuing...)"
-  # Submodule failures are non-blocking since services use Docker images
+  echo "⚠️  Warning: Submodule update had issues. Attempting force init..."
+  
+  # Manual fix: remove problematic submodule and reinit
+  rm -rf .git/modules/generadordexmle-cf 2>/dev/null || true
+  rm -rf generadordexmle-cf 2>/dev/null || true
+  
+  # Try once more
+  git submodule update --recursive --init 2>/dev/null || {
+    echo "⚠️  Warning: Submodule init failed (non-critical, continuing...)"
+    # Submodule failures are non-blocking since services use Docker images
+  }
 }
 
 # 3. Ensure .env exists and has required variables
