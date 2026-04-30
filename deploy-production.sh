@@ -56,10 +56,58 @@ git submodule update --recursive --init 2>/dev/null || {
   }
 }
 
-# 3. Ensure .env exists and has required variables
+# 3. Ensure .env exists with required variables (create if missing)
 if [ ! -f .env ]; then
-    echo "❌ .env file not found. Please create .env with required variables."
-    exit 1
+    echo "📝 Creating .env file with secure defaults..."
+    
+    # Generate secure random passwords
+    DB_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-20)
+    JWT_SECRET=$(openssl rand -base64 32)
+    
+    cat > .env << 'EOF'
+# ── Project Configuration ─────────────────────────────────────────
+COMPOSE_PROJECT_NAME=tucolmadord
+
+# ── Database Configuration ────────────────────────────────────────
+POSTGRES_DB=TuColmadoDb
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=GENERATED_DB_PASSWORD
+POSTGRES_PORT=5432
+
+MONGO_INITDB_ROOT_USERNAME=root
+MONGO_INITDB_ROOT_PASSWORD=GENERATED_DB_PASSWORD
+MONGO_PORT=27017
+
+# ── Authentication ────────────────────────────────────────────────
+JWT_SECRET=GENERATED_JWT_SECRET
+JWT_EXPIRES_IN=7d
+
+# ── Service Ports (internal) ──────────────────────────────────────
+CORE_PORT=8080
+AUTH_PORT=3000
+LANDING_PORT=5199
+WEB_PORT=5209
+API_PORT=8081
+
+# ── Domain Configuration ──────────────────────────────────────────
+PUBLIC_WEB_DOMAIN=tucolmadord.synsetsolutions.com
+PUBLIC_WEB_URL=https://tucolmadord.synsetsolutions.com
+PUBLIC_LANDING_DOMAIN=landingcolrd.synsetsolutions.com
+PUBLIC_API_DOMAIN=api.tucolmadord.synsetsolutions.com
+
+# ── Let's Encrypt / Traefik ───────────────────────────────────────
+ACME_EMAIL=admin@tucolmadord.com
+EOF
+    
+    # Substitute generated values
+    sed -i "s|GENERATED_DB_PASSWORD|${DB_PASSWORD}|g" .env
+    sed -i "s|GENERATED_JWT_SECRET|${JWT_SECRET}|g" .env
+    
+    echo "✅ .env created with secure random passwords"
+    echo "   PostgreSQL password: ${DB_PASSWORD}"
+    echo "   JWT secret: ${JWT_SECRET:0:20}..."
+else
+    echo "✅ Using existing .env file"
 fi
 
 # 4. Aggressive cleanup of existing containers and volumes
