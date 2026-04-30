@@ -110,17 +110,30 @@ docker volume prune -f 2>/dev/null || true
 
 # 5b. Resolve port conflicts (Port 80/443)
 echo "🧹 Resolving port conflicts for 80/443..."
+
+# Ensure we have the tools to find processes
+apt-get update -qq && apt-get install -y psmisc lsof -qq > /dev/null 2>&1 || true
+
 # Stop host-level services if they exist
 systemctl stop nginx 2>/dev/null || true
 systemctl stop apache2 2>/dev/null || true
 systemctl stop traefik 2>/dev/null || true
 
-# Find and stop any docker container using port 80 (not just our project)
-CONFLICTING_CONTAINERS=$(docker ps -q --filter "publish=80")
-if [ ! -z "$CONFLICTING_CONTAINERS" ]; then
-  echo "  Stopping conflicting containers: $CONFLICTING_CONTAINERS"
-  docker stop $CONFLICTING_CONTAINERS || true
+# Find and stop any docker container using port 80 or 443
+echo "  Checking for Docker containers using ports 80/443..."
+CONTAINERS_TO_STOP=$(docker ps --format "{{.ID}} {{.Ports}}" | grep -E ":80->|:443->" | cut -d' ' -f1)
+if [ ! -z "$CONTAINERS_TO_STOP" ]; then
+  echo "  Stopping conflicting containers: $CONTAINERS_TO_STOP"
+  docker stop $CONTAINERS_TO_STOP || true
 fi
+
+# Nuclear option: Kill anything still listening on these ports
+echo "  Nuclear option: Killing any remaining processes on 80/443..."
+fuser -k 80/tcp 2>/dev/null || true
+fuser -k 443/tcp 2>/dev/null || true
+
+# Wait a moment for ports to be released
+sleep 2
 
 # 6. Create fresh bind-mount directories with correct permissions
 echo "📦 Setting up fresh bind-mount directories..."
