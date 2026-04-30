@@ -187,7 +187,16 @@ if [ "$MONGO_READY" = false ]; then
   echo "⚠️  Warning: MongoDB may not be ready, but continuing..."
 fi
 
-# 9. Wait for application services
+# 9. Ensure PostgreSQL database exists before migrations
+echo "🗄️ Ensuring PostgreSQL database '${POSTGRES_DB}' exists..."
+docker compose exec -T postgres psql -U ${POSTGRES_USER} -tc \
+  "SELECT 1 FROM pg_database WHERE datname = '${POSTGRES_DB}'" | grep -q 1 || \
+  docker compose exec -T postgres createdb -U ${POSTGRES_USER} ${POSTGRES_DB} || {
+    echo "⚠️  Warning: Could not create database. It may already exist or connection failed."
+}
+echo "  ✅ Database ready"
+
+# 9a. Wait for application services
 echo "⏳ Waiting for application services to stabilize..."
 sleep 15
 
