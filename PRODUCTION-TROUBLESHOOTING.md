@@ -167,3 +167,92 @@ docker compose down -v
 2. **CORS issues**: `docker compose logs gateway | grep -i cors`
 3. **Migraciones fallidas**: `docker compose logs api | grep -i migrat`
 4. **Traefik routing**: `docker logs traefik 2>&1 | grep tucolmadord`
+
+---
+
+## 6. Container Health Status - "restarting" Loop
+
+**Síntomas:** Contenedor muestra `restarting` en `docker compose ps`, nunca llega a `running`
+
+**Causas posibles:**
+1. Aplicación critica en startup (ej: migraciones de base de datos)
+2. Dependencias no están listas (base de datos, otros servicios)
+3. Límite de reintentos agotado
+
+**Soluciones:**
+
+**a) Ver por qué el contenedor falla:**
+```bash
+# Ver logs detallados
+docker compose logs api | tail -100
+
+# Verificar que los servicios dependientes estén saludables
+docker compose ps postgres mongo auth
+```
+
+**b) Verificar health status:**
+```bash
+# Ver salud detallada de cada servicio
+docker compose ps --format "table {{.Service}}\t{{.Status}}\t{{.Health}}"
+
+# Si muestra "unhealthy" o "starting", esperar más o revisar logs
+```
+
+**c) Reintentos limitados:**
+El docker-compose.yml ahora usa `restart: on-failure:3` para evitar loops infinitos:
+- Intenta reiniciar máximo 3 veces
+- Si falla, el contenedor se queda detenido (ve por qué en logs)
+- Solución: `docker compose up -d [service]` para intentar manualmente
+
+**d) Si la base de datos no está lista:**
+```bash
+# PostgreSQL
+docker compose exec postgres pg_isready -U admin_colmado
+
+# MongoDB
+docker compose exec mongo mongosh --eval "db.adminCommand('ping')"
+
+# Si falla, esperar o hacer restart
+docker compose restart postgres
+docker compose restart mongo
+```
+
+**e) Recriar servicio desde cero:**
+```bash
+# Parar e eliminar contenedor (data de volúmenes persiste)
+docker compose rm -f api
+
+# Reconstruir e iniciar
+docker compose up -d api
+
+# Ver logs mientras inicia
+docker compose logs -f api
+```
+
+---
+
+## 7. Services Starting Order
+
+El `docker-compose.yml` usa `depends_on` con `condition: service_healthy` para asegurar orden correcto:
+
+1. **PostgreSQL** (database) - con healthcheck `pg_isready`
+2. **MongoDB** (auth-database) - con healthcheck `mongosh ping`
+3. **Auth** (depende de Mongo) - con healthcheck HTTP
+4. **API** (depende de PostgreSQL, espera migrations) - con healthcheck HTTP
+5. **ECF Generator** - con healthcheck HTTP
+6. **Gateway** (depende de Auth y API) - espera ambos saludables
+7. **Landing & Web** - con healthchecks HTTP
+
+Si un servicio de nivel inferior falla, los superiores no inician.
+
+**Verificar orden correcto:**
+```bash
+docker compose ps --format "table {{.Service}}\t{{.RunningFor}}\t{{.Status}}"
+
+# Esperado:
+# postgres     2m ago       Up X seconds (healthy)
+# mongo        2m ago       Up X seconds (healthy)  
+# auth         1m 30s ago   Up X seconds (healthy)
+# api          1m ago       Up X seconds (healthy)
+# gateway      45s ago      Up X seconds (healthy)
+```

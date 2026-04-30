@@ -10,6 +10,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - tucolmadord-network
 
@@ -23,6 +29,12 @@ services:
       - mongo_data:/data/db
     ports:
       - "${MONGO_PORT:-27017}:27017"
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - tucolmadord-network
 
@@ -30,7 +42,7 @@ services:
     build:
       context: ./auth
       dockerfile: Dockerfile
-    restart: unless-stopped
+    restart: on-failure:3
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -39,9 +51,16 @@ services:
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       NET_API_URL: http://api:8080
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     ports:
       - "${AUTH_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - tucolmadord-network
 
@@ -49,7 +68,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.api
-    restart: unless-stopped
+    restart: on-failure:3
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
@@ -59,10 +78,18 @@ services:
       AuthApi__BaseUrl: http://auth:3000
       Outbox__CloudSyncBaseUrl: http://auth:3000
     depends_on:
-      - postgres
-      - ecf-generator
+      postgres:
+        condition: service_healthy
+      ecf-generator:
+        condition: service_started
     ports:
       - "${CORE_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - tucolmadord-network
 
@@ -70,9 +97,15 @@ services:
     build:
       context: ./generadordexmle-cf
       dockerfile: Dockerfile
-    restart: unless-stopped
+    restart: on-failure:3
     ports:
       - "5000:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - tucolmadord-network
 
@@ -80,7 +113,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.gateway
-    restart: unless-stopped
+    restart: on-failure:3
     environment:
       GatewayOptions__AuthApiUrl: http://auth:3000
       GatewayOptions__CoreApiUrl: http://api:8080
@@ -92,10 +125,18 @@ services:
       GatewayOptions__AllowedOrigins__4: https://${PUBLIC_LANDING_DOMAIN}
       GatewayOptions__AllowedOrigins__5: https://www.${PUBLIC_LANDING_DOMAIN}
     depends_on:
-      - auth
-      - api
+      auth:
+        condition: service_healthy
+      api:
+        condition: service_healthy
     ports:
       - "${API_PORT:-8081}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/gateway/health/cloud"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     labels:
       - traefik.enable=true
       - traefik.http.routers.tucolmadord-api.rule=Host(`${PUBLIC_API_DOMAIN}`)
@@ -111,9 +152,15 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_WEB_ADMIN_URL: ${PUBLIC_WEB_URL}
-    restart: unless-stopped
+    restart: on-failure:3
     ports:
       - "${LANDING_PORT:-8082}:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     labels:
       - traefik.enable=true
       - traefik.http.routers.tucolmadord-landing.rule=Host(`${PUBLIC_LANDING_DOMAIN}`) || Host(`www.${PUBLIC_LANDING_DOMAIN}`)
@@ -127,9 +174,15 @@ services:
     build:
       context: ./frontend/web-admin
       dockerfile: Dockerfile
-    restart: unless-stopped
+    restart: on-failure:3
     ports:
       - "${WEB_PORT:-8083}:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     labels:
       - traefik.enable=true
       - traefik.http.routers.tucolmadord-web.rule=Host(`${PUBLIC_WEB_DOMAIN}`)
