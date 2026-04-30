@@ -1,10 +1,10 @@
 ﻿<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     POS Layout â€” TuColmadoRD
+     POS Layout â€" TuColmadoRD
      Full-screen cashier interface. Print-safe receipt included.
      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div class="pos-screen h-screen flex flex-col bg-[#0b1120] text-white overflow-hidden select-none">
 
-  <!-- â”€â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- â"€â"€â"€ HEADER â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ -->
   <header class="flex items-center gap-3 px-4 py-2 bg-[#080f1e] border-b border-white/[0.06] shrink-0">
 
     <!-- Logo + brand -->
@@ -58,52 +58,42 @@
     </button>
   </header>
 
-  <!-- â”€â”€â”€ MAIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- MAIN -->
   <div class="flex flex-1 overflow-hidden">
 
-    <!-- LEFT â€” Product catalog -->
+    <!-- LEFT — Catálogo -->
     <div class="flex flex-col flex-1 overflow-hidden border-r border-white/[0.06]">
 
-      <!-- Search + categories -->
-      <div class="px-4 py-3 space-y-2 bg-[#080f1e]/60 border-b border-white/[0.04] shrink-0">
-        <!-- Search -->
+      <!-- Barra de búsqueda + categorías -->
+      <div class="px-4 py-3 space-y-2.5 bg-[#080f1e]/80 border-b border-white/[0.05] shrink-0">
         <div class="flex gap-2">
           <div class="relative flex-1">
-            <span class="icon-[ic--baseline-search] absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-base pointer-events-none"></span>
-            <input
-              type="text"
-              placeholder="Buscar producto..."
+            <span class="icon-[ic--baseline-search] absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none"></span>
+            <input type="text" placeholder="Buscar producto..."
               [value]="catalogSearch()"
               (input)="setSearch($any($event.target).value)"
-              class="w-full pl-9 pr-4 py-2 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 focus:bg-white/[0.07] transition-all"
-            />
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-base text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 focus:bg-white/[0.07] transition-all" />
           </div>
           <button (click)="openQuickSaleModal()" title="Venta Rápida [F2]"
-            class="shrink-0 px-3 py-2 rounded-lg bg-blue-600/20 text-blue-400 font-bold text-xs border border-blue-500/30 hover:bg-blue-600/30 hover:text-white transition-colors flex items-center gap-1.5">
-            <span class="icon-[ic--baseline-bolt] text-base"></span>
-            <span class="hidden sm:inline">[F2] Venta Rápida</span>
+            class="shrink-0 px-4 py-2.5 rounded-xl bg-blue-600/20 text-blue-400 font-bold text-sm border border-blue-500/30 hover:bg-blue-600/30 hover:text-white transition-colors flex items-center gap-2">
+            <span class="icon-[ic--baseline-bolt] text-lg"></span>
+            <span class="hidden lg:inline">Rápida [F2]</span>
           </button>
         </div>
-        <!-- Category pills -->
+
         @if (categories().length > 0) {
-          <div class="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
-            <button
-              (click)="selectCategory(null)"
-              [class.bg-blue-600]="!selectedCategory()"
-              [class.text-white]="!selectedCategory()"
-              [class.bg-white\/\[0\.05\]]="selectedCategory()"
-              [class.text-slate-400]="selectedCategory()"
-              class="shrink-0 px-3 py-1 rounded-full text-xs font-semibold border border-white/[0.08] hover:border-blue-500/40 transition-all">
+          <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <button (click)="selectCategory(null)"
+              class="shrink-0 px-4 py-1.5 rounded-full text-sm font-bold border transition-all"
+              [class.bg-blue-600]="!selectedCategory()" [class.border-blue-500]="!selectedCategory()" [class.text-white]="!selectedCategory()"
+              [class.bg-white\/\[0\.04\]]="selectedCategory()" [class.border-white\/\[0\.08\]]="selectedCategory()" [class.text-slate-400]="selectedCategory()">
               Todos
             </button>
             @for (cat of categories(); track cat.id) {
-              <button
-                (click)="selectCategory(cat.id)"
-                [class.bg-blue-600]="selectedCategory() === cat.id"
-                [class.text-white]="selectedCategory() === cat.id"
-                [class.bg-white\/\[0\.05\]]="selectedCategory() !== cat.id"
-                [class.text-slate-400]="selectedCategory() !== cat.id"
-                class="shrink-0 px-3 py-1 rounded-full text-xs font-semibold border border-white/[0.08] hover:border-blue-500/40 transition-all">
+              <button (click)="selectCategory(cat.id)"
+                class="shrink-0 px-4 py-1.5 rounded-full text-sm font-bold border transition-all"
+                [class.bg-blue-600]="selectedCategory()===cat.id" [class.border-blue-500]="selectedCategory()===cat.id" [class.text-white]="selectedCategory()===cat.id"
+                [class.bg-white\/\[0\.04\]]="selectedCategory()!==cat.id" [class.border-white\/\[0\.08\]]="selectedCategory()!==cat.id" [class.text-slate-400]="selectedCategory()!==cat.id">
                 {{ cat.name }}
               </button>
             }
@@ -111,160 +101,174 @@
         }
       </div>
 
-      <!-- Product grid -->
+      <!-- Grid de productos -->
       <div class="flex-1 overflow-y-auto p-3">
         @if (loading()) {
-          <div class="flex items-center justify-center h-32 text-slate-600">
-            <span class="icon-[ic--baseline-refresh] animate-spin text-2xl mr-2"></span>
-            Cargando productos...
+          <div class="flex items-center justify-center h-40 text-slate-600 gap-3">
+            <span class="icon-[ic--baseline-refresh] animate-spin text-3xl"></span>
+            <span class="text-base">Cargando...</span>
           </div>
         } @else if (!activeShift()) {
-          <div class="flex flex-col items-center justify-center h-48 text-center gap-3 text-slate-600">
-            <span class="icon-[ic--baseline-lock] text-4xl text-amber-500/40"></span>
-            <p class="text-sm">Abre un turno para comenzar a vender.</p>
-            <button
-              (click)="showOpenShiftModal.set(true)"
-              class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-colors">
-              Abrir turno ahora
+          <div class="flex flex-col items-center justify-center h-56 text-center gap-4">
+            <span class="icon-[ic--baseline-lock] text-6xl text-amber-500/30"></span>
+            <p class="text-base text-slate-500">Abre un turno para comenzar a vender.</p>
+            <button (click)="showOpenShiftModal.set(true)"
+              class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold transition-colors">
+              Abrir turno
             </button>
           </div>
         } @else if (filteredCatalog().length === 0) {
-          <div class="flex flex-col items-center justify-center h-32 text-slate-600 gap-2">
-            <span class="icon-[ic--baseline-inventory] text-3xl"></span>
-            <p class="text-sm">Sin productos que coincidan.</p>
+          <div class="flex flex-col items-center justify-center h-40 text-slate-600 gap-3">
+            <span class="icon-[ic--baseline-inventory-2] text-4xl"></span>
+            <p class="text-base">Sin productos que coincidan.</p>
           </div>
         } @else {
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2">
-            @for (product of filteredCatalog(); track product.productId) {
-              <button
-                (click)="addToCart(product)"
-                [disabled]="product.stockQuantity <= 0"
-                class="group relative flex flex-col items-start p-3 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-blue-600/10 hover:border-blue-500/30 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-left">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            @for (product of pagedCatalog(); track product.productId) {
+              <button (click)="addToCart(product)" [disabled]="product.stockQuantity <= 0"
+                class="group relative flex flex-col rounded-2xl bg-white/[0.04] border border-white/[0.07] hover:bg-blue-600/10 hover:border-blue-500/40 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-left overflow-hidden">
 
-                <!-- Stock badge -->
-                @if (product.stockQuantity > 5) {
-                  <span class="absolute top-1.5 right-1.5 text-[0.55rem] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold">
-                    Stock: {{ product.stockQuantity | number:'1.0-2' }}
-                  </span>
-                }
-                @if (product.stockQuantity > 0 && product.stockQuantity <= 5) {
-                  <span class="absolute top-1.5 right-1.5 text-[0.55rem] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold">
-                    {{ product.stockQuantity | number:'1.0-2' }} restantes
-                  </span>
-                }
-                @if (product.stockQuantity <= 0) {
-                  <span class="absolute top-1.5 right-1.5 text-[0.55rem] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 font-semibold">
-                    Agotado
-                  </span>
-                }
+                <!-- Imagen / iniciales -->
+                <div class="w-full aspect-square flex items-center justify-center text-2xl font-black text-white/70 transition-all"
+                  [ngClass]="productColor(product.categoryName)">
+                  {{ productInitials(product.name) }}
+                </div>
 
-                <!-- ITBIS badge -->
+                <!-- Info -->
+                <div class="p-2.5 flex flex-col gap-1">
+                  <p class="text-sm font-bold text-white leading-tight line-clamp-2 group-hover:text-blue-300 transition-colors">{{ product.name }}</p>
+                  <p class="text-base font-black text-blue-400 tabular-nums">{{ product.salePrice | rdCurrency }}</p>
+
+                  <!-- Stock -->
+                  @if (product.stockQuantity <= 0) {
+                    <span class="text-[0.6rem] font-bold text-red-400">Agotado</span>
+                  } @else if (product.stockQuantity <= 5) {
+                    <span class="text-[0.6rem] font-bold text-amber-400">{{ product.stockQuantity | number:'1.0-2' }} restantes</span>
+                  } @else {
+                    <span class="text-[0.6rem] text-slate-600">Stock: {{ product.stockQuantity | number:'1.0-2' }}</span>
+                  }
+                </div>
+
                 @if (product.itbisRate > 0) {
-                  <span class="absolute bottom-1.5 right-1.5 text-[0.5rem] px-1 py-0.5 rounded bg-slate-700/60 text-slate-400">
+                  <span class="absolute top-1.5 right-1.5 text-[0.55rem] font-bold bg-black/40 text-white/60 px-1.5 py-0.5 rounded-full">
                     ITBIS {{ (product.itbisRate * 100).toFixed(0) }}%
                   </span>
                 }
-
-                <p class="text-xs font-semibold text-white leading-tight line-clamp-2 mb-2 group-hover:text-blue-300 transition-colors">{{ product.name }}</p>
-                <p class="text-sm font-black text-blue-400 mt-auto">{{ product.salePrice | rdCurrency }}</p>
-                <p class="text-[0.6rem] text-slate-600">{{ product.categoryName }}</p>
               </button>
             }
           </div>
+
+          <!-- Paginación -->
+          @if (totalPages() > 1) {
+            <div class="flex items-center justify-center gap-4 mt-4 py-2">
+              <button (click)="prevPage()" [disabled]="catalogPage() === 0"
+                class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm font-semibold text-slate-300 hover:bg-white/[0.09] disabled:opacity-30 transition-colors">
+                <span class="icon-[ic--baseline-chevron-left] text-lg"></span> Anterior
+              </button>
+              <span class="text-sm text-slate-500">{{ catalogPage() + 1 }} / {{ totalPages() }}</span>
+              <button (click)="nextPage()" [disabled]="catalogPage() === totalPages() - 1"
+                class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm font-semibold text-slate-300 hover:bg-white/[0.09] disabled:opacity-30 transition-colors">
+                Siguiente <span class="icon-[ic--baseline-chevron-right] text-lg"></span>
+              </button>
+            </div>
+          }
         }
       </div>
     </div>
 
-    <!-- RIGHT â€” Cart -->
-    <div class="flex flex-col w-72 xl:w-80 2xl:w-96 bg-[#080f1e] shrink-0">
+    <!-- RIGHT — Carrito -->
+    <div class="flex flex-col w-80 xl:w-96 bg-[#080f1e] shrink-0">
 
-      <!-- Cart header -->
-      <div class="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] shrink-0">
-        <div class="flex items-center gap-2">
-          <span class="icon-[ic--baseline-shopping-cart] text-blue-400 text-base"></span>
-          <span class="text-sm font-bold text-white">Carrito</span>
+      <!-- Carrito header -->
+      <div class="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06] shrink-0">
+        <div class="flex items-center gap-2.5">
+          <span class="icon-[ic--baseline-shopping-cart] text-blue-400 text-xl"></span>
+          <span class="text-base font-black text-white">Carrito</span>
           @if (cartCount() > 0) {
-            <span class="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[0.6rem] font-black">{{ cartCount() }}</span>
+            <span class="px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-xs font-black">{{ cartCount() }}</span>
           }
         </div>
         @if (cartItems().length > 0) {
-          <button (click)="cancelSale()" title="Cancelar venta [Esc]" class="text-[0.65rem] text-slate-600 hover:text-red-400 transition-colors font-medium">
+          <button (click)="cancelSale()" class="text-xs text-slate-600 hover:text-red-400 transition-colors font-semibold">
             Cancelar [Esc]
           </button>
         }
       </div>
 
-      <!-- Cart items -->
-      <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
+      <!-- Items del carrito -->
+      <div class="flex-1 overflow-y-auto px-3 py-2.5 space-y-2">
         @if (cartItems().length === 0) {
-          <div class="flex flex-col items-center justify-center h-32 gap-2 text-slate-700">
-            <span class="icon-[ic--baseline-shopping-cart] text-3xl"></span>
-            <p class="text-xs">Selecciona productos del catÃ¡logo</p>
+          <div class="flex flex-col items-center justify-center h-40 gap-3 text-slate-700">
+            <span class="icon-[ic--baseline-shopping-cart] text-4xl"></span>
+            <p class="text-sm">Selecciona productos del catálogo</p>
           </div>
         }
         @for (item of cartItems(); track item.productId; let i = $index) {
-          <div class="flex items-start gap-2 p-2 rounded-lg bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.05] group">
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.06] group">
+            <!-- Color dot -->
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-black text-white/80 shrink-0"
+              [ngClass]="productColor(item.name)">
+              {{ productInitials(item.name) }}
+            </div>
             <div class="flex-1 min-w-0">
-              <p class="text-xs font-semibold text-white leading-tight truncate">{{ item.name }}</p>
-              <p class="text-[0.6rem] text-slate-500 mt-0.5">
-                {{ item.salePrice | rdCurrency }}
+              <p class="text-sm font-bold text-white leading-tight truncate">{{ item.name }}</p>
+              <p class="text-xs text-slate-500 tabular-nums">{{ item.salePrice | rdCurrency }}
                 @if (item.itbisRate > 0) { <span class="text-slate-600">+ ITBIS</span> }
               </p>
             </div>
-            <!-- Qty controls -->
-            <div class="flex items-center gap-1 shrink-0">
-              <button (click)="setQuantity(i, item.quantity - 1)" class="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-red-500/20 hover:text-red-400 text-xs transition-colors">âˆ’</button>
-              <span class="w-6 text-center text-xs font-bold text-white tabular-nums">{{ item.quantity }}</span>
-              <button (click)="setQuantity(i, item.quantity + 1)" class="w-5 h-5 rounded flex items-center justify-center bg-white/[0.06] hover:bg-emerald-500/20 hover:text-emerald-400 text-xs transition-colors">+</button>
+            <!-- Controles cantidad -->
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button (click)="setQuantity(i, item.quantity - 1)"
+                class="w-7 h-7 rounded-lg flex items-center justify-center bg-white/[0.06] hover:bg-red-500/20 hover:text-red-400 text-sm font-bold transition-colors">−</button>
+              <span class="w-8 text-center text-sm font-black text-white tabular-nums">{{ item.quantity }}</span>
+              <button (click)="setQuantity(i, item.quantity + 1)"
+                class="w-7 h-7 rounded-lg flex items-center justify-center bg-white/[0.06] hover:bg-emerald-500/20 hover:text-emerald-400 text-sm font-bold transition-colors">+</button>
             </div>
-            <!-- Line total -->
-            <div class="text-right shrink-0">
-              <p class="text-xs font-bold text-white tabular-nums">{{ item.lineTotal | rdCurrency }}</p>
+            <!-- Total de línea -->
+            <div class="text-right shrink-0 min-w-[64px]">
+              <p class="text-sm font-black text-white tabular-nums">{{ item.lineTotal | rdCurrency }}</p>
               @if (item.lineItbis > 0) {
-                <p class="text-[0.55rem] text-slate-600 tabular-nums">ITBIS: {{ item.lineItbis | rdCurrency }}</p>
+                <p class="text-[0.6rem] text-slate-600 tabular-nums">ITBIS: {{ item.lineItbis | rdCurrency }}</p>
               }
             </div>
           </div>
         }
       </div>
 
-      <!-- Cart totals -->
+      <!-- Totales -->
       @if (cartItems().length > 0) {
-        <div class="border-t border-white/[0.06] px-4 py-3 space-y-1 shrink-0 bg-[#060d1a]">
-          <div class="flex justify-between text-xs text-slate-400">
+        <div class="border-t border-white/[0.06] px-5 py-4 space-y-1.5 shrink-0 bg-[#060d1a]">
+          <div class="flex justify-between text-sm text-slate-400">
             <span>Subtotal (sin ITBIS)</span>
             <span class="tabular-nums">{{ cartSubtotal() | rdCurrency }}</span>
           </div>
           @for (row of itbisBreakdown(); track row.label) {
-            <div class="flex justify-between text-xs text-slate-500">
+            <div class="flex justify-between text-sm text-slate-500">
               <span>{{ row.label }}</span>
               <span class="tabular-nums">{{ row.amount | rdCurrency }}</span>
             </div>
           }
           @if (cartItbis() === 0) {
-            <div class="flex justify-between text-xs text-slate-600">
-              <span>ITBIS</span>
-              <span>RD$ 0.00</span>
+            <div class="flex justify-between text-sm text-slate-600">
+              <span>ITBIS</span><span>RD$ 0.00</span>
             </div>
           }
-          <div class="flex justify-between text-sm font-black text-white pt-1 border-t border-white/[0.06]">
+          <div class="flex justify-between text-lg font-black text-white pt-2 border-t border-white/[0.07]">
             <span>TOTAL</span>
             <span class="tabular-nums text-blue-400">{{ cartTotal() | rdCurrency }}</span>
           </div>
         </div>
       }
 
-      <!-- Checkout button -->
-      <div class="p-3 shrink-0">
-        <button
-          (click)="openPaymentModal()"
-          [disabled]="!cartItems().length || !activeShift()"
-          class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-black text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2">
-          <span class="icon-[ic--baseline-point-of-sale] text-base"></span>
-          Cobrar @if (cartItems().length > 0) { {{ cartTotal() | rdCurrency }} }
+      <!-- Botón cobrar -->
+      <div class="p-4 shrink-0">
+        <button (click)="openPaymentModal()" [disabled]="!cartItems().length || !activeShift()"
+          class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-black text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-blue-900/40 flex items-center justify-center gap-2">
+          <span class="icon-[ic--baseline-point-of-sale] text-xl"></span>
+          Cobrar @if (cartItems().length > 0) { · {{ cartTotal() | rdCurrency }} }
         </button>
         @if (!activeShift() && cartItems().length > 0) {
-          <p class="text-center text-[0.65rem] text-amber-500/70 mt-1.5">Debes abrir un turno primero</p>
+          <p class="text-center text-xs text-amber-500/70 mt-2">Abre un turno primero [F4]</p>
         }
       </div>
     </div>
@@ -569,7 +573,7 @@
       <div class="mb-5">
         <label class="block text-xs font-semibold text-slate-400 mb-1.5">
           RNC del comprador
-          <span class="text-slate-600 font-normal ml-1">(opcional â€” emite B01 crÃ©dito fiscal)</span>
+          <span class="text-slate-600 font-normal ml-1">(opcional â€" emite B01 crÃ©dito fiscal)</span>
         </label>
         <input type="text" placeholder="123456789" [value]="buyerRnc()" (input)="setBuyerRnc($any($event.target).value)"
           maxlength="9"
@@ -631,7 +635,7 @@
         </div>
       }
 
-      <!-- â”€â”€â”€ RECEIPT PAPER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+      <!-- â"€â"€â"€ RECEIPT PAPER â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ -->
       <div id="receipt-paper" class="receipt-paper bg-white text-black rounded-xl overflow-hidden shadow-2xl font-mono text-[0.7rem] leading-snug">
 
         <!-- Header DGI obligatorio (Norma 06-18 DGII) -->
@@ -696,7 +700,7 @@
           }
         </div>
 
-        <!-- Totals â€” DGI Norma 06-18 requires explicit ITBIS breakdown -->
+        <!-- Totals â€" DGI Norma 06-18 requires explicit ITBIS breakdown -->
         <div class="px-4 py-2 border-b border-dashed border-gray-300 space-y-0.5">
           <div class="flex justify-between text-gray-600">
             <span>Subtotal (excl. ITBIS)</span>
@@ -755,7 +759,7 @@
           @if (lastSale()!.ncfNumber) {
             <p class="font-bold text-[0.6rem] text-gray-700">NCF: {{ lastSale()!.ncfNumber }}</p>
             <p>Comprobante Fiscal emitido conforme</p>
-            <p>Norma 06-18 DGII â€” RepÃºblica Dominicana</p>
+            <p>Norma 06-18 DGII â€" RepÃºblica Dominicana</p>
           }
           <p class="pt-1">Desarrollado por <strong>Synset Solutions</strong></p>
           <p class="text-[0.5rem]">tucolmadord.app</p>

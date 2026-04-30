@@ -87,7 +87,8 @@ services:
       GatewayOptions__AllowedOrigins__0: http://localhost:4200
       GatewayOptions__AllowedOrigins__1: http://localhost:5173
       GatewayOptions__AllowedOrigins__2: http://localhost:5209
-      GatewayOptions__AllowedOrigins__3: ${PUBLIC_WEB_DOMAIN:-https://tucolmadord.synsetsolutions.com}
+      GatewayOptions__AllowedOrigins__3: https://${PUBLIC_WEB_DOMAIN:-tucolmadord.synsetsolutions.com}
+      GatewayOptions__AllowedOrigins__4: https://${PUBLIC_LANDING_DOMAIN:-landingcolrd.synsetsolutions.com}
     depends_on:
       - auth
       - api

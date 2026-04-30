@@ -90,6 +90,10 @@ export class PosLayout implements OnInit, OnDestroy {
   quickSaleAmount = signal<number | null>(null);
   selectedQuickProduct = signal<ProductDto | null>(null);
 
+  // ── Catalog pagination ────────────────────────────
+  readonly PAGE_SIZE = 16;
+  catalogPage = signal(0);
+
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     if (event.key === 'F2') {
@@ -447,6 +451,26 @@ export class PosLayout implements OnInit, OnDestroy {
   selectCustomer(c: CustomerSummary): void {
     this.selectedCustomer.set(c);
     this.customerSearchQuery.set('');
+    // Auto-geocode when selected for delivery and customer has address but no coords
+    if (this.paymentMethod() === 'delivery' && c.province && c.street && c.sector && !c.latitude) {
+      this.geocodeCustomerAddress(c);
+    }
+  }
+
+  private async geocodeCustomerAddress(c: CustomerSummary): Promise<void> {
+    const query = encodeURIComponent(
+      `${c.street}${c.houseNumber ? ' ' + c.houseNumber : ''}, ${c.sector}, ${c.province}, República Dominicana`
+    );
+    try {
+      const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=do`);
+      const data = await res.json();
+      if (data?.length > 0) {
+        this.selectedCustomer.update(prev => prev
+          ? { ...prev, latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) }
+          : prev
+        );
+      }
+    } catch { /* silent — delivery still works without GPS */ }
   }
 
   submitAddCustomer(): void {
@@ -646,8 +670,27 @@ export class PosLayout implements OnInit, OnDestroy {
   logout(): void { this.auth.logout(); }
   toPortal(): void { this.router.navigate(['/portal/dashboard']); }
 
-  setSearch(v: string): void { this.catalogSearch.set(v); }
-  selectCategory(id: string | null): void { this.selectedCategory.set(id); }
+  totalPages    = computed(() => Math.max(1, Math.ceil(this.filteredCatalog().length / this.PAGE_SIZE)));
+  pagedCatalog  = computed(() => {
+    const p = this.catalogPage();
+    return this.filteredCatalog().slice(p * this.PAGE_SIZE, (p + 1) * this.PAGE_SIZE);
+  });
+
+  setSearch(v: string): void { this.catalogSearch.set(v); this.catalogPage.set(0); }
+  selectCategory(id: string | null): void { this.selectedCategory.set(id); this.catalogPage.set(0); }
+  prevPage(): void { this.catalogPage.update(p => Math.max(0, p - 1)); }
+  nextPage(): void { this.catalogPage.update(p => Math.min(this.totalPages() - 1, p + 1)); }
+
+  productInitials(name: string): string {
+    return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  }
+
+  productColor(categoryName: string): string {
+    const colors = ['bg-blue-700','bg-violet-700','bg-emerald-700','bg-amber-700','bg-rose-700','bg-cyan-700','bg-indigo-700','bg-teal-700'];
+    let hash = 0;
+    for (let i = 0; i < categoryName.length; i++) hash = categoryName.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  }
   setPaymentMethod(m: 'cash' | 'card' | 'transfer' | 'credit' | 'delivery'): void { this.paymentMethod.set(m); }
   setCashTendered(v: number): void { this.cashTendered.set(v); }
   setBuyerRnc(v: string): void { this.buyerRnc.set(v); }
