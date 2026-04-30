@@ -142,10 +142,12 @@ echo "📦 Setting up fresh bind-mount directories..."
 mkdir -p /var/lib/tucolmadord/postgres_data
 mkdir -p /var/lib/tucolmadord/mongo_data
 mkdir -p letsencrypt
+touch letsencrypt/acme.json
 chmod 755 /var/lib/tucolmadord
 chmod 755 /var/lib/tucolmadord/postgres_data
 chmod 755 /var/lib/tucolmadord/mongo_data
 chmod 700 letsencrypt
+chmod 600 letsencrypt/acme.json
 echo "  ✅ Bind-mount directories ready"
 
 # 7. Run docker compose with rebuild
