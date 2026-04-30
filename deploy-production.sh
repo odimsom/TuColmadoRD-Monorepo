@@ -5,11 +5,23 @@ set -e
 
 # Check if running as root (required for volume management)
 if [ "$EUID" -ne 0 ]; then
-  echo "❌ This script must be run as root (needed for /var/lib/tucolmadord)"
+  echo "❌ Error: This script must be run as root"
   echo ""
-  echo "Options:"
-  echo "1. Run with sudo:     sudo bash deploy-production.sh"
-  echo "2. Or from root user: su - && bash deploy-production.sh"
+  echo "This script requires root access to:"
+  echo "  - Create /var/lib/tucolmadord directories"
+  echo "  - Manage Docker volumes and containers"
+  echo ""
+  echo "Setup Options:"
+  echo ""
+  echo "Option 1 (RECOMMENDED): Configure sudo without password on VPS"
+  echo "  Run this on the VPS as root:"
+  echo "    echo 'github-actions ALL=(ALL) NOPASSWD: ALL' | sudo tee /etc/sudoers.d/github-actions"
+  echo "    sudo chmod 0440 /etc/sudoers.d/github-actions"
+  echo ""
+  echo "Option 2: Use GitHub Actions secret for sudo password"
+  echo "  1. Create a secret in GitHub: Settings > Secrets > VPS_SUDO_PASSWORD"
+  echo "  2. Workflow will use: echo \$SUDO_PASSWORD | sudo -S bash deploy-production.sh"
+  echo ""
   exit 1
 fi
 
