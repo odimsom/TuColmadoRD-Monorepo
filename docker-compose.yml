@@ -152,6 +152,7 @@ services:
     restart: unless-stopped
     environment:
       - DOCKER_API_VERSION=1.41
+      - TRAEFIK_PROVIDERS_DOCKER_VERSION=1.41
     command:
       - "--log.level=DEBUG"
       - "--api.insecure=true"
