@@ -1,9 +1,8 @@
-import { Component, inject, signal, computed, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { PaymentService } from '../../../core/payments/payment.service';
 import { RegisterRequest } from '../../../core/models/auth.models';
 
 type RegisterStep = 'account' | 'plan' | 'checkout';
@@ -24,12 +23,9 @@ interface Plan {
   templateUrl: './register.html',
   styleUrl: './register.scss'
 })
-export class Register implements OnDestroy {
-  @ViewChild('cardMount') private cardMountRef?: ElementRef<HTMLDivElement>;
-
+export class Register {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
-  private paymentService = inject(PaymentService);
   private router = inject(Router);
 
   step = signal<RegisterStep>('account');
@@ -63,11 +59,15 @@ export class Register implements OnDestroy {
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]],
   });
 
+  checkoutForm = this.fb.nonNullable.group({
+    promoCode: ['', [Validators.required]]
+  });
+
   stepLabel = computed(() => {
     switch (this.step()) {
       case 'account':  return '1 de 3 — Crear cuenta';
       case 'plan':     return '2 de 3 — Elegir plan';
-      case 'checkout': return '3 de 3 — Pago';
+      case 'checkout': return '3 de 3 — Activación';
     }
   });
 
@@ -87,14 +87,6 @@ export class Register implements OnDestroy {
   confirmPlan(): void {
     if (!this.selectedPlanId()) return;
     this.step.set('checkout');
-    // Wait one tick for Angular to render the checkout template before mounting
-    setTimeout(() => {
-      if (this.cardMountRef?.nativeElement) {
-        this.paymentService.mount(this.cardMountRef.nativeElement).catch(() => {
-          this.error.set('No se pudo cargar el formulario de pago. Recarga la página.');
-        });
-      }
-    });
   }
 
   toggleBilling(): void {
@@ -107,35 +99,36 @@ export class Register implements OnDestroy {
 
   back(): void {
     if (this.step() === 'plan')     { this.step.set('account'); return; }
-    if (this.step() === 'checkout') { this.paymentService.destroy(); this.step.set('plan'); return; }
+    if (this.step() === 'checkout') { this.step.set('plan'); return; }
   }
 
   async submitPayment(): Promise<void> {
+    if (this.checkoutForm.invalid) {
+      this.checkoutForm.markAllAsTouched();
+      return;
+    }
+
     if (this.registerForm.invalid || !this.selectedPlanId()) return;
+
+    const promo = this.checkoutForm.controls.promoCode.value.trim().toUpperCase();
+    if (promo !== 'BETA-FREE') {
+       this.error.set('Código promocional inválido.');
+       return;
+    }
 
     this.loading.set(true);
     this.error.set(null);
 
-    let paymentToken: string;
-    try {
-      const result = await this.paymentService.tokenize();
-      paymentToken = result.token;
-    } catch (err: any) {
-      this.loading.set(false);
-      this.error.set(err.message || 'Error al procesar el pago.');
-      return;
-    }
-
-    const payload: RegisterRequest = {
+    const payload: RegisterRequest & { promoCode?: string } = {
       tenantName: this.registerForm.controls.businessName.value.trim(),
       email: this.registerForm.controls.email.value.trim().toLowerCase(),
       password: this.registerForm.controls.password.value,
+      promoCode: promo
     };
 
     this.authService.register(payload).subscribe({
       next: () => {
         this.loading.set(false);
-        // TODO: POST /api/v1/subscriptions { planId: selectedPlanId(), billingCycle: billingCycle(), paymentToken }
         this.router.navigate(['/portal/dashboard']);
       },
       error: (err) => {
@@ -144,8 +137,5 @@ export class Register implements OnDestroy {
       },
     });
   }
-
-  ngOnDestroy(): void {
-    this.paymentService.destroy();
-  }
+}
 }
