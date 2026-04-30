@@ -43,6 +43,31 @@ public class OutboxWorker : BackgroundService
                 using var scope = _serviceProvider.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<TuColmadoDbContext>();
 
+                // Check if the OutboxMessages table exists before attempting to query it
+                try
+                {
+                    var tableExists = await dbContext.Database.ExecuteScalarAsync(
+                        @"SELECT EXISTS(
+                            SELECT 1 FROM information_schema.tables 
+                            WHERE table_schema = 'System' AND table_name = 'OutboxMessages'
+                        )", 
+                        stoppingToken);
+                    
+                    if (tableExists == null || (bool)tableExists == false)
+                    {
+                        // Table doesn't exist yet - wait for migrations to complete
+                        _logger.LogWarning("OutboxMessages table not found. Database migrations may still be running...");
+                        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                        continue;
+                    }
+                }
+                catch (Exception checkEx)
+                {
+                    _logger.LogWarning(checkEx, "Could not check if OutboxMessages table exists");
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    continue;
+                }
+
                 var pendingMessageIds = await dbContext.OutboxMessages
                     .Where(m => m.ProcessedAt == null)
                     .OrderBy(m => m.CreatedAt)

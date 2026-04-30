@@ -1,8 +1,10 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TuColmadoRD.Infrastructure.CrossCutting;
 using TuColmadoRD.Infrastructure.IOC.ServiceRegistrations;
+using TuColmadoRD.Infrastructure.Persistence.Contexts;
 using TuColmadoRD.Presentation.API.Endpoints.Customers;
 using TuColmadoRD.Presentation.API.Endpoints.Expenses;
 using TuColmadoRD.Presentation.API.Endpoints.Inventory;
@@ -72,6 +74,21 @@ public static class CoreApiHostBuilder
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CoreApiHostBuilder).Assembly));
 
         var app = builder.Build();
+
+        // Apply pending migrations automatically on startup
+        try
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<TuColmadoDbContext>();
+                dbContext.Database.Migrate();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log but don't crash - database might not be available during startup
+            Console.WriteLine($"Warning: Database migration failed during startup: {ex.Message}");
+        }
 
         app.UseSwagger();
         if (isLocal || app.Environment.IsDevelopment())
