@@ -109,7 +109,7 @@ const faqs = [
               <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
               Programa Piloto - Usuarios Pioneros
             </div>
-            <h1 class="text-4xl md:text-6xl lg:text-[6.5rem] font-bebas text-white leading-[0.9] mb-8 md:mb-10 tracking-tight uppercase drop-shadow-2xl">
+            <h1 class="max-w-2xl font-bebas text-white leading-[0.9] mb-8 md:mb-10 tracking-tight uppercase drop-shadow-2xl" style="font-size:clamp(2.25rem,6vw,4.5rem);">
               Tu <span class="text-blue-500 drop-shadow-[0_0_30px_rgba(37,99,235,0.5)]">Colmado</span><br/>Sin Costo. <br/>Un Año Completo.
             </h1>
             <p class="text-xl md:text-2xl text-slate-400 max-w-2xl font-medium leading-relaxed mb-6 opacity-90">
