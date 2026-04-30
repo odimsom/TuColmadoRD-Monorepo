@@ -56,7 +56,7 @@ git submodule update --recursive --init 2>/dev/null || {
   }
 }
 
-# 3. Verify .env exists (rsync preserves it from previous deployments)
+# 3. Verify .env exists and load variables (rsync preserves it from previous deployments)
 if [ ! -f .env ]; then
     echo "❌ CRITICAL ERROR: .env file not found in /app/tucolmadord"
     echo ""
@@ -75,6 +75,10 @@ if [ ! -f .env ]; then
     exit 1
 else
     echo "✅ .env file found"
+    # Load environment variables from .env so they're available to this script
+    set -a  # Export all variable assignments
+    source .env
+    set +a  # Stop exporting
 fi
 
 # 4. Aggressive cleanup of existing containers and volumes
@@ -120,23 +124,35 @@ docker compose up --build -d
 
 # 8. Wait for databases to be ready
 echo "⏳ Waiting for databases to be ready..."
+POSTGRES_READY=false
 for i in {1..30}; do
   if docker compose exec -T postgres pg_isready -U ${POSTGRES_USER} > /dev/null 2>&1; then
     echo "✅ PostgreSQL is ready"
+    POSTGRES_READY=true
     break
   fi
   echo "  Waiting for PostgreSQL... ($i/30)"
   sleep 2
 done
 
+if [ "$POSTGRES_READY" = false ]; then
+  echo "⚠️  Warning: PostgreSQL may not be ready, but continuing..."
+fi
+
+MONGO_READY=false
 for i in {1..30}; do
   if docker compose exec -T mongo mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
     echo "✅ MongoDB is ready"
+    MONGO_READY=true
     break
   fi
   echo "  Waiting for MongoDB... ($i/30)"
   sleep 2
 done
+
+if [ "$MONGO_READY" = false ]; then
+  echo "⚠️  Warning: MongoDB may not be ready, but continuing..."
+fi
 
 # 9. Wait for application services
 echo "⏳ Waiting for application services to stabilize..."
