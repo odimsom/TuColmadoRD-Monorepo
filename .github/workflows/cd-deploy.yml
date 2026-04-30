@@ -25,11 +25,12 @@ jobs:
 
       - name: Sync code to /app/tucolmadord
         run: |
-          rsync -a --delete \
+          sudo rsync -a --delete \
             --exclude='.env' \
             --exclude='letsencrypt/' \
             --exclude='*.log' \
             --exclude='.git/' \
+            --chown=root:root \
             ./ /app/tucolmadord/
 
       - name: Deploy with Docker Compose
