@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Npgsql;
 using TuColmadoRD.Core.Application.Handlers.Sync;
 using TuColmadoRD.Core.Application.Interfaces.Infrastructure.CrossCutting.Network;
 using TuColmadoRD.Infrastructure.CrossCutting.Configuration;
@@ -43,37 +44,29 @@ public class OutboxWorker : BackgroundService
                 using var scope = _serviceProvider.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<TuColmadoDbContext>();
 
-                // Check if the OutboxMessages table exists before attempting to query it
+                List<long> pendingMessageIds;
+                
                 try
                 {
-                    var tableExists = await dbContext.Database.ExecuteScalarAsync(
-                        @"SELECT EXISTS(
-                            SELECT 1 FROM information_schema.tables 
-                            WHERE table_schema = 'System' AND table_name = 'OutboxMessages'
-                        )", 
-                        stoppingToken);
-                    
-                    if (tableExists == null || (bool)tableExists == false)
-                    {
-                        // Table doesn't exist yet - wait for migrations to complete
-                        _logger.LogWarning("OutboxMessages table not found. Database migrations may still be running...");
-                        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-                        continue;
-                    }
+                    pendingMessageIds = await dbContext.OutboxMessages
+                        .Where(m => m.ProcessedAt == null)
+                        .OrderBy(m => m.CreatedAt)
+                        .Take(options.BatchSize)
+                        .Select(m => m.Id)
+                        .ToListAsync(stoppingToken);
                 }
-                catch (Exception checkEx)
+                catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P01") // Table doesn't exist
                 {
-                    _logger.LogWarning(checkEx, "Could not check if OutboxMessages table exists");
+                    _logger.LogWarning("OutboxMessages table not found. Database migrations may still be running...");
                     await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
                     continue;
                 }
 
-                var pendingMessageIds = await dbContext.OutboxMessages
-                    .Where(m => m.ProcessedAt == null)
-                    .OrderBy(m => m.CreatedAt)
-                    .Take(options.BatchSize)
-                    .Select(m => m.Id)
-                    .ToListAsync(stoppingToken);
+                if (!pendingMessageIds.Any())
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(options.PollingIntervalSeconds), stoppingToken);
+                    continue;
+                }
 
                 foreach (var messageId in pendingMessageIds)
                 {
