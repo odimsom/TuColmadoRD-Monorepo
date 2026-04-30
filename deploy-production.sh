@@ -22,9 +22,12 @@ if [ ! -f .env ]; then
 fi
 
 # 4. Clean up old containers/images to prevent conflicts
-echo "🧹 Cleaning up old Docker artifacts..."
+echo "🧹 Cleaning up old Docker artifacts (keeping data volumes)..."
 docker compose rm -f || true
-docker system prune -f --volumes || true
+# WARNING: NOT using --volumes to protect database data!
+# Use: docker system prune -f (without --volumes)
+# If you need to reset data: manually remove /var/lib/tucolmadord/
+docker system prune -f || true
 
 # 5. Run docker compose with rebuild
 echo "🐳 Rebuilding and starting Docker services..."

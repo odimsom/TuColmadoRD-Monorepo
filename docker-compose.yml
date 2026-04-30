@@ -198,4 +198,14 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/tucolmadord/postgres_data
   mongo_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/tucolmadord/mongo_data
