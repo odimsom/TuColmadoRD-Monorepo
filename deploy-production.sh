@@ -23,7 +23,8 @@ fi
 
 # 4. Clean up old containers and orphaned services
 echo "🧹 Cleaning up old Docker artifacts..."
-docker compose down --remove-orphans 2>/dev/null || true
+# Using -v to remove volumes associated with containers, --remove-orphans to clean orphaned services
+docker compose down -v --remove-orphans 2>/dev/null || true
 
 # 5. Handle volume migration from Named to Bind-mounts
 echo "📦 Migrating volumes to bind-mount configuration..."
