@@ -1,79 +1,59 @@
-# TuColmadoRD Monorepo
+<div align="center">
+  <img src="frontend/web-admin/public/assets/images/hero-colmado.png" alt="TuColmadoRD Logo" width="400"/>
 
-Monorepo raiz de **TuColmadoRD** con backend, auth y frontends unificados en un solo git.
+  <h1>TuColmadoRD</h1>
+  <p><b>El ERP y Punto de Venta SaaS Definitivo para Colmados en República Dominicana</b></p>
 
-## Estructura
+  <p>
+    <a href="https://tucolmadord.com">Sitio Web</a> •
+    <a href="https://tucolmadord.com">Demo</a> •
+    <a href="https://tucolmadord.com/contacto">Contacto</a>
+  </p>
+</div>
 
-- `backend/`: solución .NET principal, API y gateway.
-- `auth/`: servicio Node.js de autenticación y licencias.
-- `frontend/landing-page/`: sitio público.
-- `frontend/web-admin/`: panel principal y app desktop/web.
+---
 
-## Dominios
+## 🏪 Transformando la Cultura del Colmado
 
-- Landing: `landingcolrd.synsetsolutions.com`
-- Web principal: `tucolmadord.synsetsolutions.com`
-- Gateway/API pública: `api.tucolmadord.synsetsolutions.com`
+**TuColmadoRD** es una plataforma integral diseñada específicamente para las necesidades del comercio minorista y los colmados en la República Dominicana. Combinamos la rapidez de un Punto de Venta (POS) optimizado para pantallas táctiles con la potencia de un sistema en la nube (SaaS), permitiendo a los propietarios administrar su negocio desde cualquier lugar.
 
-## Puertos raros del compose
+Dile adiós a las libretas de "fiado", al descuadre de caja y a las complicaciones fiscales. TuColmadoRD automatiza, asegura y simplifica toda la operación de tu negocio.
 
-- Landing: `5199`
-- Web: `5209`
-- Gateway: `5219`
-- API core: `5229`
-- Auth: `5239`
-- PostgreSQL: `54329`
-- MongoDB: `27019`
+### 🌟 Beneficios Clave
 
-## Arranque
+- **Ventas Súper Rápidas:** Interfaz de Punto de Venta (POS) intuitiva, compatible con lectores de códigos de barra e impresión de recibos al instante.
+- **Facturación Electrónica (e-CF):** Integración nativa con la DGII para emisión de Comprobantes Fiscales Electrónicos. ¡Cumple con la ley sin esfuerzo!
+- **Control de "Fiados":** Módulo dedicado para gestionar créditos de clientes, límites de deuda y abonos con historial transparente.
+- **Gestión de Inventario Inteligente:** Alertas de bajo stock, control de productos con múltiples unidades de medida y reportes de rentabilidad.
+- **Control de Delivery Seguro:** Verificación por código y proximidad GPS para asegurar que las entregas lleguen a su destino correctamente.
+- **Manejo de Empleados y Turnos:** Control de acceso por roles (Cajero, Delivery, Administrador) y cuadre de caja (apertura y cierre de turnos).
+- **Acceso 100% en la Nube:** Monitorea las ventas de tus sucursales en tiempo real desde tu celular o computadora a través del panel de administración web.
+- **Soporte Offline (Escritorio):** Aplicación de escritorio instalable `.exe` para garantizar que la operación en caja nunca se detenga, con sincronización automática a la nube.
 
-1. Copia `.env.example` a `.env` y ajusta secretos.
-2. Ejecuta:
+---
 
-```bash
-docker compose up --build -d
-```
+## 🛠 Arquitectura Tecnológica de Vanguardia
 
-## Notas
+Diseñado para escalar y ofrecer alta disponibilidad, TuColmadoRD utiliza una arquitectura robusta:
 
-- El frontend web-admin apunta al gateway público en `api.tucolmadord.synsetsolutions.com`.
-- El auth service queda detrás del compose y del gateway.
+- **Frontend & POS:** Angular 19, TailwindCSS, DaisyUI (Progresive Web App & Escritorio).
+- **Backend (Core API):** .NET 10 (C#), Arquitectura Limpia, CQRS, MediatR.
+- **Microservicio Auth:** Node.js (Express), MongoDB para manejo ágil de perfiles de usuario.
+- **Microservicio Fiscal (e-CF):** Python (Flask) para generación y firmado de XMLs normativos de la DGII.
+- **Bases de Datos:** PostgreSQL (Datos relacionales robustos) y MongoDB (Logs y Auth).
+- **Infraestructura & CI/CD:** Docker Compose, Traefik (Proxy Inverso), y despliegues automatizados con GitHub Actions.
 
-## Flujo de ramas
+---
 
-- `main`: producción estable.
-- `qa`: rama de validación funcional y pruebas.
-- `develop`: integración continua de desarrollo.
-- `feature/<area>-<descripcion>`: nuevas funcionalidades.
-- `fix/<area>-<descripcion>`: correcciones puntuales.
-- `hotfix/<area>-<descripcion>`: correcciones urgentes sobre producción.
+## 💼 ¿Eres Dueño de un Colmado?
 
-### Flujo recomendado
+No dejes que la administración manual limite el crecimiento de tu negocio. Moderniza tu colmado hoy con **TuColmadoRD**.
 
-1. Crear rama desde `develop`:
+👉 **[Visita tucolmadord.com para agendar una demostración](https://tucolmadord.com)** 👈
 
-```bash
-git checkout develop
-git pull
-git checkout -b feature/web-admin-registro-real
-```
+---
 
-2. Abrir PR hacia `develop`.
-3. Promover `develop` a `qa` mediante PR para validación.
-4. Promover `qa` a `main` cuando QA apruebe.
-
-## Release de prueba (Desktop)
-
-Para publicar la primera versión de prueba y habilitar la descarga desde web-admin:
-
-1. Crear y subir un tag con formato `vX.Y.Z-test.N` (ejemplo: `v0.0.1-test.1`).
-2. GitHub Actions ejecutará el workflow `Build & Release Test` en `.github/workflows/release-test.yml`.
-3. El workflow genera el instalador `.exe` y lo adjunta como prerelease del monorepo.
-4. Web-admin lee automáticamente la última prerelease `-test` y muestra el botón de descarga.
-
-Comandos sugeridos:
-
-```bash
-git tag v0.0.1-test.1
-git push origin v0.0.1-test.1
-```
+<div align="center">
+  <i>Desarrollado con ❤️ en República Dominicana por <b>Synset Solutions S.R.L.</b></i><br>
+  © 2026 Todos los derechos reservados.
+</div>
