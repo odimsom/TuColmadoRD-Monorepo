@@ -129,12 +129,10 @@ export class Register {
 
     this.authService.register(payload).subscribe({
       next: () => {
-        console.log('✅ Registration successful');
         this.success.set(true);
         // Keep loading visible for 2 seconds so user sees success state
         setTimeout(() => {
           this.loading.set(false);
-          console.log('🔄 Navigating to dashboard');
           this.router.navigate(['/portal/dashboard']).catch(err => {
             console.error('❌ Navigation failed:', err);
             this.error.set('Error al redirigir. Intenta recargar la página.');
