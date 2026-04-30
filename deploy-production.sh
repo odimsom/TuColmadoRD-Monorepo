@@ -7,9 +7,12 @@ echo "🚀 Starting TuColmadoRD production deployment..."
 
 cd /app/tucolmadord
 
-# 1. Pull latest code
+# 1. Prepare git (stash any local changes and pull latest code)
+echo "📦 Preparing git repository..."
+git stash || true  # Stash local changes if they exist
 echo "📦 Pulling latest code from main branch..."
-git pull origin main --rebase
+git fetch origin
+git reset --hard origin/main  # Hard reset to ensure we have the latest code
 
 # 2. Update submodules
 echo "📦 Updating submodules..."
