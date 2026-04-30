@@ -34,12 +34,9 @@ jobs:
 
       - name: Deploy with Docker Compose
         working-directory: /app/tucolmadord
-        env:
-          SUDO_PASSWORD: ${{ secrets.VPS_SUDO_PASSWORD }}
         run: |
           chmod +x deploy-production.sh
-          # Use sudo -S to read password from stdin
-          echo "$SUDO_PASSWORD" | sudo -S bash deploy-production.sh
+          sudo bash deploy-production.sh
 
       - name: Prune old Docker images
         run: docker image prune -f
