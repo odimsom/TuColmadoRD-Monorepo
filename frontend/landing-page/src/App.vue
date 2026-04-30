@@ -70,10 +70,7 @@ const faqs = [
       <div class="container mx-auto flex justify-between items-center">
         <div class="flex items-center gap-3 group cursor-pointer" @click="scrollToTop">
           <div class="relative">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-9 h-9 transition-transform duration-500 group-hover:rotate-12" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="12" height="12" rx="2" stroke="#2563eb" />
-              <rect x="9" y="9" width="12" height="12" rx="2" stroke="#dc2626" />
-            </svg>
+            <img src="/assets/logo.svg" alt="TuColmadoRD logo" class="w-9 h-9 transition-transform duration-500 group-hover:rotate-12" />
             <div class="absolute inset-0 bg-blue-500/20 blur-lg rounded-full scale-0 group-hover:scale-150 transition-transform duration-500"></div>
           </div>
           <div class="flex flex-col justify-center leading-none">
