@@ -10,8 +10,8 @@ internal static class UpdateService
     private const string LocalLatestInstallerApi = "http://localhost:5100/gateway/updates/latest-installer";
     private static readonly string[] ReleasesUrls =
     {
-        "https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases",
-        "https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases"
+        "https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases",
+        "https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases"
     };
 
     public static async Task<UpdateCheckResult> CheckForUpdateAsync()

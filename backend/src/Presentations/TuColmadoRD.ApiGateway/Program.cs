@@ -124,8 +124,8 @@ public static class GatewayHostBuilder
             var selectedChannel = string.Equals(channel, "production", StringComparison.OrdinalIgnoreCase) ? "production" : "test";
             var releasesUrls = new[]
             {
-                "https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases",
-                "https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases"
+                "https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases",
+                "https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases"
             };
 
             try
