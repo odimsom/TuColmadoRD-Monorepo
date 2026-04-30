@@ -14,9 +14,12 @@ echo "📦 Pulling latest code from main branch..."
 git fetch origin
 git reset --hard origin/main  # Hard reset to ensure we have the latest code
 
-# 2. Update submodules
+# 2. Update submodules (non-critical - continue if fails)
 echo "📦 Updating submodules..."
-git submodule update --recursive --init
+git submodule update --recursive --init 2>/dev/null || {
+  echo "⚠️  Warning: Submodule update encountered issues (non-critical, continuing...)"
+  # Submodule failures are non-blocking since services use Docker images
+}
 
 # 3. Ensure .env exists and has required variables
 if [ ! -f .env ]; then
