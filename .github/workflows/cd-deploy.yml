@@ -34,7 +34,9 @@ jobs:
 
       - name: Deploy with Docker Compose
         working-directory: /app/tucolmadord
-        run: docker compose up --build -d
+        run: |
+          docker compose down
+          docker compose up --build -d
 
       - name: Prune old Docker images
         run: docker image prune -f

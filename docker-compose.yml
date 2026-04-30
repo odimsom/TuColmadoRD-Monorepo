@@ -3,13 +3,13 @@ services:
     image: postgres:15
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-1234}
-      POSTGRES_DB: ${POSTGRES_DB:-TuColmadoDb}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "${POSTGRES_PORT:-54329}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - tucolmadord-network
 
@@ -17,12 +17,12 @@ services:
     image: mongo:7
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-root}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-1234}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongo_data:/data/db
     ports:
-      - "${MONGO_PORT:-27019}:27017"
+      - "${MONGO_PORT:-27017}:27017"
     networks:
       - tucolmadord-network
 
@@ -34,14 +34,14 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-root}:${MONGO_INITDB_ROOT_PASSWORD:-1234}@mongo:27017/tu_colmado_auth?authSource=admin
-      JWT_SECRET: ${JWT_SECRET:-dominican-street-premium-secret-key-2026}
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongo:27017/tu_colmado_auth?authSource=admin
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       NET_API_URL: http://api:8080
     depends_on:
       - mongo
     ports:
-      - "${AUTH_PORT:-5239}:3000"
+      - "${AUTH_PORT:-3000}:3000"
     networks:
       - tucolmadord-network
 
@@ -53,8 +53,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=postgres;Database=${POSTGRES_DB:-TuColmadoDb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1234}
-      ConnectionStrings__PostgresSQLConnectionString: Host=postgres;Database=${POSTGRES_DB:-TuColmadoDb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-1234}
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__PostgresSQLConnectionString: Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       EcfGenerator__BaseUrl: http://ecf-generator:5000
       AuthApi__BaseUrl: http://auth:3000
       Outbox__CloudSyncBaseUrl: http://auth:3000
@@ -62,7 +62,7 @@ services:
       - postgres
       - ecf-generator
     ports:
-      - "${CORE_PORT:-5229}:8080"
+      - "${CORE_PORT:-8080}:8080"
     networks:
       - tucolmadord-network
 
@@ -84,20 +84,21 @@ services:
     environment:
       GatewayOptions__AuthApiUrl: http://auth:3000
       GatewayOptions__CoreApiUrl: http://api:8080
-      GatewayOptions__JwtSecret: ${JWT_SECRET:-dominican-street-premium-secret-key-2026}
+      GatewayOptions__JwtSecret: ${JWT_SECRET}
       GatewayOptions__AllowedOrigins__0: http://localhost:4200
       GatewayOptions__AllowedOrigins__1: http://localhost:5173
       GatewayOptions__AllowedOrigins__2: http://localhost:5209
-      GatewayOptions__AllowedOrigins__3: https://${PUBLIC_WEB_DOMAIN:-tucolmadord.synsetsolutions.com}
-      GatewayOptions__AllowedOrigins__4: https://${PUBLIC_LANDING_DOMAIN:-landingcolrd.synsetsolutions.com}
+      GatewayOptions__AllowedOrigins__3: https://${PUBLIC_WEB_DOMAIN}
+      GatewayOptions__AllowedOrigins__4: https://${PUBLIC_LANDING_DOMAIN}
+      GatewayOptions__AllowedOrigins__5: https://www.${PUBLIC_LANDING_DOMAIN}
     depends_on:
       - auth
       - api
     ports:
-      - "${API_PORT:-5219}:8080"
+      - "${API_PORT:-8081}:8080"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.tucolmadord-api.rule=Host(`${PUBLIC_API_DOMAIN:-api.tucolmadord.synsetsolutions.com}`)
+      - traefik.http.routers.tucolmadord-api.rule=Host(`${PUBLIC_API_DOMAIN}`)
       - traefik.http.routers.tucolmadord-api.entrypoints=websecure
       - traefik.http.routers.tucolmadord-api.tls=true
       - traefik.http.services.tucolmadord-api.loadbalancer.server.port=8080
@@ -109,13 +110,13 @@ services:
       context: ./frontend/landing-page
       dockerfile: Dockerfile
       args:
-        VITE_WEB_ADMIN_URL: ${PUBLIC_WEB_URL:-https://tucolmadord.synsetsolutions.com}
+        VITE_WEB_ADMIN_URL: ${PUBLIC_WEB_URL}
     restart: unless-stopped
     ports:
-      - "${LANDING_PORT:-5199}:80"
+      - "${LANDING_PORT:-8082}:80"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.tucolmadord-landing.rule=Host(`${PUBLIC_LANDING_DOMAIN:-landingcolrd.synsetsolutions.com}`)
+      - traefik.http.routers.tucolmadord-landing.rule=Host(`${PUBLIC_LANDING_DOMAIN}`) || Host(`www.${PUBLIC_LANDING_DOMAIN}`)
       - traefik.http.routers.tucolmadord-landing.entrypoints=websecure
       - traefik.http.routers.tucolmadord-landing.tls=true
       - traefik.http.services.tucolmadord-landing.loadbalancer.server.port=80
@@ -128,10 +129,10 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "${WEB_PORT:-5209}:80"
+      - "${WEB_PORT:-8083}:80"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.tucolmadord-web.rule=Host(`${PUBLIC_WEB_DOMAIN:-tucolmadord.synsetsolutions.com}`)
+      - traefik.http.routers.tucolmadord-web.rule=Host(`${PUBLIC_WEB_DOMAIN}`)
       - traefik.http.routers.tucolmadord-web.entrypoints=websecure
       - traefik.http.routers.tucolmadord-web.tls=true
       - traefik.http.services.tucolmadord-web.loadbalancer.server.port=80
