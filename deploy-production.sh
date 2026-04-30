@@ -123,12 +123,14 @@ systemctl stop traefik 2>/dev/null || true
 echo "  Checking for Docker containers using ports 80/443..."
 CONTAINERS_TO_STOP=$(docker ps --format "{{.ID}} {{.Ports}}" | grep -E ":80->|:443->" | cut -d' ' -f1)
 if [ ! -z "$CONTAINERS_TO_STOP" ]; then
-  echo "  Stopping conflicting containers: $CONTAINERS_TO_STOP"
-  docker stop $CONTAINERS_TO_STOP || true
+  echo "  Force removing conflicting containers: $CONTAINERS_TO_STOP"
+  docker rm -f $CONTAINERS_TO_STOP || true
 fi
 
 # Nuclear option: Kill anything still listening on these ports
 echo "  Nuclear option: Killing any remaining processes on 80/443..."
+# Show what is using the ports for debugging
+lsof -i :80 -i :443 || true
 fuser -k 80/tcp 2>/dev/null || true
 fuser -k 443/tcp 2>/dev/null || true
 
