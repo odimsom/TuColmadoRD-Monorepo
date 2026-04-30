@@ -1,0 +1,42 @@
+name: CD - Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync code to /app/tucolmadord
+        run: |
+          rsync -a --delete \
+            --exclude='.env' \
+            --exclude='letsencrypt/' \
+            --exclude='*.log' \
+            --exclude='.git/' \
+            ./ /app/tucolmadord/
+
+      - name: Deploy with Docker Compose
+        working-directory: /app/tucolmadord
+        run: docker compose up --build -d
+
+      - name: Prune old Docker images
+        run: docker image prune -f
+
+      - name: Deployment summary
+        run: |
+          echo "### Deployed to Production" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- By: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- URL: https://${{ vars.PUBLIC_WEB_DOMAIN }}" >> $GITHUB_STEP_SUMMARY

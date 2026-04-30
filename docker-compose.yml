@@ -34,7 +34,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      MONGODB_URI: mongodb://root:1234@mongo:27017/tu_colmado_auth?authSource=admin
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-root}:${MONGO_INITDB_ROOT_PASSWORD:-1234}@mongo:27017/tu_colmado_auth?authSource=admin
       JWT_SECRET: ${JWT_SECRET:-dominican-street-premium-secret-key-2026}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
     depends_on:
@@ -87,7 +87,8 @@ services:
       GatewayOptions__AllowedOrigins__0: http://localhost:4200
       GatewayOptions__AllowedOrigins__1: http://localhost:5173
       GatewayOptions__AllowedOrigins__2: http://localhost:5209
-      GatewayOptions__AllowedOrigins__3: ${PUBLIC_WEB_DOMAIN:-https://tucolmadord.synsetsolutions.com}
+      GatewayOptions__AllowedOrigins__3: https://${PUBLIC_WEB_DOMAIN:-tucolmadord.synsetsolutions.com}
+      GatewayOptions__AllowedOrigins__4: https://${PUBLIC_LANDING_DOMAIN:-landingcolrd.synsetsolutions.com}
     depends_on:
       - auth
       - api
