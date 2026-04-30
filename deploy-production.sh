@@ -22,20 +22,31 @@ if [ ! -f .env ]; then
 fi
 
 # 4. Clean up old containers/images to prevent conflicts
-echo "🧹 Cleaning up old Docker artifacts (keeping data volumes)..."
-docker compose rm -f || true
-# WARNING: NOT using --volumes to protect database data!
-# Use: docker system prune -f (without --volumes)
-# If you need to reset data: manually remove /var/lib/tucolmadord/
+echo "🧹 Cleaning up old Docker artifacts..."
+docker compose down --remove-orphans || true
+
+# 5. Handle volume migration from Named to Bind-mounts
+echo "📦 Migrating volumes to bind-mount configuration..."
+# Remove old Named volumes that conflict with new bind-mount configuration
+docker volume rm tucolmadord_postgres_data 2>/dev/null || echo "  ℹ️  Old postgres_data volume not found (OK)"
+docker volume rm tucolmadord_mongo_data 2>/dev/null || echo "  ℹ️  Old mongo_data volume not found (OK)"
+
+# Ensure bind-mount directories exist with proper permissions
+mkdir -p /var/lib/tucolmadord/postgres_data
+mkdir -p /var/lib/tucolmadord/mongo_data
+chmod 755 /var/lib/tucolmadord
+chmod 755 /var/lib/tucolmadord/postgres_data
+chmod 755 /var/lib/tucolmadord/mongo_data
+
+# System cleanup (without --volumes, protecting any data)
 docker system prune -f || true
 
-# 5. Run docker compose with rebuild
+# 6. Run docker compose with rebuild
 echo "🐳 Rebuilding and starting Docker services..."
-docker compose down --remove-orphans || true
 docker compose pull
 docker compose up --build -d
 
-# 6. Wait for databases to be ready
+# 7. Wait for databases to be ready
 echo "⏳ Waiting for databases to be ready..."
 for i in {1..30}; do
   if docker compose exec -T postgres pg_isready -U ${POSTGRES_USER} > /dev/null 2>&1; then
@@ -55,11 +66,11 @@ for i in {1..30}; do
   sleep 2
 done
 
-# 7. Wait for application services
+# 8. Wait for application services
 echo "⏳ Waiting for application services to stabilize..."
 sleep 15
 
-# 8. Run database migrations
+# 9. Run database migrations
 echo "🗄️ Running EF Core migrations for .NET API..."
 docker compose exec -T api dotnet ef database update \
     --project src/infrastructure/TuColmadoRD.Infrastructure.Persistence \
@@ -68,11 +79,11 @@ docker compose exec -T api dotnet ef database update \
     echo "⚠️  Migration warning: Check API logs with: docker compose logs api"
 }
 
-# 9. Verify all containers are healthy
+# 10. Verify all containers are healthy
 echo "✅ Verifying service health..."
 docker compose ps
 
-# 10. Health check loop
+# 11. Health check loop
 echo "🏥 Waiting for all services to be healthy..."
 MAX_ATTEMPTS=20
 ATTEMPT=0
