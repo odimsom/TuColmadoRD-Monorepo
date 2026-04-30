@@ -148,13 +148,15 @@ services:
       - tucolmadord-network
 
   traefik:
-    image: traefik:v3.1
+    image: traefik:v2.11
     restart: unless-stopped
+    environment:
+      - DOCKER_API_VERSION=1.40
     command:
       - "--log.level=DEBUG"
       - "--api.insecure=true"
       - "--providers.docker=true"
-      - "--providers.docker.endpoint=unix:///var/run/docker.sock?version=1.40"
+      - "--providers.docker.version=1.40"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
