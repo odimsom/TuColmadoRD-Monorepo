@@ -150,14 +150,12 @@ services:
   traefik:
     image: traefik:v3.1
     restart: unless-stopped
-    environment:
-      DOCKER_API_VERSION: "1.40"
-      TRAEFIK_PROVIDERS_DOCKER: "true"
-      TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
-      TRAEFIK_PROVIDERS_DOCKER_ENDPOINT: "unix:///var/run/docker.sock"
     command:
       - "--log.level=DEBUG"
       - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock?version=1.40"
+      - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       # Global HTTP to HTTPS redirection
