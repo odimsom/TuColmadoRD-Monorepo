@@ -1,5 +1,5 @@
 {
-    "version": "0.2.2",
+    "version": "0.3.0",
     "devDependencies":  {
                             "autoprefixer":  "^10.4.27",
                             "postcss":  "^8.5.8",
