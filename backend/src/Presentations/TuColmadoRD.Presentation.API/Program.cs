@@ -79,7 +79,8 @@ public static class CoreApiHostBuilder
             app.UseSwaggerUI();
         }
 
-        if (!isLocal)
+        var isContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+        if (!isLocal && !isContainer)
         {
             app.UseHttpsRedirection();
         }

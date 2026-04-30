@@ -29,7 +29,7 @@ public static class TenantEndpoints
     /// </summary>
     private static async Task<IResult> NotifyNewTenant(
         CreateTenantNotificationRequest request,
-        ILogger logger,
+        ILogger<Program> logger,
         CancellationToken ct)
     {
         logger.LogInformation(
