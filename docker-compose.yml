@@ -148,11 +148,10 @@ services:
       - tucolmadord-network
 
   traefik:
-    image: traefik:v3.0
+    image: traefik:v3.1
     restart: unless-stopped
     environment:
-      - DOCKER_API_VERSION=1.41
-      - TRAEFIK_PROVIDERS_DOCKER_VERSION=1.41
+      DOCKER_API_VERSION: "1.40"
     command:
       - "--log.level=DEBUG"
       - "--api.insecure=true"
