@@ -69,19 +69,23 @@ public static class GatewayHostBuilder
         {
             opt.AddDefaultPolicy(policy =>
             {
-                // If no origins specified, allow localhost and specific domains
-                if (allowedOrigins.Length == 0)
+                // Always allow localhost for development
+                var origins = allowedOrigins.Where(o => !string.IsNullOrWhiteSpace(o)).ToList();
+                origins.AddRange(new[] { "http://localhost:4200", "http://localhost:5173", "http://localhost:5209" });
+
+                if (origins.Count > 0)
                 {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
-                }
-                else
-                {
-                    policy.WithOrigins(allowedOrigins)
+                    policy.WithOrigins(origins.ToArray())
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();
+                }
+                else
+                {
+                    // Fallback: allow all origins if none configured (development only)
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
                 }
             });
         });
