@@ -99,9 +99,9 @@ const faqs = [
 
     <main class="flex-grow flex flex-col pt-0">
       <!-- Hero Section: Dominican Street Premium -->
-      <section class="relative w-full h-[90vh] flex items-center overflow-hidden border-b border-white/5">
-        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/assets/images/hero-colmado.png');"></div>
-        <div class="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#0f172a]/95 to-[#0f172a]/40"></div>
+      <section class="relative w-full min-h-[60vh] md:h-[90vh] flex items-center overflow-hidden border-b border-white/5">
+        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/assets/images/hero-colmado.png');" aria-hidden="true"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#0f172a]/95 to-[#0f172a]/40" aria-hidden="true"></div>
         
         <div class="container mx-auto px-12 relative z-10">
           <div class="max-w-4xl animate-in fade-in slide-in-from-left-12 duration-1000">
@@ -152,10 +152,10 @@ const faqs = [
       </section>
 
       <!-- Marquee Section -->
-      <div class="bg-blue-600 py-4 overflow-hidden border-y border-white/10 relative z-20 -rotate-1 origin-center scale-105">
+      <div class="bg-blue-600 py-4 overflow-hidden border-y border-white/10 relative z-20 md:-rotate-1 -rotate-0 origin-center scale-105">
         <div class="flex animate-marquee whitespace-nowrap" style="animation-duration:60s;">
           <div v-for="i in 10" :key="i" class="flex items-center mx-4">
-            <span class="text-white font-bebas text-3xl tracking-widest uppercase">INVENTARIO · FIADOS · CUADRE DE CAJA · FACTURACIÓN RÁPIDA · </span>
+            <span class="text-white font-bebas text-2xl md:text-3xl tracking-widest uppercase">INVENTARIO · FIADOS · CUADRE DE CAJA · FACTURACIÓN RÁPIDA · </span>
           </div>
         </div>
       </div>
