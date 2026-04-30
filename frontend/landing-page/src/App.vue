@@ -96,7 +96,7 @@ const faqs = [
 
     <main class="flex-grow flex flex-col pt-0">
       <!-- Hero Section: Dominican Street Premium -->
-      <section class="relative w-full min-h-[60vh] md:h-[90vh] flex items-center overflow-hidden border-b border-white/5">
+      <section class="relative w-full h-screen sm:h-auto sm:min-h-[55vh] md:h-[90vh] flex items-center overflow-hidden border-b border-white/5">
         <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/assets/images/hero-colmado.png');" aria-hidden="true"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#0f172a]/95 to-[#0f172a]/40" aria-hidden="true"></div>
         
@@ -121,12 +121,12 @@ const faqs = [
               ✓ Tu feedback nos define
             </p>
             <div class="flex flex-col sm:flex-row gap-4 mb-12">
-              <a :href="webAdminRegisterUrl" class="group relative px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-lg transition-all shadow-[0_0_40px_rgba(37,99,235,0.4)] text-xs sm:text-sm uppercase tracking-widest overflow-hidden flex items-center justify-center sm:justify-start gap-2 whitespace-nowrap">
+              <a :href="webAdminRegisterUrl" class="group relative px-6 sm:px-8 py-4 sm:py-5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-lg transition-all shadow-[0_0_40px_rgba(37,99,235,0.4)] text-sm sm:text-base uppercase tracking-widest overflow-hidden flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                 <span class="relative z-10">Postular mi colmado</span>
-                <span class="relative z-10 text-blue-300">→</span>
+                <span class="relative z-10 text-blue-300 hidden sm:inline">→</span>
                 <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               </a>
-              <a href="#como-funciona" class="px-6 sm:px-8 py-3 sm:py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-lg transition-all text-xs sm:text-sm uppercase tracking-widest text-center">
+              <a href="#como-funciona" class="px-6 sm:px-8 py-4 sm:py-5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-lg transition-all text-sm sm:text-base uppercase tracking-widest text-center">
                 Ver Demo
               </a>
             </div>
