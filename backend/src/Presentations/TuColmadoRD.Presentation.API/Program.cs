@@ -11,6 +11,7 @@ using TuColmadoRD.Presentation.API.Endpoints.Sales;
 using TuColmadoRD.Presentation.API.Endpoints.Sales.Shifts;
 using TuColmadoRD.Presentation.API.Endpoints.Settings;
 using TuColmadoRD.Presentation.API.Endpoints.Logistics;
+using TuColmadoRD.Presentation.API.Endpoints.Tenants;
 
 namespace TuColmadoRD.Presentation.API;
 
@@ -67,7 +68,6 @@ public static class CoreApiHostBuilder
         builder.Services.AddAuthorization();
 
         builder.Services.AddGlobalServices(builder.Configuration);
-        // Cloud API uses JWT-based tenant resolution, not device file
         builder.Services.AddCloudTenancy();
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CoreApiHostBuilder).Assembly));
 
@@ -89,6 +89,7 @@ public static class CoreApiHostBuilder
 
         app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
+        app.MapTenantEndpoints();
         app.MapInventoryEndpoints();
         app.MapPurchasingEndpoints();
         app.MapCustomerEndpoints();

@@ -69,9 +69,20 @@ public static class GatewayHostBuilder
         {
             opt.AddDefaultPolicy(policy =>
             {
-                policy.WithOrigins(allowedOrigins)
-                      .AllowAnyHeader()
-                      .AllowAnyMethod();
+                // If no origins specified, allow localhost and specific domains
+                if (allowedOrigins.Length == 0)
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                }
+                else
+                {
+                    policy.WithOrigins(allowedOrigins)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                }
             });
         });
 
