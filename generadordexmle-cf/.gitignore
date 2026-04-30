@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pycache
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+.env/
+
+# Variables de entorno
+.env
+*.env
+
+# Flask
+instance/
+.webassets-cache
+
+# Archivos generados por la app
+static/plantilla_ecf.xlsx
+
+# Archivos temporales / OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
