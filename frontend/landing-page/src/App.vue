@@ -109,7 +109,7 @@ const faqs = [
               <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
               Programa Piloto - Usuarios Pioneros
             </div>
-            <h1 class="text-7xl md:text-[9rem] font-bebas text-white leading-[0.85] mb-10 tracking-tighter uppercase drop-shadow-2xl">
+            <h1 class="text-4xl md:text-6xl lg:text-[6.5rem] font-bebas text-white leading-[0.9] mb-8 md:mb-10 tracking-tight uppercase drop-shadow-2xl">
               Tu <span class="text-blue-500 drop-shadow-[0_0_30px_rgba(37,99,235,0.5)]">Colmado</span><br/>Sin Costo. <br/>Un Año Completo.
             </h1>
             <p class="text-xl md:text-2xl text-slate-400 max-w-2xl font-medium leading-relaxed mb-6 opacity-90">
@@ -153,7 +153,7 @@ const faqs = [
 
       <!-- Marquee Section -->
       <div class="bg-blue-600 py-4 overflow-hidden border-y border-white/10 relative z-20 -rotate-1 origin-center scale-105">
-        <div class="flex animate-marquee whitespace-nowrap">
+        <div class="flex animate-marquee whitespace-nowrap" style="animation-duration:60s;">
           <div v-for="i in 10" :key="i" class="flex items-center mx-4">
             <span class="text-white font-bebas text-3xl tracking-widest uppercase">INVENTARIO · FIADOS · CUADRE DE CAJA · FACTURACIÓN RÁPIDA · </span>
           </div>
