@@ -36,7 +36,7 @@ jobs:
         working-directory: /app/tucolmadord
         run: |
           chmod +x deploy-production.sh
-          bash deploy-production.sh
+          sudo bash deploy-production.sh
 
       - name: Prune old Docker images
         run: docker image prune -f

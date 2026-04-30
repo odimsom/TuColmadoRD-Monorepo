@@ -3,6 +3,16 @@
 
 set -e
 
+# Check if running as root (required for volume management)
+if [ "$EUID" -ne 0 ]; then
+  echo "❌ This script must be run as root (needed for /var/lib/tucolmadord)"
+  echo ""
+  echo "Options:"
+  echo "1. Run with sudo:     sudo bash deploy-production.sh"
+  echo "2. Or from root user: su - && bash deploy-production.sh"
+  exit 1
+fi
+
 echo "🚀 Starting TuColmadoRD production deployment..."
 
 cd /app/tucolmadord
