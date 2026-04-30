@@ -1,0 +1,2 @@
+#!/bin/bash
+docker run --rm --network tucolmadord_tucolmadord-network -v /app/tucolmadord:/source -w /source/backend mcr.microsoft.com/dotnet/sdk:10.0-preview sh -c "dotnet tool install --global dotnet-ef && export PATH=\$PATH:/root/.dotnet/tools && dotnet ef database update --project src/infrastructure/TuColmadoRD.Infrastructure.Persistence --startup-project src/Presentations/TuColmadoRD.Presentation.API --context TuColmadoDbContext --connection 'Host=tucolmadord-postgres-1;Database=TuColmadoDb;Username=admin_colmado;Password=ArroZZ12hju.,'"
