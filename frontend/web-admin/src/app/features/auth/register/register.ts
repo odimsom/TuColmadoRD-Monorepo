@@ -33,6 +33,7 @@ export class Register {
   selectedPlanId = signal<string | null>(null);
   loading = signal(false);
   error = signal<string | null>(null);
+  success = signal(false);
 
   plans: Plan[] = [
     {
@@ -128,10 +129,22 @@ export class Register {
 
     this.authService.register(payload).subscribe({
       next: () => {
-        this.loading.set(false);
-        this.router.navigate(['/portal/dashboard']);
+        console.log('✅ Registration successful');
+        this.success.set(true);
+        // Keep loading visible for 2 seconds so user sees success state
+        setTimeout(() => {
+          this.loading.set(false);
+          console.log('🔄 Navigating to dashboard');
+          this.router.navigate(['/portal/dashboard']).catch(err => {
+            console.error('❌ Navigation failed:', err);
+            this.error.set('Error al redirigir. Intenta recargar la página.');
+            this.success.set(false);
+            this.loading.set(false);
+          });
+        }, 2000);
       },
       error: (err) => {
+        console.error('❌ Registration error:', err);
         this.loading.set(false);
         this.error.set(err.error?.message || 'Error al crear la cuenta. Inténtalo de nuevo.');
       },
