@@ -91,7 +91,7 @@ export class PosLayout implements OnInit, OnDestroy {
   selectedQuickProduct = signal<ProductDto | null>(null);
 
   // ── Catalog pagination ────────────────────────────
-  readonly PAGE_SIZE = 16;
+  readonly PAGE_SIZE = 24;
   catalogPage = signal(0);
 
   @HostListener('window:keydown', ['$event'])

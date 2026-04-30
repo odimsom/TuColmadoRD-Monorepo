@@ -123,29 +123,29 @@
             <p class="text-base">Sin productos que coincidan.</p>
           </div>
         } @else {
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
             @for (product of pagedCatalog(); track product.productId) {
               <button (click)="addToCart(product)" [disabled]="product.stockQuantity <= 0"
-                class="group relative flex flex-col rounded-2xl bg-white/[0.04] border border-white/[0.07] hover:bg-blue-600/10 hover:border-blue-500/40 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-left overflow-hidden">
+                class="group relative flex flex-col rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-blue-600/10 hover:border-blue-500/40 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-left overflow-hidden">
 
                 <!-- Imagen / iniciales -->
-                <div class="w-full aspect-square flex items-center justify-center text-2xl font-black text-white/70 transition-all"
+                <div class="w-full h-20 flex items-center justify-center text-lg font-black text-white/70 transition-all"
                   [ngClass]="productColor(product.categoryName)">
                   {{ productInitials(product.name) }}
                 </div>
 
                 <!-- Info -->
-                <div class="p-2.5 flex flex-col gap-1">
-                  <p class="text-sm font-bold text-white leading-tight line-clamp-2 group-hover:text-blue-300 transition-colors">{{ product.name }}</p>
-                  <p class="text-base font-black text-blue-400 tabular-nums">{{ product.salePrice | rdCurrency }}</p>
+                <div class="p-2 flex flex-col gap-0.5">
+                  <p class="text-xs font-bold text-white leading-tight line-clamp-2 group-hover:text-blue-300 transition-colors">{{ product.name }}</p>
+                  <p class="text-sm font-black text-blue-400 tabular-nums">{{ product.salePrice | rdCurrency }}</p>
 
                   <!-- Stock -->
                   @if (product.stockQuantity <= 0) {
-                    <span class="text-[0.6rem] font-bold text-red-400">Agotado</span>
+                    <span class="text-[0.58rem] font-bold text-red-400">Agotado</span>
                   } @else if (product.stockQuantity <= 5) {
-                    <span class="text-[0.6rem] font-bold text-amber-400">{{ product.stockQuantity | number:'1.0-2' }} restantes</span>
+                    <span class="text-[0.58rem] font-bold text-amber-400">{{ product.stockQuantity | number:'1.0-2' }} restantes</span>
                   } @else {
-                    <span class="text-[0.6rem] text-slate-600">Stock: {{ product.stockQuantity | number:'1.0-2' }}</span>
+                    <span class="text-[0.58rem] text-slate-600">Stock: {{ product.stockQuantity | number:'1.0-2' }}</span>
                   }
                 </div>
 
