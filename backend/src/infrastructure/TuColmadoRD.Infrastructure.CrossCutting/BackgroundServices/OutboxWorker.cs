@@ -44,7 +44,7 @@ public class OutboxWorker : BackgroundService
                 using var scope = _serviceProvider.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<TuColmadoDbContext>();
 
-                List<long> pendingMessageIds;
+                List<Guid> pendingMessageIds;
                 
                 try
                 {

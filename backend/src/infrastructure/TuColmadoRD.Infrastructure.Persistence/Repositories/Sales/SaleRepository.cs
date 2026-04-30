@@ -9,16 +9,16 @@ namespace TuColmadoRD.Infrastructure.Persistence.Repositories.Sales;
 
 public class SaleRepository(TuColmadoDbContext dbContext) : GenericRepository<Sale>(dbContext), ISaleRepository, AppSaleRepository
 {
-	private readonly TuColmadoDbContext _dbContext = dbContext;
+	private readonly TuColmadoDbContext _context = dbContext;
 
 	public new async Task AddAsync(Sale sale, CancellationToken ct)
 	{
-		await _dbContext.Set<Sale>().AddAsync(sale, ct);
+		await _context.Set<Sale>().AddAsync(sale, ct);
 	}
 
 	public async Task<Sale?> GetByIdAsync(Guid saleId, Guid tenantId, CancellationToken ct)
 	{
-		return await _dbContext.Set<Sale>()
+		return await _context.Set<Sale>()
 			.Include(s => s.Items)
 			.Include(s => s.Payments)
 			.FirstOrDefaultAsync(s => s.Id == saleId && s.TenantId.Value == tenantId, ct);
@@ -26,7 +26,7 @@ public class SaleRepository(TuColmadoDbContext dbContext) : GenericRepository<Sa
 
 	public async Task<IReadOnlyList<Sale>> GetByTerminalIdAsync(Guid terminalId, Guid tenantId, CancellationToken ct)
 	{
-		return await _dbContext.Set<Sale>()
+		return await _context.Set<Sale>()
 			.Where(s => s.TerminalId == terminalId && s.TenantId.Value == tenantId)
 			.OrderByDescending(s => s.CreatedAt)
 			.ToListAsync(ct);
@@ -34,7 +34,7 @@ public class SaleRepository(TuColmadoDbContext dbContext) : GenericRepository<Sa
 
 	public async Task<IReadOnlyList<Sale>> GetByShiftIdAsync(Guid shiftId, Guid tenantId, CancellationToken ct)
 	{
-		return await _dbContext.Set<Sale>()
+		return await _context.Set<Sale>()
 			.Where(s => s.ShiftId == shiftId && s.TenantId.Value == tenantId)
 			.OrderByDescending(s => s.CreatedAt)
 			.ToListAsync(ct);
@@ -46,7 +46,7 @@ public class SaleRepository(TuColmadoDbContext dbContext) : GenericRepository<Sa
 		int pageSize,
 		CancellationToken ct)
 	{
-		var query = _dbContext.Set<Sale>()
+		var query = _context.Set<Sale>()
 			.Where(s => s.TenantId.Value == tenantId)
 			.OrderByDescending(s => s.CreatedAt);
 
@@ -63,16 +63,16 @@ public class SaleRepository(TuColmadoDbContext dbContext) : GenericRepository<Sa
 
 	public new Task UpdateAsync(Sale sale, CancellationToken ct)
 	{
-		if (_dbContext.Entry(sale).State == EntityState.Detached)
+		if (_context.Entry(sale).State == EntityState.Detached)
 		{
-			_dbContext.Set<Sale>().Update(sale);
+			_context.Set<Sale>().Update(sale);
 		}
 		return Task.CompletedTask;
 	}
 
 	public IQueryable<Sale> GetQueryable()
 	{
-		return _dbContext.Set<Sale>().AsQueryable();
+		return _context.Set<Sale>().AsQueryable();
 	}
 }
 
