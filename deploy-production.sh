@@ -112,9 +112,11 @@ docker volume prune -f 2>/dev/null || true
 echo "📦 Setting up fresh bind-mount directories..."
 mkdir -p /var/lib/tucolmadord/postgres_data
 mkdir -p /var/lib/tucolmadord/mongo_data
+mkdir -p letsencrypt
 chmod 755 /var/lib/tucolmadord
 chmod 755 /var/lib/tucolmadord/postgres_data
 chmod 755 /var/lib/tucolmadord/mongo_data
+chmod 700 letsencrypt
 echo "  ✅ Bind-mount directories ready"
 
 # 7. Run docker compose with rebuild

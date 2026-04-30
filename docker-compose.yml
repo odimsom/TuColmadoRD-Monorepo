@@ -142,7 +142,33 @@ services:
       - traefik.http.routers.tucolmadord-api.rule=Host(`${PUBLIC_API_DOMAIN}`)
       - traefik.http.routers.tucolmadord-api.entrypoints=websecure
       - traefik.http.routers.tucolmadord-api.tls=true
+      - traefik.http.routers.tucolmadord-api.tls.certresolver=letsencrypt
       - traefik.http.services.tucolmadord-api.loadbalancer.server.port=8080
+    networks:
+      - tucolmadord-network
+
+  traefik:
+    image: traefik:v2.10
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Global HTTP to HTTPS redirection
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      # Let's Encrypt
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
     networks:
       - tucolmadord-network
 
@@ -166,6 +192,7 @@ services:
       - traefik.http.routers.tucolmadord-landing.rule=Host(`${PUBLIC_LANDING_DOMAIN}`) || Host(`www.${PUBLIC_LANDING_DOMAIN}`)
       - traefik.http.routers.tucolmadord-landing.entrypoints=websecure
       - traefik.http.routers.tucolmadord-landing.tls=true
+      - traefik.http.routers.tucolmadord-landing.tls.certresolver=letsencrypt
       - traefik.http.services.tucolmadord-landing.loadbalancer.server.port=80
     networks:
       - tucolmadord-network
@@ -188,6 +215,7 @@ services:
       - traefik.http.routers.tucolmadord-web.rule=Host(`${PUBLIC_WEB_DOMAIN}`)
       - traefik.http.routers.tucolmadord-web.entrypoints=websecure
       - traefik.http.routers.tucolmadord-web.tls=true
+      - traefik.http.routers.tucolmadord-web.tls.certresolver=letsencrypt
       - traefik.http.services.tucolmadord-web.loadbalancer.server.port=80
     networks:
       - tucolmadord-network
