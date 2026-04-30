@@ -37,6 +37,7 @@ services:
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-root}:${MONGO_INITDB_ROOT_PASSWORD:-1234}@mongo:27017/tu_colmado_auth?authSource=admin
       JWT_SECRET: ${JWT_SECRET:-dominican-street-premium-secret-key-2026}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      NET_API_URL: http://api:8080
     depends_on:
       - mongo
     ports:
