@@ -7,7 +7,7 @@ RUN npm ci
 COPY . .
 # Para producción real usar: npm run build
 # Para stack Docker local usar configuración de desarrollo (gatewayUrl → localhost:5032)
-ARG BUILD_CONFIG=development
+ARG BUILD_CONFIG=production
 RUN npm run build -- --configuration=$BUILD_CONFIG
 
 FROM nginx:1.27-alpine
