@@ -36,7 +36,6 @@ jobs:
       - name: Deploy with Docker Compose
         working-directory: /app/tucolmadord
         run: |
-          chmod +x deploy-production.sh
           sudo bash deploy-production.sh
 
       - name: Prune old Docker images
