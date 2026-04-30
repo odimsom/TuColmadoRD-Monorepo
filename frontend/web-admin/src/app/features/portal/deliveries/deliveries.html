@@ -1,0 +1,146 @@
+<div class="p-6 max-w-5xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-black text-white">Deliveries</h1>
+      <p class="text-sm text-slate-500 mt-0.5">Pedidos pendientes y en tránsito</p>
+    </div>
+    <button (click)="load()" [disabled]="loading()"
+      class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-sm text-slate-300 font-semibold transition-colors disabled:opacity-40">
+      <span class="icon-[ic--baseline-refresh] text-base" [class.animate-spin]="loading()"></span>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="grid grid-cols-2 gap-4">
+    <div class="p-4 rounded-2xl bg-amber-500/8 border border-amber-500/20">
+      <p class="text-xs text-amber-400 font-semibold uppercase tracking-wider mb-1">Sin asignar</p>
+      <p class="text-3xl font-black text-white">{{ pending().length }}</p>
+      <p class="text-xs text-slate-500 mt-0.5">esperando repartidor</p>
+    </div>
+    <div class="p-4 rounded-2xl bg-blue-500/8 border border-blue-500/20">
+      <p class="text-xs text-blue-400 font-semibold uppercase tracking-wider mb-1">En tránsito</p>
+      <p class="text-3xl font-black text-white">{{ inTransit().length }}</p>
+      <p class="text-xs text-slate-500 mt-0.5">en camino al cliente</p>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="flex items-center gap-2 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+      <span class="icon-[ic--baseline-error]"></span> {{ error() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="flex items-center justify-center py-20 text-slate-600">
+      <span class="icon-[ic--baseline-hourglass-empty] text-3xl animate-pulse"></span>
+    </div>
+  } @else if (orders().length === 0) {
+    <div class="flex flex-col items-center justify-center py-20 gap-3 text-slate-600">
+      <span class="icon-[ic--baseline-check-circle] text-5xl text-emerald-600/40"></span>
+      <p class="font-semibold text-slate-400">No hay deliveries activos</p>
+      <p class="text-sm">Todos los pedidos han sido entregados.</p>
+    </div>
+  } @else {
+
+    <!-- Pending (sin repartidor) -->
+    @if (pending().length > 0) {
+      <section>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="icon-[ic--baseline-pending] text-amber-400"></span>
+          <h2 class="text-sm font-black text-amber-400 uppercase tracking-wider">Sin asignar ({{ pending().length }})</h2>
+        </div>
+
+        @if (pending().length > 2) {
+          <div class="flex items-center gap-2 mb-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
+            <span class="icon-[ic--baseline-warning] shrink-0"></span>
+            <span>Hay {{ pending().length }} pedidos sin repartidor asignado. Asegúrate de que haya repartidores disponibles.</span>
+          </div>
+        }
+
+        <div class="space-y-3">
+          @for (o of pending(); track o.id) {
+            <ng-container *ngTemplateOutlet="orderCard; context: { $implicit: o }"></ng-container>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- In Transit -->
+    @if (inTransit().length > 0) {
+      <section>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="icon-[ic--baseline-directions-bike] text-blue-400"></span>
+          <h2 class="text-sm font-black text-blue-400 uppercase tracking-wider">En tránsito ({{ inTransit().length }})</h2>
+        </div>
+        <div class="space-y-3">
+          @for (o of inTransit(); track o.id) {
+            <ng-container *ngTemplateOutlet="orderCard; context: { $implicit: o }"></ng-container>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>
+
+<!-- Order card template -->
+<ng-template #orderCard let-o>
+  <div class="rounded-2xl bg-[#0d1626] border border-white/[0.06] overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.04]">
+      <div class="flex items-center gap-2.5">
+        <span class="text-xs font-mono font-bold bg-white/[0.06] text-slate-300 px-2.5 py-1 rounded-full">#{{ o.receiptNumber }}</span>
+        @if (o.status === 'Pending') {
+          <span class="text-[0.6rem] font-black bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/25">SIN REPARTIDOR</span>
+        } @else {
+          <span class="text-[0.6rem] font-black bg-blue-500/15 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/25">EN CAMINO</span>
+        }
+        @if (!o.latitude) {
+          <span class="text-[0.6rem] font-bold bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full border border-red-500/20 flex items-center gap-1">
+            <span class="icon-[ic--baseline-gps-off] text-xs"></span> Sin GPS
+          </span>
+        }
+      </div>
+      <span class="text-lg font-black text-white tabular-nums">{{ o.totalAmount | rdCurrency }}</span>
+    </div>
+
+    <div class="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.04]">
+      <!-- Customer -->
+      <div class="px-5 py-3 flex items-start gap-3">
+        <span class="icon-[ic--baseline-person] text-slate-500 text-base shrink-0 mt-0.5"></span>
+        <div class="min-w-0">
+          <p class="text-sm font-bold text-white truncate">{{ o.customerName }}</p>
+          @if (o.customerPhone) {
+            <a [href]="'tel:' + o.customerPhone" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-0.5">
+              <span class="icon-[ic--baseline-phone] text-xs"></span>{{ o.customerPhone }}
+            </a>
+          }
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="px-5 py-3 flex items-start gap-3">
+        <span class="icon-[ic--baseline-location-on] text-slate-500 text-base shrink-0 mt-0.5"></span>
+        <div class="min-w-0">
+          <p class="text-sm text-white leading-snug truncate">{{ o.street }}{{ o.houseNumber ? ' #' + o.houseNumber : '' }}, {{ o.sector }}</p>
+          <p class="text-xs text-slate-500">{{ o.province }}</p>
+          <p class="text-xs text-slate-600 mt-0.5 truncate">Ref: {{ o.reference }}</p>
+        </div>
+      </div>
+
+      <!-- Code + map -->
+      <div class="px-5 py-3 flex items-center justify-between gap-3">
+        <div>
+          <p class="text-[0.6rem] text-slate-500 uppercase font-semibold tracking-wider">Código</p>
+          <p class="text-xl font-mono font-black text-white tracking-[0.2em]">{{ o.confirmationCode }}</p>
+        </div>
+        <a [href]="mapsUrl(o)" target="_blank"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600/15 border border-blue-500/25 text-blue-400 hover:bg-blue-600/25 text-xs font-bold transition-colors">
+          <span class="icon-[ic--baseline-map]"></span>
+          Ver mapa
+        </a>
+      </div>
+    </div>
+  </div>
+</ng-template>

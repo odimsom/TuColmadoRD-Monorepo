@@ -18,6 +18,7 @@ public sealed record DeliveryOrderDto(
     string AddressReference,
     double? Latitude,
     double? Longitude,
-    string Status);
+    string Status,
+    string ConfirmationCode);
 
 public sealed record GetPendingDeliveryOrdersQuery() : IRequest<OperationResult<IReadOnlyList<DeliveryOrderDto>, DomainError>>;

@@ -13,7 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 function createAuthServiceMock() {
   return {
     login:       vi.fn(),
-    currentUser: { set: vi.fn() },
+    currentUser: vi.fn().mockReturnValue({ role: 'Owner' }),
     token:       { set: vi.fn() },
   };
 }

@@ -55,6 +55,7 @@ export class PosLayout implements OnInit, OnDestroy {
   lastSale      = signal<CreateSaleResult | null>(null);
   lastSalePaymentMethod = signal<string>('');
   lastSaleCustomerName  = signal<string>('');
+  lastSaleCustomerPhone = signal<string>('');
   tenantProfile = signal<TenantProfileDto | null>(null);
   allCustomers  = signal<CustomerSummary[]>([]);
 
@@ -78,10 +79,20 @@ export class PosLayout implements OnInit, OnDestroy {
   selectedCustomer = signal<CustomerSummary | null>(null);
   customerSearchQuery = signal('');
 
+  // ── Geocoding (Nominatim) ─────────────────────────
+  geocodeLat     = signal<number | null>(null);
+  geocodeLon     = signal<number | null>(null);
+  geocodeLoading = signal(false);
+  geocodeError   = signal<string | null>(null);
+
   // ── Quick Sale ────────────────────────────────────
   quickSaleSearch = signal('');
   quickSaleAmount = signal<number | null>(null);
   selectedQuickProduct = signal<ProductDto | null>(null);
+
+  // ── Catalog pagination ────────────────────────────
+  readonly PAGE_SIZE = 24;
+  catalogPage = signal(0);
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
@@ -226,6 +237,18 @@ export class PosLayout implements OnInit, OnDestroy {
       return Math.max(0, this.cashTendered() - this.cartTotal());
     }
     return 0;
+  });
+
+  whatsAppDeliveryUrl = computed(() => {
+    const sale = this.lastSale();
+    const phone = this.lastSaleCustomerPhone().replace(/\D/g, '');
+    const name  = this.lastSaleCustomerName();
+    if (!sale?.confirmationCode || !phone) return null;
+    const total = new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(sale.total);
+    const text  = encodeURIComponent(
+      `Hola ${name}! Tu pedido de ${total} está en camino. Tu código de confirmación de entrega es: *${sale.confirmationCode}*. Dáselo al repartidor cuando recibas el pedido.`
+    );
+    return `https://wa.me/${phone}?text=${text}`;
   });
 
   itbisBreakdown = computed(() => {
@@ -428,6 +451,26 @@ export class PosLayout implements OnInit, OnDestroy {
   selectCustomer(c: CustomerSummary): void {
     this.selectedCustomer.set(c);
     this.customerSearchQuery.set('');
+    // Auto-geocode when selected for delivery and customer has address but no coords
+    if (this.paymentMethod() === 'delivery' && c.province && c.street && c.sector && !c.latitude) {
+      this.geocodeCustomerAddress(c);
+    }
+  }
+
+  private async geocodeCustomerAddress(c: CustomerSummary): Promise<void> {
+    const query = encodeURIComponent(
+      `${c.street}${c.houseNumber ? ' ' + c.houseNumber : ''}, ${c.sector}, ${c.province}, República Dominicana`
+    );
+    try {
+      const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=do`);
+      const data = await res.json();
+      if (data?.length > 0) {
+        this.selectedCustomer.update(prev => prev
+          ? { ...prev, latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) }
+          : prev
+        );
+      }
+    } catch { /* silent — delivery still works without GPS */ }
   }
 
   submitAddCustomer(): void {
@@ -534,7 +577,9 @@ export class PosLayout implements OnInit, OnDestroy {
           sector: v.sector!,
           street: v.street!,
           reference: v.reference!,
-          houseNumber: v.houseNumber || undefined
+          houseNumber: v.houseNumber || undefined,
+          latitude: this.geocodeLat() ?? undefined,
+          longitude: this.geocodeLon() ?? undefined
         };
       } else {
         this.errorMsg.set('Para delivery, selecciona un cliente con dirección o llena los datos de envío.');
@@ -558,6 +603,7 @@ export class PosLayout implements OnInit, OnDestroy {
         this.lastSale.set(result);
         this.lastSalePaymentMethod.set(this.paymentMethod());
         this.lastSaleCustomerName.set(this.selectedCustomer()?.fullName ?? '');
+        this.lastSaleCustomerPhone.set(this.selectedCustomer()?.phone ?? '');
         this.showPaymentModal.set(false);
         this.showReceiptModal.set(true);
         this.clearCart();
@@ -572,6 +618,40 @@ export class PosLayout implements OnInit, OnDestroy {
 
   printReceipt(): void {
     window.print();
+  }
+
+  async geocodeAddress(): Promise<void> {
+    const v = this.deliveryAddressForm.value;
+    if (!v.street || !v.sector || !v.province) {
+      this.geocodeError.set('Completa al menos calle, sector y provincia.');
+      return;
+    }
+    this.geocodeLoading.set(true);
+    this.geocodeError.set(null);
+    this.geocodeLat.set(null);
+    this.geocodeLon.set(null);
+
+    const query = encodeURIComponent(
+      `${v.street}${v.houseNumber ? ' ' + v.houseNumber : ''}, ${v.sector}, ${v.province}, República Dominicana`
+    );
+
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=do`,
+        { headers: { 'Accept-Language': 'es' } }
+      );
+      const data = await res.json();
+      if (data?.length > 0) {
+        this.geocodeLat.set(parseFloat(data[0].lat));
+        this.geocodeLon.set(parseFloat(data[0].lon));
+      } else {
+        this.geocodeError.set('No se encontraron coordenadas. La entrega será sin verificación GPS.');
+      }
+    } catch {
+      this.geocodeError.set('Error al obtener coordenadas.');
+    } finally {
+      this.geocodeLoading.set(false);
+    }
   }
 
   // ── Helpers ───────────────────────────────────────
@@ -590,8 +670,27 @@ export class PosLayout implements OnInit, OnDestroy {
   logout(): void { this.auth.logout(); }
   toPortal(): void { this.router.navigate(['/portal/dashboard']); }
 
-  setSearch(v: string): void { this.catalogSearch.set(v); }
-  selectCategory(id: string | null): void { this.selectedCategory.set(id); }
+  totalPages    = computed(() => Math.max(1, Math.ceil(this.filteredCatalog().length / this.PAGE_SIZE)));
+  pagedCatalog  = computed(() => {
+    const p = this.catalogPage();
+    return this.filteredCatalog().slice(p * this.PAGE_SIZE, (p + 1) * this.PAGE_SIZE);
+  });
+
+  setSearch(v: string): void { this.catalogSearch.set(v); this.catalogPage.set(0); }
+  selectCategory(id: string | null): void { this.selectedCategory.set(id); this.catalogPage.set(0); }
+  prevPage(): void { this.catalogPage.update(p => Math.max(0, p - 1)); }
+  nextPage(): void { this.catalogPage.update(p => Math.min(this.totalPages() - 1, p + 1)); }
+
+  productInitials(name: string): string {
+    return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  }
+
+  productColor(categoryName: string): string {
+    const colors = ['bg-blue-700','bg-violet-700','bg-emerald-700','bg-amber-700','bg-rose-700','bg-cyan-700','bg-indigo-700','bg-teal-700'];
+    let hash = 0;
+    for (let i = 0; i < categoryName.length; i++) hash = categoryName.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+  }
   setPaymentMethod(m: 'cash' | 'card' | 'transfer' | 'credit' | 'delivery'): void { this.paymentMethod.set(m); }
   setCashTendered(v: number): void { this.cashTendered.set(v); }
   setBuyerRnc(v: string): void { this.buyerRnc.set(v); }

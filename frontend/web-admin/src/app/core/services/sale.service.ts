@@ -70,6 +70,8 @@ export interface CreateSaleResult {
   totalPaid: number;
   changeDue: number;
   items: CreateSaleLineResult[];
+  deliveryOrderId?: string | null;
+  confirmationCode?: string | null;
 }
 
 export interface ShiftDto {

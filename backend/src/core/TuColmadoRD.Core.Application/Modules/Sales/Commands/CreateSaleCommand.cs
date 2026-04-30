@@ -47,7 +47,9 @@ public sealed record CreateSaleResult(
     decimal Total,
     decimal TotalPaid,
     decimal ChangeDue,
-    IReadOnlyList<SaleItemResult> Items);
+    IReadOnlyList<SaleItemResult> Items,
+    Guid? DeliveryOrderId = null,
+    string? ConfirmationCode = null);
 
 /// <summary>
 /// Request address for delivery.

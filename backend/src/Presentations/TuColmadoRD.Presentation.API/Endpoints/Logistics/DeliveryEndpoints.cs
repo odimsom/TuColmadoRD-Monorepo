@@ -44,10 +44,17 @@ public static class DeliveryEndpoints
         return TypedResults.Ok(new { status = "InTransit" });
     }
 
-    private static async Task<IResult> CompleteOrder(Guid id, List<SalePaymentRequest> payments, IMediator mediator, CancellationToken ct)
+    private static async Task<IResult> CompleteOrder(Guid id, CompleteDeliveryOrderRequest body, IMediator mediator, CancellationToken ct)
     {
-        var result = await mediator.Send(new CompleteDeliveryOrderCommand(id, payments), ct);
+        var result = await mediator.Send(
+            new CompleteDeliveryOrderCommand(id, body.Payments, body.ConfirmationCode, body.DriverLatitude, body.DriverLongitude), ct);
         if (!result.IsGood) return result.Error.MapDomainError();
         return TypedResults.Ok(new { status = "Delivered" });
     }
 }
+
+internal sealed record CompleteDeliveryOrderRequest(
+    List<SalePaymentRequest> Payments,
+    string ConfirmationCode,
+    double? DriverLatitude,
+    double? DriverLongitude);

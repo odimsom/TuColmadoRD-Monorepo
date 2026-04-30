@@ -27,6 +27,8 @@ public class DeliveryOrderConfiguration : IEntityTypeConfiguration<DeliveryOrder
             b.Property(a => a.Longitude).HasColumnName("Destination_Longitude");
         });
 
+        builder.Property(d => d.ConfirmationCode).IsRequired().HasMaxLength(6);
+
         builder.Property(d => d.Status).IsRequired().HasConversion<string>();
 
         builder.HasOne<DeliveryPerson>()

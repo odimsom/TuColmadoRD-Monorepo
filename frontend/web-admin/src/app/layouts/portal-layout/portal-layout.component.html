@@ -112,6 +112,22 @@
         }
       </a>
 
+      <a routerLink="/portal/employees" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-badge] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
+        @if (!isSidebarCollapsed()) {
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Empleados</span>
+        }
+      </a>
+
+      <a routerLink="/portal/deliveries" routerLinkActive="!text-blue-400 bg-blue-600/10 border-l-2 border-blue-500" [class.justify-center]="isSidebarCollapsed()"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.04] border-l-2 border-transparent transition-all group">
+        <span class="icon-[ic--baseline-delivery-dining] text-lg shrink-0 group-hover:scale-110 transition-transform"></span>
+        @if (!isSidebarCollapsed()) {
+          <span class="text-[0.7rem] font-black uppercase tracking-widest animate-in fade-in duration-200">Deliveries</span>
+        }
+      </a>
+
       <!-- Divider -->
       <div class="my-3 mx-3 border-t border-white/[0.05]"></div>
 
@@ -228,25 +244,13 @@
         }
       </div>
 
-      <!-- Right: actions + profile -->
+      <!-- Right: actions -->
       <div class="flex items-center gap-3">
         <!-- Nueva Venta CTA -->
         <a routerLink="/pos" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 flex items-center gap-1.5">
           <span class="icon-[ic--baseline-point-of-sale] text-sm"></span>
           Nueva Venta
         </a>
-
-        <div class="h-5 w-px bg-white/10"></div>
-
-        <!-- User avatar -->
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center font-black text-white text-[0.65rem] shadow-xl ring-1 ring-blue-500/20">
-            {{ getInitials() }}
-          </div>
-          @if (!isSidebarCollapsed()) {
-            <span class="text-xs text-slate-400 font-bold hidden xl:block">{{ authService.currentUser()?.email }}</span>
-          }
-        </div>
       </div>
     </header>
 

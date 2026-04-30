@@ -31,7 +31,8 @@ internal sealed class GetPendingDeliveryOrdersQueryHandler : IRequestHandler<Get
                             let payment = s.Payments.FirstOrDefault()
                             join c in _dbContext.Customers on payment.CustomerId equals c.Id into custGroup
                             from c in custGroup.DefaultIfEmpty()
-                            where d.TenantId.Value == tenantId && d.Status == DeliveryStatus.Pending
+                            where d.TenantId.Value == tenantId
+                                && (d.Status == DeliveryStatus.Pending || d.Status == DeliveryStatus.InTransit)
                             select new DeliveryOrderDto(
                                 d.Id,
                                 d.SaleId,
@@ -46,7 +47,8 @@ internal sealed class GetPendingDeliveryOrdersQueryHandler : IRequestHandler<Get
                                 d.Destination.Reference,
                                 d.Destination.Latitude,
                                 d.Destination.Longitude,
-                                d.Status.ToString()
+                                d.Status.ToString(),
+                                d.ConfirmationCode
                             ))
             .AsNoTracking()
             .ToListAsync(cancellationToken);

@@ -1,0 +1,170 @@
+<div class="p-6 space-y-6 max-w-5xl">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-black text-white tracking-tight">Empleados</h1>
+      <p class="text-sm text-slate-500 mt-0.5">Gestiona el acceso del equipo a TuColmadoRD</p>
+    </div>
+    <button (click)="openCreate()"
+      class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors shadow-lg shadow-blue-600/20">
+      <span class="icon-[ic--baseline-person-add] text-base"></span>
+      Nuevo empleado
+    </button>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+      <span class="icon-[ic--baseline-error]"></span>
+      {{ errorMsg() }}
+      <button (click)="errorMsg.set(null)" class="ml-auto"><span class="icon-[ic--baseline-close]"></span></button>
+    </div>
+  }
+
+  <!-- Table card -->
+  <div class="rounded-2xl bg-[#0d1627] border border-white/[0.06] overflow-hidden">
+
+    @if (loading()) {
+      <div class="flex items-center justify-center py-20 text-slate-600">
+        <span class="icon-[ic--baseline-refresh] text-3xl animate-spin"></span>
+      </div>
+    } @else if (employees().length === 0) {
+      <div class="flex flex-col items-center justify-center py-20 gap-3 text-slate-600">
+        <span class="icon-[ic--baseline-people] text-5xl"></span>
+        <p class="text-sm font-semibold">No hay empleados registrados</p>
+        <button (click)="openCreate()" class="mt-2 text-blue-400 text-sm hover:text-blue-300 font-semibold">+ Agregar el primero</button>
+      </div>
+    } @else {
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-white/[0.06]">
+            <th class="px-5 py-3 text-left text-[0.65rem] font-black uppercase tracking-widest text-slate-500">Empleado</th>
+            <th class="px-5 py-3 text-left text-[0.65rem] font-black uppercase tracking-widest text-slate-500">Correo</th>
+            <th class="px-4 py-3 text-left text-[0.65rem] font-black uppercase tracking-widest text-slate-500">Rol</th>
+            <th class="px-4 py-3 text-left text-[0.65rem] font-black uppercase tracking-widest text-slate-500">Estado</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (emp of employees(); track emp._id) {
+            <tr class="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+              <td class="px-5 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-black text-xs shrink-0">
+                    {{ (emp.firstName || emp.email)[0].toUpperCase() }}
+                  </div>
+                  <span class="font-semibold text-white">{{ fullName(emp) }}</span>
+                </div>
+              </td>
+              <td class="px-5 py-3.5 text-slate-400">{{ emp.email }}</td>
+              <td class="px-4 py-3.5">
+                <span class="px-2.5 py-1 rounded-full text-[0.65rem] font-bold border {{ roleInfo(emp.role).color }}">
+                  {{ roleInfo(emp.role).label }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5">
+                @if (emp.isActive) {
+                  <span class="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Activo
+                  </span>
+                } @else {
+                  <span class="flex items-center gap-1.5 text-slate-500 text-xs font-semibold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-600"></span>Inactivo
+                  </span>
+                }
+              </td>
+              <td class="px-4 py-3.5">
+                @if (emp.role !== 'owner') {
+                  <div class="flex items-center gap-1 justify-end">
+                    <button (click)="openEdit(emp)" title="Editar"
+                      class="p-1.5 rounded-lg text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 transition-colors">
+                      <span class="icon-[ic--baseline-edit] text-base"></span>
+                    </button>
+                    <button (click)="toggle(emp)" [title]="emp.isActive ? 'Desactivar' : 'Activar'"
+                      class="p-1.5 rounded-lg transition-colors"
+                      [class]="emp.isActive ? 'text-slate-500 hover:text-red-400 hover:bg-red-500/10' : 'text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10'">
+                      <span [class]="emp.isActive ? 'icon-[ic--baseline-person-off] text-base' : 'icon-[ic--baseline-person] text-base'"></span>
+                    </button>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+<!-- Modal -->
+@if (showModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="showModal.set(false)"></div>
+    <div class="relative z-10 w-full max-w-md bg-[#0d1627] border border-white/[0.08] rounded-2xl shadow-2xl p-6 space-y-5">
+
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-black text-white">{{ editTarget() ? 'Editar empleado' : 'Nuevo empleado' }}</h2>
+        <button (click)="showModal.set(false)" class="text-slate-500 hover:text-white transition-colors">
+          <span class="icon-[ic--baseline-close] text-xl"></span>
+        </button>
+      </div>
+
+      @if (errorMsg()) {
+        <div class="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">{{ errorMsg() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 font-semibold mb-1">Nombre</label>
+            <input formControlName="firstName" type="text" placeholder="Juan"
+              class="w-full px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"/>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 font-semibold mb-1">Apellido</label>
+            <input formControlName="lastName" type="text" placeholder="Pérez"
+              class="w-full px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 font-semibold mb-1">Correo electrónico *</label>
+          <input formControlName="email" type="email" placeholder="juan@colmado.com"
+            class="w-full px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors disabled:opacity-40"/>
+        </div>
+
+        @if (!editTarget()) {
+          <div>
+            <label class="block text-xs text-slate-400 font-semibold mb-1">Contraseña *</label>
+            <input formControlName="password" type="password" placeholder="Mín. 8 caracteres"
+              class="w-full px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"/>
+          </div>
+        }
+
+        <div>
+          <label class="block text-xs text-slate-400 font-semibold mb-1">Rol *</label>
+          <select formControlName="role"
+            class="w-full px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors">
+            @for (r of roles; track r.value) {
+              <option [value]="r.value" class="bg-slate-900">{{ r.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="flex gap-3 pt-1">
+          <button type="button" (click)="showModal.set(false)"
+            class="flex-1 py-2.5 rounded-xl bg-white/[0.05] text-slate-300 text-sm font-semibold hover:bg-white/[0.08] transition-colors">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="form.invalid || saving()"
+            class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-bold transition-colors flex items-center justify-center gap-2">
+            @if (saving()) { <span class="icon-[ic--baseline-refresh] animate-spin text-sm"></span> }
+            {{ editTarget() ? 'Guardar cambios' : 'Crear empleado' }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+}

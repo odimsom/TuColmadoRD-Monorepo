@@ -349,7 +349,9 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
                 sale.TotalAmount,
                 sale.TotalPaidAmount,
                 sale.ChangeDueAmount,
-                saleItemResults.AsReadOnly()));
+                saleItemResults.AsReadOnly(),
+                deliveryOrder?.Id,
+                deliveryOrder?.ConfirmationCode));
     }
 
     private static OperationResult<IReadOnlyList<SalesQuantity>, DomainError> ValidateAndPrepareQuantities(

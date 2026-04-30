@@ -17,6 +17,7 @@ export interface DeliveryOrderDto {
   latitude?: number | null;
   longitude?: number | null;
   status: string;
+  confirmationCode: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -31,9 +32,18 @@ export class DeliveryService {
     return this.gateway.post<{ status: string }>(`/api/v1/logistics/delivery/${id}/accept`, {});
   }
 
-  completeOrder(id: string, totalAmount: number): Observable<{ status: string }> {
-    return this.gateway.post<{ status: string }>(`/api/v1/logistics/delivery/${id}/complete`, [
-      { paymentMethodId: 1, amount: totalAmount, reference: null, customerId: null }
-    ]);
+  completeOrder(
+    id: string,
+    totalAmount: number,
+    confirmationCode: string,
+    driverLatitude?: number | null,
+    driverLongitude?: number | null
+  ): Observable<{ status: string }> {
+    return this.gateway.post<{ status: string }>(`/api/v1/logistics/delivery/${id}/complete`, {
+      payments: [{ paymentMethodId: 1, amount: totalAmount, reference: null, customerId: null }],
+      confirmationCode,
+      driverLatitude: driverLatitude ?? null,
+      driverLongitude: driverLongitude ?? null
+    });
   }
 }
