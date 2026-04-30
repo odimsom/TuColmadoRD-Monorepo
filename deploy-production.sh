@@ -21,26 +21,35 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# 4. Clean up old containers and orphaned services
-echo "🧹 Cleaning up old Docker artifacts..."
-# Using -v to remove volumes associated with containers, --remove-orphans to clean orphaned services
-docker compose down -v --remove-orphans 2>/dev/null || true
+# 4. Aggressive cleanup of existing containers and volumes
+echo "🧹 Aggressive cleanup of old Docker artifacts..."
 
-# 5. Handle volume migration from Named to Bind-mounts
-echo "📦 Migrating volumes to bind-mount configuration..."
+# 4a. Stop and remove ALL containers (force if needed)
+echo "  Stopping and removing all tucolmadord containers..."
+docker ps -q --filter "label=com.docker.compose.project=tucolmadord" | xargs -r docker rm -f 2>/dev/null || true
+docker compose down --remove-orphans 2>/dev/null || true
 
-# Remove ALL tucolmadord-related Named volumes (more aggressive cleanup)
-echo "  Removing conflicting Named volumes..."
+# 4b. Remove ALL tucolmadord Named volumes explicitly (with force if they're in use)
+echo "  Removing Named volumes..."
 docker volume ls -q | grep -E "^tucolmadord" | while read vol; do
-  echo "    Removing volume: $vol"
-  docker volume rm "$vol" 2>/dev/null || true
+  echo "    Forcing removal: $vol"
+  docker volume rm -f "$vol" 2>/dev/null || true
 done
 
-# Force remove any lingering volumes with docker volume prune
-docker volume prune -f --filter "label!=keep" 2>/dev/null || true
+# 4c. Clean up bind-mount directories on filesystem (aggressive)
+echo "  Cleaning bind-mount directories..."
+if [ -d /var/lib/tucolmadord ]; then
+  rm -rf /var/lib/tucolmadord/postgres_data 2>/dev/null || true
+  rm -rf /var/lib/tucolmadord/mongo_data 2>/dev/null || true
+fi
 
-# Ensure bind-mount directories exist with proper permissions
-echo "  Creating bind-mount directories..."
+# 5. Prune all unused Docker objects
+echo "  Pruning unused Docker objects..."
+docker system prune -f 2>/dev/null || true
+docker volume prune -f 2>/dev/null || true
+
+# 6. Create fresh bind-mount directories with correct permissions
+echo "📦 Setting up fresh bind-mount directories..."
 mkdir -p /var/lib/tucolmadord/postgres_data
 mkdir -p /var/lib/tucolmadord/mongo_data
 chmod 755 /var/lib/tucolmadord
@@ -48,16 +57,12 @@ chmod 755 /var/lib/tucolmadord/postgres_data
 chmod 755 /var/lib/tucolmadord/mongo_data
 echo "  ✅ Bind-mount directories ready"
 
-# System cleanup (without --volumes, protecting any data in bind-mounts)
-echo "  Running system prune..."
-docker system prune -f 2>/dev/null || true
-
-# 6. Run docker compose with rebuild
+# 7. Run docker compose with rebuild
 echo "🐳 Rebuilding and starting Docker services..."
 docker compose pull
 docker compose up --build -d
 
-# 7. Wait for databases to be ready
+# 8. Wait for databases to be ready
 echo "⏳ Waiting for databases to be ready..."
 for i in {1..30}; do
   if docker compose exec -T postgres pg_isready -U ${POSTGRES_USER} > /dev/null 2>&1; then
@@ -77,11 +82,11 @@ for i in {1..30}; do
   sleep 2
 done
 
-# 8. Wait for application services
+# 9. Wait for application services
 echo "⏳ Waiting for application services to stabilize..."
 sleep 15
 
-# 9. Run database migrations
+# 10. Run database migrations
 echo "🗄️ Running EF Core migrations for .NET API..."
 docker compose exec -T api dotnet ef database update \
     --project src/infrastructure/TuColmadoRD.Infrastructure.Persistence \
@@ -90,11 +95,11 @@ docker compose exec -T api dotnet ef database update \
     echo "⚠️  Migration warning: Check API logs with: docker compose logs api"
 }
 
-# 10. Verify all containers are healthy
+# 11. Verify all containers are healthy
 echo "✅ Verifying service health..."
 docker compose ps
 
-# 11. Health check loop
+# 12. Health check loop
 echo "🏥 Waiting for all services to be healthy..."
 MAX_ATTEMPTS=20
 ATTEMPT=0
