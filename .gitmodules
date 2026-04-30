@@ -1,0 +1,3 @@
+[submodule "generadordexmle-cf"]
+	path = generadordexmle-cf
+	url = https://github.com/odimsom/dgii-ecf-generator.git
