@@ -9,10 +9,6 @@ const toggleFaq = (index: number) => {
   activeFaq.value = activeFaq.value === index ? null : index
 }
 
-const scrollToTop = () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
 const webAdminBaseUrl = (import.meta.env.VITE_WEB_ADMIN_URL as string | undefined)?.replace(/\/$/, '') || 'http://localhost:4200'
 const webAdminHomeUrl = `${webAdminBaseUrl}/`
 const webAdminRegisterUrl = `${webAdminBaseUrl}/auth/register`
@@ -68,7 +64,7 @@ const faqs = [
       ]"
     >
       <div class="container mx-auto flex justify-between items-center">
-        <div class="flex items-center gap-3 group cursor-pointer" @click="scrollToTop">
+        <a href="#inicio" class="flex items-center gap-3 group cursor-pointer transition-all hover:opacity-80">
           <div class="relative">
             <img src="/assets/logo.svg" alt="TuColmadoRD logo" class="w-9 h-9 transition-transform duration-500 group-hover:rotate-12" />
             <div class="absolute inset-0 bg-blue-500/20 blur-lg rounded-full scale-0 group-hover:scale-150 transition-transform duration-500"></div>
@@ -77,8 +73,9 @@ const faqs = [
             <span class="text-[1.35rem] font-bebas text-white tracking-wider uppercase leading-none">TuColmado<span class="text-blue-500">RD</span></span>
             <span class="text-[0.5rem] font-bold text-slate-600 uppercase tracking-[0.35em] mt-0.5">by Synset Solutions</span>
           </div>
-        </div>
+        </a>
         <nav class="hidden md:flex space-x-10">
+          <a href="#inicio" class="text-slate-400 hover:text-white transition-colors font-medium text-sm uppercase tracking-widest">Inicio</a>
           <a href="#beneficios" class="text-slate-400 hover:text-white transition-colors font-medium text-sm uppercase tracking-widest">Beneficios</a>
           <a href="#como-funciona" class="text-slate-400 hover:text-white transition-colors font-medium text-sm uppercase tracking-widest">Cómo Funciona</a>
           <a href="#precios" class="text-slate-400 hover:text-white transition-colors font-medium text-sm uppercase tracking-widest">Precios</a>
@@ -96,7 +93,7 @@ const faqs = [
 
     <main class="flex-grow flex flex-col pt-0">
       <!-- Hero Section: Dominican Street Premium -->
-      <section class="relative w-full h-screen sm:h-auto sm:min-h-[55vh] md:h-[90vh] flex items-center overflow-hidden border-b border-white/5">
+      <section id="inicio" class="relative w-full h-screen sm:h-auto sm:min-h-[55vh] md:h-[90vh] flex items-center overflow-hidden border-b border-white/5 scroll-mt-20">
         <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/assets/images/hero-colmado.png');" aria-hidden="true"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#0f172a]/95 to-[#0f172a]/40" aria-hidden="true"></div>
         
