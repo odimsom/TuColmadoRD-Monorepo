@@ -20,7 +20,7 @@ public class TuColmadoDbContext : DbContext
 {
     private readonly ITenantProvider _tenantProvider;
 
-    public Guid CurrentTenantId => (Guid)_tenantProvider.TenantId;
+    public Guid CurrentTenantId => _tenantProvider.TenantId?.Value ?? Guid.Empty;
 
     public TuColmadoDbContext(DbContextOptions<TuColmadoDbContext> options, ITenantProvider tenantProvider)
         : base(options)
