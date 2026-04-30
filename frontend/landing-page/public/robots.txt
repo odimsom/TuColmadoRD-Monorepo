@@ -1,4 +1,25 @@
-User-agent: *
-Disallow:
+# TuColmadoRD - Search Engine Optimization
 
+# Allow all bots
+User-agent: *
+Allow: /
+
+# Disallow private routes
+Disallow: /auth/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /.env
+Disallow: /node_modules/
+
+# Allow specific crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Sitemap location
 Sitemap: https://app.tucolmadord.com/sitemap.xml
+
+# Crawl delay (optional, in seconds)
+Crawl-delay: 1
