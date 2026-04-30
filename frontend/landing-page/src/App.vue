@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 
 const isScrolled = ref(false)
 const showVideo = ref(false)
-const billingCycle = ref<'monthly' | 'annual'>('monthly')
 const activeFaq = ref<number | null>(null)
 
 const toggleFaq = (index: number) => {
@@ -91,8 +90,8 @@ const faqs = [
           <a :href="webAdminHomeUrl" class="text-slate-400 hover:text-white transition-all text-xs font-black uppercase tracking-widest">
             Iniciar Sesión
           </a>
-          <a :href="webAdminRegisterUrl" class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] text-xs uppercase tracking-widest border border-blue-400/20">
-            Empezar Gratis →
+          <a :href="webAdminRegisterUrl" class="px-5 py-2.5 rounded-lg bg-green-600 hover:bg-green-500 text-white font-black transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] text-xs uppercase tracking-widest border border-green-400/20">
+            Postular →
           </a>
         </div>
       </div>
@@ -106,21 +105,28 @@ const faqs = [
         
         <div class="container mx-auto px-12 relative z-10">
           <div class="max-w-4xl animate-in fade-in slide-in-from-left-12 duration-1000">
-            <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-[0.3em] mb-10 backdrop-blur-md">
-              <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-              Líder en Software para Colmados
+            <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-black uppercase tracking-[0.3em] mb-10 backdrop-blur-md">
+              <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              Programa Piloto - Usuarios Pioneros
             </div>
             <h1 class="text-7xl md:text-[9rem] font-bebas text-white leading-[0.85] mb-10 tracking-tighter uppercase drop-shadow-2xl">
-              El control total <br/> de tu <span class="text-blue-600 drop-shadow-[0_0_30px_rgba(37,99,235,0.5)]">Colmado</span>
+              Tu <span class="text-green-500 drop-shadow-[0_0_30px_rgba(34,197,94,0.5)]">Colmado</span><br/>Sin Costo. <br/>Un Año Completo.
             </h1>
-            <p class="text-xl md:text-2xl text-slate-400 max-w-2xl font-medium leading-relaxed mb-12 opacity-90">
-              Moderniza tu tienda con la tecnología urbana más potente del país. 
-              Factura en segundos, controla tu inventario y elimina el desorden de la libreta.
+            <p class="text-xl md:text-2xl text-slate-400 max-w-2xl font-medium leading-relaxed mb-6 opacity-90">
+              Somos 20 colmaderos construyendo juntos la herramienta perfecta para nuestra realidad. 
+              Sin promesas de corporativo. Con soporte real por WhatsApp.
+            </p>
+            <p class="text-lg md:text-xl text-green-400 max-w-2xl font-semibold mb-8">
+              ✓ 1 año de acceso completo (gratis)
+              <br/>
+              ✓ Soporte humano dominicano
+              <br/>
+              ✓ Tu feedback nos define
             </p>
             <div class="flex flex-wrap gap-4 mb-10">
-              <a :href="webAdminRegisterUrl" class="group relative px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-lg transition-all shadow-[0_0_40px_rgba(37,99,235,0.4)] text-sm uppercase tracking-widest overflow-hidden flex items-center gap-2">
-                <span class="relative z-10">Empezar 14 días gratis</span>
-                <span class="relative z-10 text-blue-300">→</span>
+              <a :href="webAdminRegisterUrl" class="group relative px-8 py-4 bg-green-600 hover:bg-green-500 text-white font-black rounded-lg transition-all shadow-[0_0_40px_rgba(34,197,94,0.4)] text-sm uppercase tracking-widest overflow-hidden flex items-center gap-2">
+                <span class="relative z-10">Postular mi colmado</span>
+                <span class="relative z-10 text-green-300">→</span>
                 <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               </a>
               <a href="#como-funciona" class="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-lg transition-all text-sm uppercase tracking-widest">
@@ -129,16 +135,16 @@ const faqs = [
             </div>
             <!-- Social proof inline -->
             <div class="flex items-center gap-4 flex-wrap">
-              <div class="flex -space-x-2">
-                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 ring-2 ring-[#0f172a] flex items-center justify-center text-[0.55rem] font-black text-white">JP</div>
-                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-red-600 to-red-800 ring-2 ring-[#0f172a] flex items-center justify-center text-[0.55rem] font-black text-white">MA</div>
-                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-green-600 to-green-800 ring-2 ring-[#0f172a] flex items-center justify-center text-[0.55rem] font-black text-white">LR</div>
-                <div class="w-7 h-7 rounded-full bg-[#1e293b] ring-2 ring-[#0f172a] flex items-center justify-center text-[0.55rem] font-black text-slate-400">+</div>
-              </div>
-              <div class="flex items-center gap-1">
-                <span class="icon-[ic--baseline-star] text-amber-400 text-xs"></span>
-                <span class="text-white font-bold text-sm">4.9</span>
-                <span class="text-slate-400 text-xs ml-1">· 200+ colmados activos en RD</span>
+              <div class="flex flex-col gap-3">
+                <div class="flex items-center gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div class="flex items-center gap-2">
+                    <span class="font-black text-green-400 text-lg">6 / 20</span>
+                    <span class="text-sm text-slate-400">colmados confirmados</span>
+                  </div>
+                </div>
+                <div class="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                  <div class="bg-green-500 h-full rounded-full" style="width: 30%"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -253,91 +259,73 @@ const faqs = [
           </div>
         </section>
 
-        <!-- SECCIÓN C: PRECIOS -->
-        <section id="precios" class="max-w-7xl mx-auto mb-48 pt-20 scroll-mt-32">
+        <!-- SECCIÓN C: ACCESO GRATUITO -->
+        <section id="precios" class="max-w-4xl mx-auto mb-48 pt-20 scroll-mt-32">
           <div class="text-center mb-16 px-8">
-            <span class="px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/5 text-blue-400 text-xs font-black uppercase tracking-[0.2em] mb-6 inline-block">PRECIOS TRANSPARENTES</span>
-            <h2 class="text-6xl md:text-8xl font-bebas text-white mb-10 uppercase tracking-widest leading-none">Elige tu plan</h2>
-            
-            <!-- Toggle Mensual/Anual -->
-            <div class="flex items-center justify-center gap-4 mt-8">
-              <span :class="['text-sm font-bold uppercase transition-colors', billingCycle === 'monthly' ? 'text-white' : 'text-slate-500']">Mensual</span>
-              <button 
-                @click="billingCycle = billingCycle === 'monthly' ? 'annual' : 'monthly'"
-                class="w-14 h-7 rounded-full bg-blue-900/40 border border-white/10 relative p-1 flex items-center transition-all"
-              >
-                <div :class="['w-5 h-5 bg-blue-500 rounded-full shadow-lg transition-transform duration-300', billingCycle === 'annual' ? 'translate-x-[28px]' : 'translate-x-0']"></div>
-              </button>
-              <div class="flex items-center gap-2 relative">
-                <span :class="['text-sm font-bold uppercase transition-colors', billingCycle === 'annual' ? 'text-white' : 'text-slate-500']">Anual</span>
-                <span class="absolute left-full ml-2 px-2 py-0.5 bg-green-500 text-[#0f172a] text-[10px] font-black rounded whitespace-nowrap -top-4 shadow-[0_0_15px_rgba(74,222,128,0.3)] animate-bounce">
-                  -20% AHORRO
-                </span>
-              </div>
-            </div>
+            <span class="px-4 py-1.5 rounded-full border border-green-500/30 bg-green-500/5 text-green-400 text-xs font-black uppercase tracking-[0.2em] mb-6 inline-block">TU INVERSIÓN EN TI</span>
+            <h2 class="text-6xl md:text-8xl font-bebas text-white mb-10 uppercase tracking-widest leading-none">RD$0</h2>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            <!-- Básico -->
-            <div class="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 flex flex-col">
-              <h3 class="text-3xl font-bebas text-white mb-2 uppercase tracking-wide">Básico</h3>
-              <p class="text-slate-500 text-sm font-medium mb-8">Para colmados pequeños que quieren organizarse</p>
-              <div class="flex items-baseline gap-1 mb-8">
-                <span class="font-bebas text-5xl text-white">RD${{ billingCycle === 'monthly' ? '990' : '790' }}</span>
-                <span class="text-slate-500 font-bold text-xs uppercase tracking-widest">/mes</span>
-              </div>
-              
-              <ul class="space-y-4 mb-10 flex-grow">
-                <li v-for="f in ['1 caja registradora', 'Hasta 500 productos', 'Control de ventas', 'Cuadre de caja diario', 'Soporte por WhatsApp']" :key="f" class="flex items-center gap-3 text-slate-400 text-sm font-medium">
-                  <span class="icon-[ic--baseline-check-circle] text-blue-500 text-lg"></span>
-                  {{ f }}
-                </li>
-              </ul>
-              <a :href="webAdminRegisterUrl" class="w-full py-4 text-center border-2 border-blue-900/40 hover:border-blue-500/50 rounded-xl text-white font-black uppercase tracking-widest text-xs transition-all">Empezar gratis 14 días</a>
+          <!-- Single Pricing Card -->
+          <div class="relative p-12 md:p-16 rounded-[3rem] bg-gradient-to-br from-green-500/10 via-slate-900/80 to-slate-900/80 border-2 border-green-500/50 shadow-[0_0_60px_rgba(34,197,94,0.2)]">
+            <div class="absolute -top-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-green-500 text-slate-900 rounded-full text-sm font-black uppercase tracking-[0.2em] shadow-xl">
+              PROGRAMA PILOTO
             </div>
 
-            <!-- Avanzado (DESTACADO) -->
-            <div class="p-10 rounded-[2.5rem] bg-[#0F172A] border-2 border-blue-600 shadow-[0_0_40px_rgba(37,99,235,0.2)] transform lg:scale-105 z-10 flex flex-col relative transition-all duration-300 hover:-translate-y-2">
-              <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-600 rounded text-[10px] font-black text-white uppercase tracking-[0.2em] shadow-xl">MÁS POPULAR</div>
-              <h3 class="text-3xl font-bebas text-white mb-2 uppercase tracking-wide">Avanzado</h3>
-              <p class="text-blue-400/80 text-sm font-bold mb-8">Control total del negocio</p>
-              <div class="flex items-baseline gap-1 mb-8">
-                <span class="font-bebas text-5xl text-white">RD${{ billingCycle === 'monthly' ? '1,990' : '1,590' }}</span>
-                <span class="text-slate-500 font-bold text-xs uppercase tracking-widest">/mes</span>
+            <h3 class="text-4xl md:text-5xl font-bebas text-white mb-4 uppercase tracking-wider">Usuario Pionero</h3>
+            <p class="text-lg text-slate-300 mb-12 font-medium">
+              Eres parte de los 20 colmaderos que construyen TuColmadoRD junto a nosotros.
+            </p>
+
+            <div class="space-y-8 mb-16">
+              <div class="flex items-start gap-6">
+                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 text-white font-black text-xl shadow-lg shadow-green-500/50">
+                  ✓
+                </div>
+                <div>
+                  <h4 class="text-xl font-black text-white mb-2">1 año de acceso completo</h4>
+                  <p class="text-slate-400 text-sm">Sin límites de usuarios, facturación, inventario o fiados. Todo incluido hasta Abril 2027.</p>
+                </div>
               </div>
-              
-              <ul class="space-y-4 mb-10 flex-grow">
-                <li v-for="f in ['Hasta 3 cajas', 'Productos ilimitados', 'Control de fiados (la libreta)', 'Reportes por turno y por empleado', 'Inventario en tiempo real', 'Alertas de stock bajo', 'Soporte prioritario 24/7']" :key="f" class="flex items-center gap-3 text-slate-300 text-sm font-bold">
-                  <span class="icon-[ic--baseline-check-circle] text-blue-500 text-lg"></span>
-                  {{ f }}
-                </li>
-              </ul>
-              <a :href="webAdminRegisterUrl" class="w-full py-4 text-center bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-600/30">Empezar gratis 14 días</a>
+
+              <div class="flex items-start gap-6">
+                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 text-white font-black text-xl shadow-lg shadow-green-500/50">
+                  ✓
+                </div>
+                <div>
+                  <h4 class="text-xl font-black text-white mb-2">Soporte dominicano por WhatsApp</h4>
+                  <p class="text-slate-400 text-sm">Hablas con nosotros, no con un bot. Lunes a sábado. Entendemos tu colmado porque somos de aquí.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-6">
+                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 text-white font-black text-xl shadow-lg shadow-green-500/50">
+                  ✓
+                </div>
+                <div>
+                  <h4 class="text-xl font-black text-white mb-2">Tu voz define el producto</h4>
+                  <p class="text-slate-400 text-sm">Los 20 usuarios pioneros deciden qué se construye. Si sugieres una feature y otros colmaderos la necesitan, la hacemos.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-6">
+                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 text-white font-black text-xl shadow-lg shadow-green-500/50">
+                  ✓
+                </div>
+                <div>
+                  <h4 class="text-xl font-black text-white mb-2">Sin tarjeta de crédito ahora</h4>
+                  <p class="text-slate-400 text-sm">No pedimos forma de pago. Cuando se cumpla el año, hablaremos de qué sigue. Puede ser seguir gratis, puede ser precio especial.</p>
+                </div>
+              </div>
             </div>
 
-            <!-- Premium -->
-            <div class="p-10 rounded-[2.5rem] bg-white/[0.02] border border-white/5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 flex flex-col">
-              <h3 class="text-3xl font-bebas text-white mb-2 uppercase tracking-wide">Premium</h3>
-              <p class="text-slate-500 text-sm font-medium mb-8">Para minimarkets y cadenas</p>
-              <div class="flex items-baseline gap-1 mb-8">
-                <span class="font-bebas text-5xl text-white">RD${{ billingCycle === 'monthly' ? '3,490' : '2,790' }}</span>
-                <span class="text-slate-500 font-bold text-xs uppercase tracking-widest">/mes</span>
-              </div>
-              
-              <ul class="space-y-4 mb-10 flex-grow">
-                <li v-for="f in ['Cajas ilimitadas', 'Multi-sucursal', 'App móvil para dueños', 'Reportes avanzados y exportación', 'Integración con proveedores B2B', 'Gerente de cuenta dedicado']" :key="f" class="flex items-center gap-3 text-slate-400 text-sm font-medium">
-                  <span class="icon-[ic--baseline-check-circle] text-blue-500 text-lg"></span>
-                  {{ f }}
-                </li>
-              </ul>
-              <a href="https://wa.me/18296932458" class="w-full py-4 text-center border-2 border-blue-900/40 hover:border-blue-500/50 rounded-xl text-white font-black uppercase tracking-widest text-xs transition-all">Contactar ventas</a>
-            </div>
-          </div>
+            <a :href="webAdminRegisterUrl" class="w-full py-5 text-center bg-green-600 hover:bg-green-500 text-white font-black rounded-xl transition-all text-sm uppercase tracking-widest shadow-[0_10px_30px_rgba(34,197,94,0.3)]">
+              Solicitar mi lugar
+            </a>
 
-          <div class="mt-16 flex flex-wrap justify-center gap-8 text-green-400 font-black text-xs uppercase tracking-[0.2em]">
-            <span class="flex items-center gap-2">✓ 14 DÍAS GRATIS</span>
-            <span class="flex items-center gap-2">✓ SIN TARJETA DE CRÉDITO</span>
-            <span class="flex items-center gap-2">✓ CANCELA CUANDO QUIERAS</span>
+            <p class="text-center text-slate-500 text-xs mt-8 font-medium">
+              Plazas limitadas a 20 colmados. Actualmente 6 confirmados. Se asignan por orden de postulación.
+            </p>
           </div>
         </section>
 
