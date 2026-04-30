@@ -21,25 +21,35 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# 4. Clean up old containers/images to prevent conflicts
+# 4. Clean up old containers and orphaned services
 echo "🧹 Cleaning up old Docker artifacts..."
-docker compose down --remove-orphans || true
+docker compose down --remove-orphans 2>/dev/null || true
 
 # 5. Handle volume migration from Named to Bind-mounts
 echo "📦 Migrating volumes to bind-mount configuration..."
-# Remove old Named volumes that conflict with new bind-mount configuration
-docker volume rm tucolmadord_postgres_data 2>/dev/null || echo "  ℹ️  Old postgres_data volume not found (OK)"
-docker volume rm tucolmadord_mongo_data 2>/dev/null || echo "  ℹ️  Old mongo_data volume not found (OK)"
+
+# Remove ALL tucolmadord-related Named volumes (more aggressive cleanup)
+echo "  Removing conflicting Named volumes..."
+docker volume ls -q | grep -E "^tucolmadord" | while read vol; do
+  echo "    Removing volume: $vol"
+  docker volume rm "$vol" 2>/dev/null || true
+done
+
+# Force remove any lingering volumes with docker volume prune
+docker volume prune -f --filter "label!=keep" 2>/dev/null || true
 
 # Ensure bind-mount directories exist with proper permissions
+echo "  Creating bind-mount directories..."
 mkdir -p /var/lib/tucolmadord/postgres_data
 mkdir -p /var/lib/tucolmadord/mongo_data
 chmod 755 /var/lib/tucolmadord
 chmod 755 /var/lib/tucolmadord/postgres_data
 chmod 755 /var/lib/tucolmadord/mongo_data
+echo "  ✅ Bind-mount directories ready"
 
-# System cleanup (without --volumes, protecting any data)
-docker system prune -f || true
+# System cleanup (without --volumes, protecting any data in bind-mounts)
+echo "  Running system prune..."
+docker system prune -f 2>/dev/null || true
 
 # 6. Run docker compose with rebuild
 echo "🐳 Rebuilding and starting Docker services..."
