@@ -152,6 +152,7 @@ services:
     restart: unless-stopped
     command:
       - "--log.level=DEBUG"
+      - "--api.insecure=true" # Enable dashboard for debugging
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
@@ -159,13 +160,14 @@ services:
       # Global HTTP to HTTPS redirection
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      # Let's Encrypt - Using TLS Challenge for better reliability
+      # Let's Encrypt - Using TLS Challenge
       - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
       - "443:443"
+      - "8084:8080" # Dashboard port (DEBUG ONLY)
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./letsencrypt:/letsencrypt"
