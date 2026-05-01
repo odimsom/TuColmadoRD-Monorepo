@@ -77,6 +77,7 @@ services:
       EcfGenerator__BaseUrl: http://ecf-generator:5000
       AuthApi__BaseUrl: http://auth:3000
       Outbox__CloudSyncBaseUrl: http://auth:3000
+      JwtSettings__Secret: ${JWT_SECRET}
     depends_on:
       postgres:
         condition: service_healthy

@@ -19,7 +19,6 @@ public static class SalesEndpoints
 
         group.MapPost(string.Empty, CreateSale)
             .WithName("CreateSale")
-            .AllowAnonymous()
             .WithOpenApi();
 
         group.MapPost("/{saleId:guid}/void", VoidSale)

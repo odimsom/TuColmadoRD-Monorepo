@@ -42,12 +42,10 @@ public static class InventoryEndpoints
 
         group.MapGet("/products", GetProductsPaged)
             .WithName("GetProductsPaged")
-            .AllowAnonymous()
             .WithOpenApi();
 
         group.MapGet("/catalog", GetCatalog)
             .WithName("GetCatalog")
-            .AllowAnonymous()
             .WithOpenApi();
 
         group.MapGet("/products/low-stock", GetLowStock)
