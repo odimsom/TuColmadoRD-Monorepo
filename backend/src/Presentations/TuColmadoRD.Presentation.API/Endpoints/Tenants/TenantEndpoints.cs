@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using TuColmadoRD.Presentation.API.Extensions;
 
 namespace TuColmadoRD.Presentation.API.Endpoints.Tenants;
@@ -29,6 +30,7 @@ public static class TenantEndpoints
     /// </summary>
     private static async Task<IResult> NotifyNewTenant(
         CreateTenantNotificationRequest request,
+        TuColmadoRD.Infrastructure.Persistence.Contexts.TuColmadoDbContext dbContext,
         ILogger<Program> logger,
         CancellationToken ct)
     {
@@ -38,12 +40,31 @@ public static class TenantEndpoints
             request.Name,
             request.OwnerEmail);
 
-        // TODO: Implement tenant initialization logic here
-        // Examples:
-        // - Create default settings for the tenant
-        // - Initialize default catalog/products
-        // - Set up roles and permissions
-        // - Send welcome email
+        if (Guid.TryParse(request.TenantId, out var tenantIdGuid))
+        {
+            var tenantId = TuColmadoRD.Core.Domain.ValueObjects.TenantIdentifier.Validate(tenantIdGuid).Result;
+            
+            // 1. Create Default Tenant Profile
+            var existingProfile = await dbContext.Set<TuColmadoRD.Core.Domain.Entities.System.TenantProfile>()
+                .AnyAsync(p => p.TenantId.Value == tenantIdGuid, ct);
+
+            if (!existingProfile)
+            {
+                var profileResult = TuColmadoRD.Core.Domain.Entities.System.TenantProfile.Create(
+                    tenantId,
+                    request.Name,
+                    "Dirección pendiente de configurar",
+                    null,
+                    request.OwnerEmail);
+
+                if (profileResult.IsGood && profileResult.TryGetResult(out var profile))
+                {
+                    dbContext.Set<TuColmadoRD.Core.Domain.Entities.System.TenantProfile>().Add(profile!);
+                    await dbContext.SaveChangesAsync(ct);
+                    logger.LogInformation("✅ Default TenantProfile created for {TenantId}", request.TenantId);
+                }
+            }
+        }
 
         var response = new TenantNotificationResponse(
             request.TenantId,
