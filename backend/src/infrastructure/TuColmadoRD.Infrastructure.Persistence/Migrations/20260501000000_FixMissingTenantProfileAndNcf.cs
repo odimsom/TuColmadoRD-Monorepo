@@ -6,8 +6,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace TuColmadoRD.Infrastructure.Persistence.Migrations
 {
-    [DbContext(typeof(TuColmadoRD.Infrastructure.Persistence.Contexts.TuColmadoDbContext))]
-    [Migration("20260501000000_FixMissingTenantProfileAndNcf")]
     public partial class FixMissingTenantProfileAndNcf : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
