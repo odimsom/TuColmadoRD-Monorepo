@@ -1,4 +1,5 @@
 using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -10,6 +11,7 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
     /// - Sales.Sales: NcfNumber (B01/B02) column
     /// - System.TenantProfiles: business name, RNC, address for fiscal receipts (Norma 06-18)
     /// </summary>
+    [Migration("20260419000001_AddNcfAndTenantProfile")]
     public partial class AddNcfAndTenantProfile : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
