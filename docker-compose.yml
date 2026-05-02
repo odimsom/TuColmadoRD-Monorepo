@@ -160,17 +160,15 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      # Global HTTP to HTTPS redirection
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      # Let's Encrypt - Using TLS Challenge
       - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
       - "443:443"
-      - "8084:8080" # Dashboard port (DEBUG ONLY)
+      - "8084:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./letsencrypt:/letsencrypt"
@@ -196,6 +194,12 @@ services:
       - traefik.enable=true
       - traefik.http.routers.tucolmadord-landing.rule=Host(`${PUBLIC_LANDING_DOMAIN}`) || Host(`www.${PUBLIC_LANDING_DOMAIN}`)
       - traefik.http.routers.tucolmadord-landing.entrypoints=websecure
+      - traefik.http.routers.tucolmadord-landing.priority=1
+      
+      - traefik.http.routers.tucolmadord-sitemap.rule=(Host(`${PUBLIC_LANDING_DOMAIN}`) || Host(`www.${PUBLIC_LANDING_DOMAIN}`)) && Path(`/sitemap.xml`)
+      - traefik.http.routers.tucolmadord-sitemap.entrypoints=websecure
+      - traefik.http.routers.tucolmadord-sitemap.priority=10
+      
       - traefik.http.routers.tucolmadord-landing.tls=true
       - traefik.http.routers.tucolmadord-landing.tls.certresolver=letsencrypt
       - traefik.http.services.tucolmadord-landing.loadbalancer.server.port=80
