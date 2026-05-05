@@ -20,14 +20,14 @@ public sealed class JwtTenantProvider : ITenantProvider
             var raw = _httpContextAccessor.HttpContext?
                 .User.FindFirst("tenant_id")?.Value;
 
-            if (Guid.TryParse(raw, out var id))
+            if (Guid.TryParse(raw, out var id) && id != Guid.Empty)
             {
                 var result = TenantIdentifier.Validate(id);
                 if (result.IsGood && result.TryGetResult(out var tid))
                     return tid!;
             }
 
-            return TenantIdentifier.Validate(Guid.Empty).TryGetResult(out var empty) ? empty! : default!;
+            return TenantIdentifier.Empty;
         }
     }
 

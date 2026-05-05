@@ -1,0 +1,36 @@
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
+    user: root
+    environment:
+      JENKINS_OPTS: "--httpPort=8080"
+      # runSetupWizard habilitado → genera initialAdminPassword para el primer acceso
+    ports:
+      # Solo accesible desde el propio VPS (para setup y health checks).
+      # El acceso público va por Traefik → jenkins.tucolmadord.com
+      # Puerto 8090 para no chocar con la API de la app (que usa 8080).
+      - "127.0.0.1:8090:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - traefik-net
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.jenkins.rule=Host(`jenkins.tucolmadord.com`)
+      - traefik.http.routers.jenkins.entrypoints=websecure
+      - traefik.http.routers.jenkins.tls=true
+      - traefik.http.routers.jenkins.tls.certresolver=letsencrypt
+      - traefik.http.services.jenkins.loadbalancer.server.port=8080
+      - traefik.http.middlewares.jenkins-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+
+networks:
+  traefik-net:
+    external: true
+    name: tucolmadord_tucolmadord-network
+
+volumes:
+  jenkins_home:
+    driver: local

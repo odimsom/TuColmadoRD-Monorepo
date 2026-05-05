@@ -30,8 +30,8 @@ export class DownloadService {
   private http = inject(HttpClient);
   // GitHub API — no requiere token para repos públicos
   private readonly releasesUrls = [
-    'https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases',
-    'https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases'
+    'https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases',
+    'https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases'
   ];
 
   getLatestTestRelease(): Observable<DownloadInfo | null> {

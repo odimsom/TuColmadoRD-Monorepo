@@ -1,8 +1,10 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TuColmadoRD.Infrastructure.CrossCutting;
 using TuColmadoRD.Infrastructure.IOC.ServiceRegistrations;
+using TuColmadoRD.Infrastructure.Persistence.Contexts;
 using TuColmadoRD.Presentation.API.Endpoints.Customers;
 using TuColmadoRD.Presentation.API.Endpoints.Expenses;
 using TuColmadoRD.Presentation.API.Endpoints.Inventory;
@@ -11,6 +13,7 @@ using TuColmadoRD.Presentation.API.Endpoints.Sales;
 using TuColmadoRD.Presentation.API.Endpoints.Sales.Shifts;
 using TuColmadoRD.Presentation.API.Endpoints.Settings;
 using TuColmadoRD.Presentation.API.Endpoints.Logistics;
+using TuColmadoRD.Presentation.API.Endpoints.Tenants;
 
 namespace TuColmadoRD.Presentation.API;
 
@@ -67,11 +70,25 @@ public static class CoreApiHostBuilder
         builder.Services.AddAuthorization();
 
         builder.Services.AddGlobalServices(builder.Configuration);
-        // Cloud API uses JWT-based tenant resolution, not device file
         builder.Services.AddCloudTenancy();
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CoreApiHostBuilder).Assembly));
 
         var app = builder.Build();
+
+        // Apply pending migrations automatically on startup
+        try
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<TuColmadoDbContext>();
+                dbContext.Database.Migrate();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log but don't crash - database might not be available during startup
+            Console.WriteLine($"Warning: Database migration failed during startup: {ex.Message}");
+        }
 
         app.UseSwagger();
         if (isLocal || app.Environment.IsDevelopment())
@@ -79,7 +96,8 @@ public static class CoreApiHostBuilder
             app.UseSwaggerUI();
         }
 
-        if (!isLocal)
+        var isContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+        if (!isLocal && !isContainer)
         {
             app.UseHttpsRedirection();
         }
@@ -89,6 +107,7 @@ public static class CoreApiHostBuilder
 
         app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
+        app.MapTenantEndpoints();
         app.MapInventoryEndpoints();
         app.MapPurchasingEndpoints();
         app.MapCustomerEndpoints();

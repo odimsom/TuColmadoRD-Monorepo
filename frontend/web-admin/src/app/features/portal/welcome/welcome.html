@@ -1,26 +1,120 @@
-<section class="max-w-5xl mx-auto px-6 py-12 md:py-20">
-  <div class="mb-10 text-center">
-    <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight">Bienvenido a TuColmadoRD</h1>
-    <p class="text-slate-400 mt-3">Elige como quieres continuar con tu cuenta activa.</p>
+<section class="max-w-6xl mx-auto px-6 py-12 md:py-20">
+  <!-- Beta Banner -->
+  <div class="mb-12 p-6 md:p-8 rounded-2xl border-2 border-blue-500/50 bg-blue-500/5 backdrop-blur-sm">
+    <div class="flex items-center gap-3 mb-3">
+      <span class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></span>
+      <h2 class="text-2xl md:text-3xl font-black text-white">Estamos en etapa de lanzamiento</h2>
+    </div>
+    <p class="text-slate-400 text-sm md:text-base">
+      Buscamos a nuestros primeros 20 clientes pioneros para revolucionar el barrio. Tu retroalimentación es lo que hace esto posible.
+    </p>
   </div>
 
-  <div class="grid gap-6 md:grid-cols-2">
-    <article class="rounded-2xl border border-white/10 bg-slate-900/60 p-8">
-      <h2 class="text-2xl font-bold text-white">Portal Web</h2>
-      <p class="text-slate-400 mt-3">Gestiona inventario, reportes y configuracion desde la nube.</p>
-      <a routerLink="/portal/dashboard" class="btn btn-primary mt-8 w-full">Entrar al portal</a>
-    </article>
-
-    <article class="rounded-2xl border border-white/10 bg-slate-950/80 p-8">
-      <h2 class="text-2xl font-bold text-white">App Local (.exe)</h2>
-      <p class="text-slate-400 mt-3">La aplicación de escritorio se entrega directamente con tu licencia activa.</p>
-      <div class="mt-8 flex items-start gap-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
-        <span class="text-blue-400 mt-0.5">ℹ</span>
-        <p class="text-sm text-slate-300">Para obtener el instalador, contacta a soporte por WhatsApp con tu número de licencia.</p>
+  <!-- Collaboration Panel -->
+  <div class="grid gap-8 md:grid-cols-2 mb-16">
+    <!-- Report Issues / Suggest Features -->
+    <article class="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-slate-900/60 p-10 hover:border-blue-500/60 transition-all shadow-lg shadow-blue-500/5">
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/50">
+          <span class="text-3xl">💡</span>
+        </div>
+        <div>
+          <h3 class="text-2xl md:text-3xl font-black text-white">Reportar o Sugerir</h3>
+          <p class="text-slate-500 text-sm">Algo no funciona o tienes una idea?</p>
+        </div>
       </div>
-      <a href="https://wa.me/18296932458" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm mt-6 text-xs text-slate-400 hover:text-white">
-        Contactar soporte →
+      <p class="text-slate-400 mb-8 leading-relaxed">
+        Los reportes de errores y sugerencias de los usuarios pioneros son lo que guía el desarrollo de TuColmadoRD. Si algo falla o crees que hace falta una feature, cuéntanos.
+      </p>
+      <a 
+        href="https://wa.me/18296932458?text=Tengo%20una%20sugerencia%20para%20TuColmadoRD" 
+        target="_blank" 
+        class="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-sm transition-all shadow-lg shadow-blue-600/30"
+      >
+        <span class="text-xl">📤</span>
+        Reportar en WhatsApp
       </a>
     </article>
+
+    <!-- Support Widget -->
+    <article class="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-slate-900/60 p-10 hover:border-blue-500/60 transition-all shadow-lg shadow-blue-500/5">
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/50">
+          <span class="text-3xl">💬</span>
+        </div>
+        <div>
+          <h3 class="text-2xl md:text-3xl font-black text-white">Hablar con Soporte</h3>
+          <p class="text-slate-500 text-sm">Soporte humano, no bot</p>
+        </div>
+      </div>
+      <p class="text-slate-400 mb-8 leading-relaxed">
+        Tenemos gente aquí que entiende cómo funciona un colmado. Si tienes una pregunta o necesitas ayuda, no esperes. Chatea directo por WhatsApp.
+      </p>
+      <div class="space-y-3">
+        <a 
+          href="https://wa.me/18296932458" 
+          target="_blank" 
+          class="flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-sm transition-all shadow-lg shadow-blue-600/30 justify-center"
+        >
+          <span class="text-2xl">📱</span>
+          Abrir WhatsApp
+        </a>
+        <p class="text-xs text-slate-500 text-center">Respuesta típica en menos de 2 horas · Lunes a sábado</p>
+      </div>
+    </article>
+  </div>
+
+  <!-- This Week's Roadmap -->
+  <div class="p-10 md:p-12 rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-slate-900/40 backdrop-blur-sm">
+    <div class="flex items-center gap-3 mb-8">
+      <span class="text-3xl">🚀</span>
+      <h3 class="text-3xl md:text-4xl font-black text-white">Lo que estamos construyendo esta semana</h3>
+    </div>
+    
+    <div class="grid gap-4 md:grid-cols-3">
+      <div class="p-6 rounded-xl bg-slate-900/60 border border-white/10">
+        <div class="text-2xl mb-3">✅</div>
+        <h4 class="font-bold text-white mb-2">Mejora de performance</h4>
+        <p class="text-sm text-slate-400">La app POS será más rápida al procesar ventas. Especialmente importante si tienes mucho tráfico.</p>
+      </div>
+      <div class="p-6 rounded-xl bg-slate-900/60 border border-white/10">
+        <div class="text-2xl mb-3">🔄</div>
+        <h4 class="font-bold text-white mb-2">Reporte de clientes</h4>
+        <p class="text-sm text-slate-400">Ver quién son tus 10 mejores clientes y cuánto gastan. Datos reales para tomar decisiones.</p>
+      </div>
+      <div class="p-6 rounded-xl bg-slate-900/60 border border-white/10">
+        <div class="text-2xl mb-3">💾</div>
+        <h4 class="font-bold text-white mb-2">Backup automático</h4>
+        <p class="text-sm text-slate-400">Tus datos se respaldan solos. Si pasa algo, tu información sigue segura.</p>
+      </div>
+    </div>
+
+    <p class="text-slate-500 text-sm mt-8 pt-8 border-t border-white/10">
+      Este roadmap cambia cada semana basado en lo que necesitan los colmados que usan TuColmadoRD. ¿Necesitas algo urgente? Dilo en WhatsApp.
+    </p>
+  </div>
+
+  <!-- Quick Links to App -->
+  <div class="mt-16 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <a routerLink="/portal/dashboard" class="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-blue-500/50 transition-all group text-center">
+      <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">📊</div>
+      <h4 class="font-bold text-white mb-1">Dashboard</h4>
+      <p class="text-xs text-slate-400">Resumen de hoy</p>
+    </a>
+    <a routerLink="/portal/sales" class="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-green-500/50 transition-all group text-center">
+      <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">💰</div>
+      <h4 class="font-bold text-white mb-1">Ventas</h4>
+      <p class="text-xs text-slate-400">Abrir POS</p>
+    </a>
+    <a routerLink="/portal/inventory" class="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-amber-500/50 transition-all group text-center">
+      <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">📦</div>
+      <h4 class="font-bold text-white mb-1">Inventario</h4>
+      <p class="text-xs text-slate-400">Tus productos</p>
+    </a>
+    <a routerLink="/portal/customers" class="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-red-500/50 transition-all group text-center">
+      <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">👥</div>
+      <h4 class="font-bold text-white mb-1">Clientes</h4>
+      <p class="text-xs text-slate-400">Fiados e info</p>
+    </a>
   </div>
 </section>

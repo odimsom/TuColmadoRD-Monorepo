@@ -5,10 +5,6 @@ using TuColmadoRD.Core.Domain.Base;
 using TuColmadoRD.Core.Domain.Entities.Audit;
 using TuColmadoRD.Core.Domain.Entities.System;
 using System.Reflection;
-using Microsoft.EntityFrameworkCore;
-using TuColmadoRD.Core.Application.Interfaces.Tenancy;
-using TuColmadoRD.Core.Domain.Base;
-using TuColmadoRD.Core.Domain.Entities.Audit;
 using TuColmadoRD.Core.Domain.Entities.Customers;
 using TuColmadoRD.Core.Domain.Entities.Fiscal;
 using TuColmadoRD.Core.Domain.Entities.HumanResources;
@@ -24,7 +20,7 @@ public class TuColmadoDbContext : DbContext
 {
     private readonly ITenantProvider _tenantProvider;
 
-    public Guid CurrentTenantId => (Guid)_tenantProvider.TenantId;
+    public Guid CurrentTenantId => _tenantProvider.TenantId?.Value ?? Guid.Empty;
 
     public TuColmadoDbContext(DbContextOptions<TuColmadoDbContext> options, ITenantProvider tenantProvider)
         : base(options)

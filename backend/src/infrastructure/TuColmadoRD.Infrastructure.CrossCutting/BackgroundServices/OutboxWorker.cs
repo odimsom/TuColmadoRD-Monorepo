@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Npgsql;
 using TuColmadoRD.Core.Application.Handlers.Sync;
 using TuColmadoRD.Core.Application.Interfaces.Infrastructure.CrossCutting.Network;
 using TuColmadoRD.Infrastructure.CrossCutting.Configuration;
@@ -43,12 +44,29 @@ public class OutboxWorker : BackgroundService
                 using var scope = _serviceProvider.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<TuColmadoDbContext>();
 
-                var pendingMessageIds = await dbContext.OutboxMessages
-                    .Where(m => m.ProcessedAt == null)
-                    .OrderBy(m => m.CreatedAt)
-                    .Take(options.BatchSize)
-                    .Select(m => m.Id)
-                    .ToListAsync(stoppingToken);
+                List<Guid> pendingMessageIds;
+                
+                try
+                {
+                    pendingMessageIds = await dbContext.OutboxMessages
+                        .Where(m => m.ProcessedAt == null)
+                        .OrderBy(m => m.CreatedAt)
+                        .Take(options.BatchSize)
+                        .Select(m => m.Id)
+                        .ToListAsync(stoppingToken);
+                }
+                catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P01") // Table doesn't exist
+                {
+                    _logger.LogWarning("OutboxMessages table not found. Database migrations may still be running...");
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    continue;
+                }
+
+                if (!pendingMessageIds.Any())
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(options.PollingIntervalSeconds), stoppingToken);
+                    continue;
+                }
 
                 foreach (var messageId in pendingMessageIds)
                 {
