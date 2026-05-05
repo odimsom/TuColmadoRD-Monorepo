@@ -220,7 +220,11 @@
             <div class="flex items-center gap-1.5 shrink-0">
               <button (click)="setQuantity(i, item.quantity - 1)"
                 class="w-7 h-7 rounded-lg flex items-center justify-center bg-white/[0.06] hover:bg-red-500/20 hover:text-red-400 text-sm font-bold transition-colors">−</button>
-              <span class="w-8 text-center text-sm font-black text-white tabular-nums">{{ item.quantity }}</span>
+              <span class="w-10 text-center text-sm font-black text-white tabular-nums">
+                {{ item.quantity | number:(item.unitTypeId === 2 || item.unitTypeId === 3 ? '1.0-3' : '1.0-0') }}
+                @if (item.unitTypeId === 2) { <span class="text-[0.55rem] text-slate-500">lb</span> }
+                @else if (item.unitTypeId === 3) { <span class="text-[0.55rem] text-slate-500">L</span> }
+              </span>
               <button (click)="setQuantity(i, item.quantity + 1)"
                 class="w-7 h-7 rounded-lg flex items-center justify-center bg-white/[0.06] hover:bg-emerald-500/20 hover:text-emerald-400 text-sm font-bold transition-colors">+</button>
             </div>
