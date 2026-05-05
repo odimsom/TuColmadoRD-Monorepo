@@ -1,94 +1,16 @@
-name: CI - QA → Main
+name: CI - QA → Main (DESACTIVADO — migrado a Jenkins)
 
+# Desactivado: Jenkins maneja este pipeline via Jenkinsfile (rama qa)
+# Para reactivar temporalmente cambia workflow_dispatch por push: branches: [qa]
 on:
-  push:
-    branches:
-      - qa
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  test-dotnet:
-    name: .NET Tests
+  _disabled:
+    name: Este workflow está desactivado
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Restore dependencies
-        working-directory: ./backend
-        run: dotnet restore TuColmadoRD.slnx
-
-      - name: Build solution
-        working-directory: ./backend
-        run: dotnet build TuColmadoRD.slnx --configuration Release --no-restore
-
-      - name: Run tests
-        working-directory: ./backend
-        run: dotnet test TuColmadoRD.slnx --configuration Release --no-build --verbosity normal
-
-  test-auth:
-    name: Auth Service Tests (Jest)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install pnpm
-        run: npm install -g pnpm
-
-      - name: Install dependencies
-        working-directory: ./auth
-        run: pnpm install
-
-      - name: Run tests
-        working-directory: ./auth
-        run: pnpm test
-
-  test-frontend:
-    name: Frontend Tests (Angular)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install dependencies
-        working-directory: ./frontend/web-admin
-        run: npm ci
-
-      - name: Run unit tests
-        working-directory: ./frontend/web-admin
-        run: npx ng test
-        env:
-          CI: 'true'
-
-  promote-to-main:
-    name: Promote qa → main
-    needs: [test-dotnet, test-auth, test-frontend]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure git
-        run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-
-      - name: Push to main
-        run: git push origin ${{ github.sha }}:refs/heads/main
+      - run: echo "CI/CD migrado a Jenkins. Ver Jenkinsfile en la raíz del repo."

@@ -1,4 +1,7 @@
-name: CD - Deploy to Production
+name: CD - Build & Attach Windows Installer
+
+# Jenkins (Jenkinsfile) crea la release vX.Y.Z en GitHub.
+# Este workflow solo construye el instalador .exe y lo adjunta a esa release.
 
 on:
   push:
@@ -6,55 +9,20 @@ on:
       - main
 
 concurrency:
-  group: production-deploy
+  group: installer-build
   cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
-  deploy:
-    name: Deploy to VPS
-    runs-on: self-hosted
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Sync code to /app/tucolmadord
-        run: |
-          sudo rsync -a --delete \
-            --exclude='.env' \
-            --exclude='letsencrypt/' \
-            --exclude='*.log' \
-            --exclude='.git/' \
-            --chown=root:root \
-            ./ /app/tucolmadord/
-
-      - name: Deploy with Docker Compose
-        working-directory: /app/tucolmadord
-        run: |
-          sudo bash deploy-production.sh
-
-      - name: Prune old Docker images
-        run: docker image prune -f
-
-      - name: Deployment summary
-        run: |
-          echo "### Deployed to Production" >> $GITHUB_STEP_SUMMARY
-          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- By: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- URL: https://${{ vars.PUBLIC_WEB_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
-
   build-installer:
-    name: Build & Release Desktop App
+    name: Build & Attach Installer to Release
     runs-on: windows-latest
 
     steps:
       - name: Checkout monorepo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -76,48 +44,75 @@ jobs:
         working-directory: ./frontend/web-admin
         run: npm ci
 
-      - name: Resolve production version
+      - name: Resolve version from package.json
         id: vars
         run: |
           $package = Get-Content ./frontend/package.json | ConvertFrom-Json
           $version = $package.version
-          "APP_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "app_version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "APP_VERSION=$version"   | Out-File -FilePath $env:GITHUB_ENV -Append
+          "app_version=$version"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "tag_name=v$version"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         shell: pwsh
 
       - name: Build desktop + installer
         run: |
-          $env:RELEASE_TYPE = "production"
-          $env:APP_VERSION = "${{ steps.vars.outputs.app_version }}"
-          $env:TU_COLMADORD_ROOT = "${{ github.workspace }}"
+          $env:RELEASE_TYPE       = "production"
+          $env:APP_VERSION        = "${{ steps.vars.outputs.app_version }}"
+          $env:TU_COLMADORD_ROOT  = "${{ github.workspace }}"
           Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
           & "${{ github.workspace }}/frontend/scripts/build-desktop.ps1"
         shell: pwsh
 
-      - name: Verify installer
+      - name: Verify installer exists
         run: |
           $installerDir = Join-Path $env:GITHUB_WORKSPACE "backend/publish/installer"
           if (-not (Test-Path $installerDir)) {
             Write-Error "Installer directory not found: $installerDir"
             exit 1
           }
-
           $exe = Get-ChildItem -Path $installerDir -Filter "*.exe" -File | Select-Object -First 1
           if (-not $exe) {
             Write-Error "No installer .exe found in $installerDir"
             exit 1
           }
-
-          Write-Host "Installer found: $($exe.FullName)"
+          Write-Host "Installer: $($exe.FullName)"
         shell: pwsh
 
-      - name: Create GitHub Release
+      # Espera a que Jenkins cree la release antes de adjuntar el .exe.
+      # Jenkins puede tardar varios minutos en tests + deploy + release.
+      - name: Wait for Jenkins release to exist
+        run: |
+          $tag  = "${{ steps.vars.outputs.tag_name }}"
+          $repo = "odimsom/TuColmadoRD-Monorepo"
+          $url  = "https://api.github.com/repos/$repo/releases/tags/$tag"
+          $headers = @{ Authorization = "token ${{ secrets.GITHUB_TOKEN }}" }
+
+          Write-Host "Esperando release $tag en GitHub..."
+          for ($i = 1; $i -le 30; $i++) {
+            try {
+              $resp = Invoke-RestMethod -Uri $url -Headers $headers -ErrorAction Stop
+              Write-Host "✅ Release encontrada (intento $i): $($resp.html_url)"
+              break
+            } catch {
+              if ($i -eq 30) {
+                Write-Host "⚠️  Release no encontrada después de 5 minutos — creando una nueva..."
+              } else {
+                Write-Host "  Intento $i/30 — esperando 10s..."
+                Start-Sleep -Seconds 10
+              }
+            }
+          }
+        shell: pwsh
+
+      # Adjunta el .exe a la release que Jenkins creó.
+      # allow_updates:true → si la release ya tiene el .exe, lo reemplaza.
+      - name: Attach installer to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.vars.outputs.app_version }}
-          name: TuColmadoRD v${{ steps.vars.outputs.app_version }} - Production Release
+          tag_name: ${{ steps.vars.outputs.tag_name }}
+          name: TuColmadoRD ${{ steps.vars.outputs.tag_name }}
           prerelease: false
-          files: |
-            backend/publish/installer/*.exe
+          allow_updates: true
+          files: backend/publish/installer/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
