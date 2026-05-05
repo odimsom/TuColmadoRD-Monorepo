@@ -236,7 +236,7 @@ export class Inventory implements OnInit {
     }
     this.saving.set(true);
     const reason = this.adjustType() === 'compra'
-      ? `Compra de ${v.delta} ${product.unitTypeName ?? 'unidades'} de ${product.name}`
+      ? `Compra de ${v.delta} ${this.unitTypeLabel(product.unitTypeId)} de ${product.name}`
       : v.reason;
     const req: AdjustStockRequest = { delta: v.delta, reason };
     this.inventoryService.adjustStock(product.productId, req).subscribe({
@@ -276,10 +276,18 @@ export class Inventory implements OnInit {
   readonly unitTypes = [
     { id: 1, name: 'Unidad' },
     { id: 2, name: 'Libra' },
-    { id: 3, name: 'Kilogramo' },
-    { id: 4, name: 'Litro' },
-    { id: 5, name: 'Galón' },
-    { id: 6, name: 'Caja' },
-    { id: 7, name: 'Docena' },
+    { id: 3, name: 'Litro' },
+    { id: 4, name: 'Caja' },
   ];
+
+  private static readonly UNIT_LABELS: Record<number, string> = {
+    1: 'Unidad',
+    2: 'Libra',
+    3: 'Litro',
+    4: 'Caja',
+  };
+
+  unitTypeLabel(id: number): string {
+    return Inventory.UNIT_LABELS[id] ?? 'Unidad';
+  }
 }

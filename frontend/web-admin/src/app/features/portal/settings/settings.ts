@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { SettingsService, TenantProfileDto } from '../../../core/services/settings.service';
 import { RncPipe, RdPhonePipe } from '../../../core/pipes';
 
@@ -13,6 +14,7 @@ import { RncPipe, RdPhonePipe } from '../../../core/pipes';
 export class Settings implements OnInit {
   private settingsService = inject(SettingsService);
   private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   loading = signal(true);
   saving = signal(false);
@@ -69,9 +71,14 @@ export class Settings implements OnInit {
     }).subscribe({
       next: () => {
         this.saving.set(false);
+        const wasNew = this.isNewProfile();
         this.isNewProfile.set(false);
-        this.successMsg.set('Perfil guardado correctamente.');
-        setTimeout(() => this.successMsg.set(null), 4000);
+        if (wasNew) {
+          this.router.navigate(['/portal/dashboard']);
+        } else {
+          this.successMsg.set('Perfil guardado correctamente.');
+          setTimeout(() => this.successMsg.set(null), 4000);
+        }
       },
       error: (err) => {
         this.saving.set(false);

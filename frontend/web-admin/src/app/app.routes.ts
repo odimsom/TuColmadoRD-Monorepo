@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { desktopRegistrationGuard } from './core/guards/desktop-registration.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { businessSetupGuard } from './core/guards/business-setup.guard';
 
 export const routes: Routes = [
   {
@@ -38,6 +39,7 @@ export const routes: Routes = [
     path: 'portal',
     loadComponent: () => import('./layouts/portal-layout/portal-layout').then(m => m.PortalLayout),
     canActivate: [authGuard, roleGuard('Owner', 'Admin')],
+    canActivateChild: [businessSetupGuard],
     children: [
       {
         path: 'welcome',
