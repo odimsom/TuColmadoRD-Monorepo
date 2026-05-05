@@ -6,7 +6,12 @@ services:
     user: root
     environment:
       JENKINS_OPTS: "--httpPort=8080"
-      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+      # runSetupWizard habilitado → genera initialAdminPassword para el primer acceso
+    ports:
+      # Solo accesible desde el propio VPS (para setup y health checks).
+      # El acceso público va por Traefik → jenkins.tucolmadord.com
+      # Puerto 8090 para no chocar con la API de la app (que usa 8080).
+      - "127.0.0.1:8090:8080"
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock

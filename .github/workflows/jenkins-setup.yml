@@ -99,7 +99,7 @@ jobs:
         run: |
           echo "Esperando que Jenkins inicie (máx. 3 minutos)..."
           for i in $(seq 1 36); do
-            if curl -sf http://localhost:8080/login > /dev/null 2>&1; then
+            if curl -sf http://localhost:8090/login > /dev/null 2>&1; then
               echo "✅ Jenkins listo (intento $i)"
               break
             fi
@@ -115,7 +115,7 @@ jobs:
       # ── 7. Instalar plugins ───────────────────────────────────────────────
       - name: Install Jenkins plugins
         run: |
-          curl -sf http://localhost:8080/jnlpJars/jenkins-cli.jar -o /tmp/jenkins-cli.jar
+          curl -sf http://localhost:8090/jnlpJars/jenkins-cli.jar -o /tmp/jenkins-cli.jar
 
           ADMIN_PASS=$(docker exec jenkins \
             cat /var/jenkins_home/secrets/initialAdminPassword 2>/dev/null || echo "")
@@ -125,7 +125,7 @@ jobs:
           else
             echo "Instalando plugins..."
             java -jar /tmp/jenkins-cli.jar \
-              -s http://localhost:8080 \
+              -s http://localhost:8090 \
               -auth "admin:${ADMIN_PASS}" \
               install-plugin \
                 git \
@@ -162,7 +162,7 @@ jobs:
           echo "   Tipo: A | Nombre: jenkins | IP: 177.7.48.169 | TTL: 14400"
           echo ""
           echo "📌 PASO 2 — Accede a Jenkins:"
-          echo "   Ahora mismo:  http://177.7.48.169:8080"
+          echo "   Ahora mismo:  http://177.7.48.169:8090"
           echo "   Tras el DNS:  https://jenkins.tucolmadord.com"
           echo ""
           echo "📌 PASO 3 — Contraseña inicial:"
