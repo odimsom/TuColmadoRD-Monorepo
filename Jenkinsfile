@@ -30,11 +30,7 @@ pipeline {
                         -v "${WORKSPACE}/backend:/workspace" \
                         -w /workspace \
                         mcr.microsoft.com/dotnet/sdk:10.0-preview \
-                        bash -c "
-                            dotnet restore TuColmadoRD.slnx &&
-                            dotnet build TuColmadoRD.slnx -c Release --no-restore &&
-                            dotnet test TuColmadoRD.slnx -c Release --no-build --verbosity normal
-                        "
+                        bash -c "dotnet restore && dotnet build -c Release --no-restore && dotnet test -c Release --no-build --verbosity normal"
                 '''
             }
         }
@@ -102,11 +98,7 @@ pipeline {
                         -v "${WORKSPACE}/backend:/workspace" \
                         -w /workspace \
                         mcr.microsoft.com/dotnet/sdk:10.0-preview \
-                        bash -c "
-                            dotnet restore TuColmadoRD.slnx &&
-                            dotnet build TuColmadoRD.slnx -c Release --no-restore &&
-                            dotnet test TuColmadoRD.slnx -c Release --no-build --verbosity normal
-                        "
+                        bash -c "dotnet restore && dotnet build -c Release --no-restore && dotnet test -c Release --no-build --verbosity normal"
                 '''
             }
         }
