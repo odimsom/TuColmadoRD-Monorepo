@@ -16,7 +16,7 @@ services:
       # Puerto 8090 para no chocar con la API de la app (que usa 8080).
       - "127.0.0.1:8090:8080"
     volumes:
-      - jenkins_home:/var/jenkins_home
+      - /var/jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - traefik-net
@@ -33,7 +33,3 @@ networks:
   traefik-net:
     external: true
     name: tucolmadord_tucolmadord-network
-
-volumes:
-  jenkins_home:
-    driver: local
