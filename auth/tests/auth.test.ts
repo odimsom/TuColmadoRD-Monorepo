@@ -201,7 +201,7 @@ describe('RegisterUseCase', () => {
     expect(result.user.role).toBe(Role.OWNER);
   });
 
-  it('TC-06: execute revierte usuario y tenant si NetAPI falla', async () => {
+  it('TC-06: execute retorna JWT aunque NetAPI falle (registro resiliente)', async () => {
     const user = fakeUser({ _id: 'rollback-user' });
     const userRepo = makeUserRepo({ create: jest.fn().mockResolvedValue(user) });
     const tenantRepo = makeTenantRepo({ create: jest.fn().mockResolvedValue(undefined) });
@@ -213,12 +213,12 @@ describe('RegisterUseCase', () => {
 
     const useCase = new RegisterUseCase(userRepo as any, tenantRepo as any, netApi as any);
 
-    await expect(
-      useCase.execute({ email: 'x@x.com', password: 'p', tenantName: 'Test' }),
-    ).rejects.toThrow('NET_API_ERROR');
+    const result = await useCase.execute({ email: 'x@x.com', password: 'p', tenantName: 'Test' });
 
-    expect(userRepo.delete).toHaveBeenCalledWith(user._id, expect.any(String));
-    expect(tenantRepo.delete).toHaveBeenCalled();
+    expect(result.accessToken).toBe('mocked.jwt.token');
+    expect(result.user.role).toBe(Role.OWNER);
+    expect(userRepo.delete).not.toHaveBeenCalled();
+    expect(tenantRepo.delete).not.toHaveBeenCalled();
   });
 });
 

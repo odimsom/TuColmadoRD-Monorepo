@@ -15,7 +15,7 @@ describe('PortalLayout', () => {
 
   beforeEach(async () => {
     const authMock = { currentUser: () => null, logout: vi.fn(), isLicenseExpired: () => false };
-    const downloadMock = { getLatestTestRelease: vi.fn().mockReturnValue(of(null)) };
+    const downloadMock = { getLatestRelease: vi.fn().mockReturnValue(of(null)) };
     const saleMock = { getCurrentShift: vi.fn().mockReturnValue(throwError(() => new Error('no shift'))) };
 
     await TestBed.configureTestingModule({

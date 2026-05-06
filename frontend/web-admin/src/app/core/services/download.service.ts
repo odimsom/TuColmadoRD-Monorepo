@@ -34,52 +34,36 @@ export class DownloadService {
     'https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases'
   ];
 
-  getLatestTestRelease(): Observable<DownloadInfo | null> {
+  getLatestRelease(): Observable<DownloadInfo | null> {
     return this.http.get<GithubRelease[]>(this.releasesUrls[0]).pipe(
-      map(releases => {
-        // Filtrar solo pre-releases con tag -test
-        const testReleases = releases.filter(r => 
-          r.prerelease && r.tag_name.includes('-test')
-        );
-        
-        if (!testReleases.length) return this.getFallbackDownloadInfo();
-        
-        // Tomar el más reciente (GitHub los devuelve ordenados por fecha descendente)
-        const latest = testReleases[0];
-        const asset = latest.assets.find(a => a.name.endsWith('.exe'));
-        
-        if (!asset) return this.getFallbackDownloadInfo();
-        
-        return {
-          version: latest.tag_name,
-          downloadUrl: asset.browser_download_url,
-          fileSize: this.formatBytes(asset.size),
-          publishedAt: latest.published_at
-        };
-      }),
+      map(releases => this.resolveStableRelease(releases)),
       catchError(() => this.http.get<GithubRelease[]>(this.releasesUrls[1]).pipe(
-        map(releases => {
-          const testReleases = releases.filter(r =>
-            r.prerelease && r.tag_name.includes('-test')
-          );
-
-          if (!testReleases.length) return this.getFallbackDownloadInfo();
-
-          const latest = testReleases[0];
-          const asset = latest.assets.find(a => a.name.endsWith('.exe'));
-
-          if (!asset) return this.getFallbackDownloadInfo();
-
-          return {
-            version: latest.tag_name,
-            downloadUrl: asset.browser_download_url,
-            fileSize: this.formatBytes(asset.size),
-            publishedAt: latest.published_at
-          };
-        }),
+        map(releases => this.resolveStableRelease(releases)),
         catchError(() => of(this.getFallbackDownloadInfo()))
       ))
     );
+  }
+
+  private resolveStableRelease(releases: GithubRelease[]): DownloadInfo | null {
+    // Solo releases estables: sin prerelease y sin sufijo -test
+    const stable = releases.filter(r =>
+      !r.prerelease && !r.tag_name.includes('-test')
+    );
+
+    if (!stable.length) return this.getFallbackDownloadInfo();
+
+    // GitHub los devuelve ordenados por fecha descendente
+    const latest = stable[0];
+    const asset = latest.assets.find(a => a.name.endsWith('.exe'));
+
+    if (!asset) return this.getFallbackDownloadInfo();
+
+    return {
+      version: latest.tag_name,
+      downloadUrl: asset.browser_download_url,
+      fileSize: this.formatBytes(asset.size),
+      publishedAt: latest.published_at
+    };
   }
 
   private getFallbackDownloadInfo(): DownloadInfo | null {
