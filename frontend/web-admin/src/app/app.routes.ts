@@ -2,9 +2,9 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { desktopRegistrationGuard } from './core/guards/desktop-registration.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { businessSetupGuard } from './core/guards/business-setup.guard';
 
 export const routes: Routes = [
-  // Ruta pública — bloqueada en desktop (redirige a login)
   {
     path: '',
     canActivate: [desktopRegistrationGuard],
@@ -27,7 +27,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/auth/login/login').then(m => m.Login)
       },
       {
-        // Registro bloqueado en desktop (ya hay licencia activa)
         path: 'register',
         canActivate: [desktopRegistrationGuard],
         loadComponent: () => import('./features/auth/register/register').then(m => m.Register)
@@ -40,6 +39,7 @@ export const routes: Routes = [
     path: 'portal',
     loadComponent: () => import('./layouts/portal-layout/portal-layout').then(m => m.PortalLayout),
     canActivate: [authGuard, roleGuard('Owner', 'Admin')],
+    canActivateChild: [businessSetupGuard],
     children: [
       {
         path: 'welcome',

@@ -8,10 +8,10 @@ namespace TuColmadoRD.Infrastructure.Persistence.Repositories.Logistics;
 
 public class DeliveryOrderRepository(TuColmadoDbContext dbContext) : GenericRepository<DeliveryOrder>(dbContext), IDeliveryOrderRepository
 {
-    private readonly TuColmadoDbContext _dbContext = dbContext;
+    private readonly TuColmadoDbContext _context = dbContext;
 
     public IQueryable<DeliveryOrder> GetQueryable()
     {
-        return _dbContext.Set<DeliveryOrder>().AsQueryable();
+        return _context.Set<DeliveryOrder>().AsQueryable();
     }
 }

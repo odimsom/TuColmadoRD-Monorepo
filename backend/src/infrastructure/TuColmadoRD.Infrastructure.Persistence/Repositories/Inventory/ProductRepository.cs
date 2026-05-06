@@ -11,9 +11,11 @@ namespace TuColmadoRD.Infrastructure.Persistence.Repositories.Inventory;
 
 public class ProductRepository(TuColmadoDbContext dbContext) : GenericRepository<Product>(dbContext), IProductRepository, AppProductRepository
 {
+    private readonly TuColmadoDbContext _context = dbContext;
+
     public async Task<OperationResult<Product, DomainError>> GetByIdAsync(Guid id, Guid tenantId, CancellationToken ct)
     {
-        var product = await _dbContext.Set<Product>()
+        var product = await _context.Set<Product>()
             .FirstOrDefaultAsync(p => p.Id == id && p.TenantId.Value == tenantId, ct);
 
         return product is null
@@ -21,9 +23,9 @@ public class ProductRepository(TuColmadoDbContext dbContext) : GenericRepository
             : OperationResult<Product, DomainError>.Good(product);
     }
 
-    public async Task AddAsync(Product product, CancellationToken ct)
+    public new async Task AddAsync(Product product, CancellationToken ct)
     {
-        await _dbContext.Set<Product>().AddAsync(product, ct);
+        await _context.Set<Product>().AddAsync(product, ct);
     }
 
     public async Task<IReadOnlyList<Product>> GetByIdsAsync(IReadOnlyList<Guid> ids, Guid tenantId, CancellationToken ct)
@@ -33,20 +35,20 @@ public class ProductRepository(TuColmadoDbContext dbContext) : GenericRepository
             return [];
         }
 
-        return await _dbContext.Set<Product>()
+        return await _context.Set<Product>()
             .Where(p => ids.Contains(p.Id) && p.TenantId.Value == tenantId)
             .ToListAsync(ct);
     }
 
     public Task UpdateRangeAsync(IReadOnlyList<Product> products, CancellationToken ct)
     {
-        _dbContext.Set<Product>().UpdateRange(products);
+        _context.Set<Product>().UpdateRange(products);
         return Task.CompletedTask;
     }
 
     public async Task<bool> CategoryExistsAsync(Guid categoryId, Guid tenantId, CancellationToken ct)
     {
-        return await _dbContext.Set<Category>()
+        return await _context.Set<Category>()
             .AnyAsync(c => c.Id == categoryId && c.TenantId.Value == tenantId, ct);
     }
 }

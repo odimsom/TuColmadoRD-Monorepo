@@ -13,7 +13,8 @@ public static class DomainErrorResultExtensions
     /// </summary>
     public static IResult MapDomainError(this DomainError error)
     {
-        if (error.Code.Contains("not_found", StringComparison.OrdinalIgnoreCase))
+        if (error.Code.Contains("not_found", StringComparison.OrdinalIgnoreCase) ||
+            error.Code.Contains("no_open_shift", StringComparison.OrdinalIgnoreCase))
         {
             return TypedResults.NotFound(new { error = error.Code, message = error.Message, statusCode = StatusCodes.Status404NotFound });
         }

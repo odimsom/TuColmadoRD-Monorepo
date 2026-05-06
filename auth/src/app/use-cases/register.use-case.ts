@@ -49,9 +49,9 @@ export class RegisterUseCase {
         ownerEmail: normalizedEmail,
       });
     } catch (error) {
-      await this.userRepo.delete(user._id, tenantId);
-      await this.tenantRepo.delete(tenantId);
-      throw new Error("NET_API_ERROR");
+      console.error("❌ Failed to notify API of new tenant:", error);
+      // Log but don't fail registration - tenant is already created in Auth
+      // The API can be notified later through a retry mechanism
     }
 
     const token = jwt.sign(

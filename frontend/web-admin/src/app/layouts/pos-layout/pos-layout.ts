@@ -126,7 +126,7 @@ export class PosLayout implements OnInit, OnDestroy {
     this.showCloseShiftModal.set(false);
   }
 
-  openQuickSaleModal(): void {
+  openQuickSaleModal(preselect?: ProductDto): void {
     if (!this.activeShift()) {
       this.showOpenShiftModal.set(true);
       return;
@@ -134,7 +134,7 @@ export class PosLayout implements OnInit, OnDestroy {
     this.showQuickSaleModal.set(true);
     this.quickSaleAmount.set(null);
     this.quickSaleSearch.set('');
-    this.selectedQuickProduct.set(null);
+    this.selectedQuickProduct.set(preselect ?? null);
     setTimeout(() => this.quickSaleAmountInput?.nativeElement?.focus(), 100);
   }
 
@@ -327,7 +327,13 @@ export class PosLayout implements OnInit, OnDestroy {
       this.showOpenShiftModal.set(true);
       return;
     }
-    
+
+    // Sold-by-weight or volume: open amount dialog so cashier enters RD$ value
+    if (customQuantity === undefined && (product.unitTypeId === 2 || product.unitTypeId === 3)) {
+      this.openQuickSaleModal(product);
+      return;
+    }
+
     const qtyToAdd = customQuantity ?? 1;
     const items = this.cartItems();
     const idx   = items.findIndex(i => i.productId === product.productId);

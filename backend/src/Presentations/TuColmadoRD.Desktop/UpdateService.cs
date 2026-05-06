@@ -10,8 +10,8 @@ internal static class UpdateService
     private const string LocalLatestInstallerApi = "http://localhost:5100/gateway/updates/latest-installer";
     private static readonly string[] ReleasesUrls =
     {
-        "https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases",
-        "https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases"
+        "https://api.github.com/repos/odimsom/TuColmadoRD-Monorepo/releases",
+        "https://api.github.com/repos/synsetsolutions/TuColmadoRD-Monorepo/releases"
     };
 
     public static async Task<UpdateCheckResult> CheckForUpdateAsync()
@@ -20,10 +20,9 @@ internal static class UpdateService
         if (localResolved != null)
         {
             var currentInstalledVersion = GetCurrentVersion();
-            var isTestTag = localResolved.Tag.Contains("-test", StringComparison.OrdinalIgnoreCase);
             var hasNewerVersion = localResolved.Version > currentInstalledVersion;
 
-            if (isTestTag || hasNewerVersion)
+            if (hasNewerVersion)
             {
                 return new UpdateCheckResult
                 {
@@ -74,7 +73,9 @@ internal static class UpdateService
         }
 
         var latest = releases
-            .Where(r => !string.IsNullOrWhiteSpace(r.TagName))
+            .Where(r => !string.IsNullOrWhiteSpace(r.TagName)
+                     && !r.Prerelease
+                     && !r.TagName!.Contains("-test", StringComparison.OrdinalIgnoreCase))
             .Select(r => new
             {
                 Release = r,
@@ -89,10 +90,8 @@ internal static class UpdateService
             return UpdateCheckResult.NoUpdate;
         }
 
-        var latestTag = latest.Release.TagName ?? string.Empty;
-        var isTestRelease = latestTag.Contains("-test", StringComparison.OrdinalIgnoreCase);
         var currentVersion = GetCurrentVersion();
-        if (!isTestRelease && latest.Version! <= currentVersion)
+        if (latest.Version! <= currentVersion)
         {
             return UpdateCheckResult.NoUpdate;
         }
@@ -251,6 +250,7 @@ internal static class UpdateService
     private sealed class GitHubRelease
     {
         public string? TagName { get; set; }
+        public bool Prerelease { get; set; }
         public List<GitHubAsset> Assets { get; set; } = new();
     }
 

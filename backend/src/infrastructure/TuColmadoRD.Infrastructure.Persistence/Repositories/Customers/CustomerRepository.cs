@@ -10,6 +10,6 @@ public class CustomerRepository(TuColmadoDbContext dbContext) : GenericRepositor
 {
     public async Task<Customer?> GetByDocumentIdAsync(string documentId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Set<Customer>().FirstOrDefaultAsync(c => c.DocumentId.Value == documentId, cancellationToken);
+        return await _dbContext.Set<Customer>().FirstOrDefaultAsync(c => c.DocumentId != null && c.DocumentId.Value == documentId, cancellationToken);
     }
 }

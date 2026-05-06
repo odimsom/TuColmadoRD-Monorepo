@@ -1,0 +1,198 @@
+name: Bootstrap Jenkins on VPS
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: jenkins-setup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    name: Install & start Jenkins
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # ── 1. Red de Traefik ────────────────────────────────────────────────
+      - name: Ensure Traefik network exists
+        run: |
+          docker network inspect tucolmadord_tucolmadord-network > /dev/null 2>&1 \
+            && echo "✅ Red ya existe" \
+            || docker network create \
+                --driver bridge \
+                --label com.docker.compose.network=tucolmadord-network \
+                --label com.docker.compose.project=tucolmadord \
+                tucolmadord_tucolmadord-network
+
+      # ── 2. Docker Compose v2 ─────────────────────────────────────────────
+      - name: Ensure docker compose v2 available
+        run: |
+          docker compose version 2>/dev/null && echo "✅ docker compose ok" || {
+            sudo apt-get update -qq
+            sudo apt-get install -y docker-compose-plugin
+          }
+
+      # ── 3. Arrancar Jenkins ──────────────────────────────────────────────
+      - name: Start Jenkins container
+        run: |
+          docker rm -f jenkins 2>/dev/null || true
+          docker compose -f docker-compose.jenkins.yml up -d
+          echo "✅ Jenkins iniciado"
+
+      # ── 4. Docker CLI dentro de Jenkins ─────────────────────────────────
+      - name: Install Docker CLI inside Jenkins container
+        run: |
+          docker exec jenkins bash -c "
+            apt-get update -qq &&
+            apt-get install -y docker.io curl --no-install-recommends -qq &&
+            echo '✅ docker CLI instalado'
+          "
+
+      # ── 5. Clave SSH para deployments ────────────────────────────────────
+      # Generamos en /tmp (escribible por el runner) y luego movemos con sudo.
+      - name: Generate deploy SSH key
+        run: |
+          KEY_TMP="/tmp/jenkins_deploy_key"
+          KEY_DEST="/root/.jenkins_deploy_key"
+
+          # Generar solo si no existe ya en el destino
+          if sudo test -f "$KEY_DEST"; then
+            echo "ℹ️  Clave ya existe en $KEY_DEST — reutilizando"
+          else
+            rm -f "$KEY_TMP" "${KEY_TMP}.pub"
+            ssh-keygen -t ed25519 -f "$KEY_TMP" -N "" -C "jenkins-deploy@tucolmadord.com"
+
+            sudo mv "$KEY_TMP"       "$KEY_DEST"
+            sudo mv "${KEY_TMP}.pub" "${KEY_DEST}.pub"
+            sudo chmod 600 "$KEY_DEST"
+            echo "✅ Clave SSH generada"
+          fi
+
+          # Agregar clave pública a authorized_keys de root
+          PUB_KEY=$(sudo cat "${KEY_DEST}.pub")
+          if ! sudo grep -qF "$PUB_KEY" /root/.ssh/authorized_keys 2>/dev/null; then
+            sudo mkdir -p /root/.ssh
+            sudo chmod 700 /root/.ssh
+            echo "$PUB_KEY" | sudo tee -a /root/.ssh/authorized_keys > /dev/null
+            sudo chmod 600 /root/.ssh/authorized_keys
+            echo "✅ Clave pública agregada a authorized_keys"
+          else
+            echo "ℹ️  Clave pública ya estaba en authorized_keys"
+          fi
+
+          # Copiar clave privada al volumen de Jenkins
+          sudo cp "$KEY_DEST" "$KEY_TMP"
+          sudo chmod 644 "$KEY_TMP"   # temporal para que docker cp pueda leerla
+          docker cp "$KEY_TMP" jenkins:/var/jenkins_home/jenkins_deploy_key
+          docker exec jenkins chmod 600 /var/jenkins_home/jenkins_deploy_key
+          sudo rm -f "$KEY_TMP"
+          echo "✅ Clave copiada a Jenkins"
+
+      # ── 6. Esperar que Jenkins arranque ──────────────────────────────────
+      - name: Wait for Jenkins to be ready
+        run: |
+          echo "Esperando que Jenkins inicie (máx. 3 minutos)..."
+          for i in $(seq 1 36); do
+            if curl -sf http://localhost:8090/login > /dev/null 2>&1; then
+              echo "✅ Jenkins listo (intento $i)"
+              break
+            fi
+            if [ "$i" -eq 36 ]; then
+              echo "❌ Jenkins no respondió tras 3 minutos"
+              docker logs jenkins --tail 60
+              exit 1
+            fi
+            echo "  Intento $i/36 — esperando 5s..."
+            sleep 5
+          done
+
+      # ── 7. Instalar plugins ───────────────────────────────────────────────
+      - name: Install Jenkins plugins
+        run: |
+          curl -sf http://localhost:8090/jnlpJars/jenkins-cli.jar -o /tmp/jenkins-cli.jar
+
+          ADMIN_PASS=$(docker exec jenkins \
+            cat /var/jenkins_home/secrets/initialAdminPassword 2>/dev/null || echo "")
+
+          if [ -z "$ADMIN_PASS" ]; then
+            echo "ℹ️  Jenkins ya configurado — saltando instalación de plugins"
+          else
+            echo "Instalando plugins..."
+            java -jar /tmp/jenkins-cli.jar \
+              -s http://localhost:8090 \
+              -auth "admin:${ADMIN_PASS}" \
+              install-plugin \
+                git \
+                github \
+                github-branch-source \
+                workflow-aggregator \
+                pipeline-stage-view \
+                credentials-binding \
+                ssh-credentials \
+                docker-workflow \
+                blueocean \
+                matrix-auth \
+              -restart 2>&1 || echo "⚠️  Plugins instalados — Jenkins reiniciando..."
+            echo "Esperando reinicio de Jenkins..."
+            sleep 40
+            echo "✅ Plugins instalados"
+          fi
+
+      # ── 8. Resumen ────────────────────────────────────────────────────────
+      - name: Print setup summary
+        run: |
+          ADMIN_PASS=$(docker exec jenkins \
+            cat /var/jenkins_home/secrets/initialAdminPassword 2>/dev/null \
+            || echo "(ya configurado — usa tu usuario admin)")
+
+          PRIV_KEY=$(sudo cat /root/.jenkins_deploy_key)
+
+          echo ""
+          echo "════════════════════════════════════════════════════"
+          echo "  JENKINS SETUP COMPLETADO"
+          echo "════════════════════════════════════════════════════"
+          echo ""
+          echo "📌 PASO 1 — DNS en Hostinger (si no lo agregaste aún):"
+          echo "   Tipo: A | Nombre: jenkins | IP: 177.7.48.169 | TTL: 14400"
+          echo ""
+          echo "📌 PASO 2 — Accede a Jenkins:"
+          echo "   Ahora mismo:  http://177.7.48.169:8090"
+          echo "   Tras el DNS:  https://jenkins.tucolmadord.com"
+          echo ""
+          echo "📌 PASO 3 — Contraseña inicial:"
+          echo "   $ADMIN_PASS"
+          echo ""
+          echo "📌 PASO 4 — Credentials en Jenkins → Manage → Credentials → Global → Add:"
+          echo ""
+          echo "   [A] ID: github-token"
+          echo "       Kind: Secret text"
+          echo "       Value: <tu GitHub PAT con scope repo + workflow>"
+          echo ""
+          echo "   [B] ID: vps-deploy-key"
+          echo "       Kind: SSH Username with private key"
+          echo "       Username: root"
+          echo "       Private key → Enter directly:"
+          echo "──────────────────────────────────────────────────"
+          echo "$PRIV_KEY"
+          echo "──────────────────────────────────────────────────"
+          echo ""
+          echo "📌 PASO 5 — Crear pipeline:"
+          echo "   New Item → Multibranch Pipeline → nombre: TuColmadoRD"
+          echo "   Branch Sources → GitHub"
+          echo "   Repository: https://github.com/odimsom/TuColmadoRD-Monorepo"
+          echo "   Credentials: github-token"
+          echo "   Behaviors: descubrir ramas dev, qa, main"
+          echo ""
+          echo "📌 PASO 6 — Webhook en GitHub:"
+          echo "   Repo → Settings → Webhooks → Add webhook"
+          echo "   Payload URL: https://jenkins.tucolmadord.com/github-webhook/"
+          echo "   Content type: application/json"
+          echo "   Which events: Just the push event"
+          echo ""
+          echo "════════════════════════════════════════════════════"

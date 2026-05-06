@@ -51,7 +51,7 @@ export class PortalLayout implements OnInit, OnDestroy {
   }
 
   loadDownloadInfo(): void {
-    this.downloads.getLatestTestRelease()
+    this.downloads.getLatestRelease()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(info => this.downloadInfo.set(info));
   }
