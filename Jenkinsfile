@@ -16,8 +16,14 @@ pipeline {
 
     stages {
 
-        // ─── CI: Tests ────────────────────────────────────────────────────
-        stage('Test .NET Backend') {
+        // ─── PRUEBAS UNITARIAS — dev y PRs hacia dev ─────────────────────
+        stage('Unit Test · .NET Backend') {
+            when {
+                anyOf {
+                    branch 'dev'
+                    changeRequest target: 'dev'
+                }
+            }
             steps {
                 sh '''
                     docker run --rm \
@@ -33,7 +39,13 @@ pipeline {
             }
         }
 
-        stage('Test Auth Service') {
+        stage('Unit Test · Auth Service') {
+            when {
+                anyOf {
+                    branch 'dev'
+                    changeRequest target: 'dev'
+                }
+            }
             steps {
                 sh '''
                     docker run --rm \
@@ -45,39 +57,110 @@ pipeline {
             }
         }
 
-        // ─── Promoción dev → qa ───────────────────────────────────────────
-        stage('Promote dev → qa') {
+        // ─── AUTO-PR dev → qa (solo tras merge/commit a dev, nunca en PRs) ─
+        stage('Auto PR: dev → qa') {
             when { branch 'dev' }
             steps {
                 withCredentials([string(credentialsId: 'github-token', variable: 'GH_TOKEN')]) {
                     sh '''
-                        git config user.email "jenkins@tucolmadord.com"
-                        git config user.name  "Jenkins CI"
-                        git push "https://x-access-token:${GH_TOKEN}@${GH_REMOTE#https://}" \
-                            HEAD:refs/heads/qa --force
-                        echo "✅ Promovido dev → qa"
+                        PR_EXISTS=$(curl -sf \
+                            "https://api.github.com/repos/${GH_REPO}/pulls?head=odimsom:dev&base=qa&state=open" \
+                            -H "Authorization: token ${GH_TOKEN}" \
+                            | grep -c '"number"' || true)
+
+                        if [ "${PR_EXISTS:-0}" -gt 0 ]; then
+                            echo "ℹ️  Ya existe un PR abierto dev → qa"
+                        else
+                            curl -sf -X POST \
+                                "https://api.github.com/repos/${GH_REPO}/pulls" \
+                                -H "Authorization: token ${GH_TOKEN}" \
+                                -H "Content-Type: application/json" \
+                                -d "{
+                                    \\"title\\": \\"[Auto] Promote dev → qa · Build #${BUILD_NUMBER}\\",
+                                    \\"head\\": \\"dev\\",
+                                    \\"base\\": \\"qa\\",
+                                    \\"body\\": \\"PR automático: pruebas unitarias pasaron (build #${BUILD_NUMBER}).\\\\n\\\\nPendiente: pruebas de integración deben pasar en este PR antes del merge.\\"
+                                }" > /dev/null
+                            echo "✅ PR creado: dev → qa"
+                        fi
                     '''
                 }
             }
         }
 
-        // ─── Promoción qa → main ──────────────────────────────────────────
-        stage('Promote qa → main') {
+        // ─── PRUEBAS DE INTEGRACIÓN — qa y PRs hacia qa ──────────────────
+        stage('Integration Test · .NET Backend') {
+            when {
+                anyOf {
+                    branch 'qa'
+                    changeRequest target: 'qa'
+                }
+            }
+            steps {
+                sh '''
+                    docker run --rm \
+                        -v "${WORKSPACE}/backend:/workspace" \
+                        -w /workspace \
+                        mcr.microsoft.com/dotnet/sdk:10.0-preview \
+                        bash -c "
+                            dotnet restore TuColmadoRD.slnx &&
+                            dotnet build TuColmadoRD.slnx -c Release --no-restore &&
+                            dotnet test TuColmadoRD.slnx -c Release --no-build --verbosity normal
+                        "
+                '''
+            }
+        }
+
+        stage('Integration Test · Auth Service') {
+            when {
+                anyOf {
+                    branch 'qa'
+                    changeRequest target: 'qa'
+                }
+            }
+            steps {
+                sh '''
+                    docker run --rm \
+                        -v "${WORKSPACE}/auth:/workspace" \
+                        -w /workspace \
+                        node:22-alpine \
+                        sh -c "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm test"
+                '''
+            }
+        }
+
+        // ─── AUTO-PR qa → main (solo tras merge/commit a qa, nunca en PRs) ─
+        stage('Auto PR: qa → main') {
             when { branch 'qa' }
             steps {
                 withCredentials([string(credentialsId: 'github-token', variable: 'GH_TOKEN')]) {
                     sh '''
-                        git config user.email "jenkins@tucolmadord.com"
-                        git config user.name  "Jenkins CI"
-                        git push "https://x-access-token:${GH_TOKEN}@${GH_REMOTE#https://}" \
-                            HEAD:refs/heads/main --force
-                        echo "✅ Promovido qa → main"
+                        PR_EXISTS=$(curl -sf \
+                            "https://api.github.com/repos/${GH_REPO}/pulls?head=odimsom:qa&base=main&state=open" \
+                            -H "Authorization: token ${GH_TOKEN}" \
+                            | grep -c '"number"' || true)
+
+                        if [ "${PR_EXISTS:-0}" -gt 0 ]; then
+                            echo "ℹ️  Ya existe un PR abierto qa → main"
+                        else
+                            curl -sf -X POST \
+                                "https://api.github.com/repos/${GH_REPO}/pulls" \
+                                -H "Authorization: token ${GH_TOKEN}" \
+                                -H "Content-Type: application/json" \
+                                -d "{
+                                    \\"title\\": \\"[Auto] Promote qa → main · Build #${BUILD_NUMBER}\\",
+                                    \\"head\\": \\"qa\\",
+                                    \\"base\\": \\"main\\",
+                                    \\"body\\": \\"PR automático: pruebas de integración pasaron en qa (build #${BUILD_NUMBER}).\\\\n\\\\nMerge para desplegar a producción.\\"
+                                }" > /dev/null
+                            echo "✅ PR creado: qa → main"
+                        fi
                     '''
                 }
             }
         }
 
-        // ─── CD: Deploy a producción ──────────────────────────────────────
+        // ─── DEPLOY A PRODUCCIÓN — solo en main ───────────────────────────
         stage('Deploy to Production') {
             when { branch 'main' }
             steps {
@@ -99,16 +182,12 @@ pipeline {
             }
         }
 
-        // ─── Release en GitHub ────────────────────────────────────────────
-        // Crea el tag vX.Y.Z y la release en GitHub.
-        // GitHub Actions (cd-deploy.yml) luego adjunta el instalador .exe
-        // a esta misma release usando allow_updates: true.
+        // ─── RELEASE EN GITHUB — solo en main ─────────────────────────────
         stage('Create GitHub Release') {
             when { branch 'main' }
             steps {
                 withCredentials([string(credentialsId: 'github-token', variable: 'GH_TOKEN')]) {
                     sh '''
-                        # Leer versión desde package.json (sin dependencias externas)
                         VERSION=$(grep -m1 '"version"' frontend/package.json \
                                   | sed 's/.*"version": *"\\([^"]*\\)".*/\\1/')
                         TAG="v${VERSION}"
@@ -118,7 +197,6 @@ pipeline {
 
                         echo "📦 Creando release ${TAG} (build #${BUILD})..."
 
-                        # Crear o reusar tag en GitHub
                         git config user.email "jenkins@tucolmadord.com"
                         git config user.name  "Jenkins CI"
 
@@ -126,14 +204,12 @@ pipeline {
                         git tag -f "$TAG" -m "Release ${TAG}"
                         git push "$REMOTE" "$TAG" --force
 
-                        # Crear release via API (si ya existe, la actualiza)
                         BODY="### Deploy #${BUILD} — Producción\\n\\n\
 **Versión:** \\`${TAG}\\`  \\n\
 **Commit:** [\\`${SHORT}\\`](https://github.com/${GH_REPO}/commit/${COMMIT})  \\n\
 **Rama:** main  \\n\\n\
 > Instalador Windows adjuntado automáticamente por GitHub Actions."
 
-                        # Intentar crear; si falla (ya existe), buscar y actualizar
                         CREATE_RESP=$(curl -s -w "\\n%{http_code}" \
                             -X POST \
                             "https://api.github.com/repos/${GH_REPO}/releases" \
@@ -164,7 +240,7 @@ pipeline {
                                 }" > /dev/null
                         fi
 
-                        echo "✅ Release ${TAG} lista en GitHub"
+                        echo "✅ Release ${TAG} lista"
                         echo "   https://github.com/${GH_REPO}/releases/tag/${TAG}"
                     '''
                 }
