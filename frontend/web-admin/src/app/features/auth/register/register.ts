@@ -128,17 +128,21 @@ export class Register {
     };
 
     this.authService.register(payload).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.success.set(true);
         // Keep loading visible for 2 seconds so user sees success state
         setTimeout(() => {
           this.loading.set(false);
-          this.router.navigate(['/portal/dashboard']).catch(err => {
-            console.error('❌ Navigation failed:', err);
-            this.error.set('Error al redirigir. Intenta recargar la página.');
-            this.success.set(false);
-            this.loading.set(false);
-          });
+          if (res.requiresVerification) {
+            this.router.navigate(['/auth/login'], { queryParams: { registered: true } });
+          } else {
+            this.router.navigate(['/portal/dashboard']).catch(err => {
+              console.error('❌ Navigation failed:', err);
+              this.error.set('Error al redirigir. Intenta recargar la página.');
+              this.success.set(false);
+              this.loading.set(false);
+            });
+          }
         }, 2000);
       },
       error: (err) => {
