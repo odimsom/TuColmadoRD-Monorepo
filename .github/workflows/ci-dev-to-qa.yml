@@ -49,18 +49,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Create PR to QA
+      - name: Create and Merge PR to QA
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ADMIN_PAT }}
         run: |
           PR_EXISTS=$(gh pr list --base qa --head dev --state open --json number --jq length)
           if [ "$PR_EXISTS" -gt "0" ]; then
-            echo "PR dev -> qa already exists."
+            PR_NUMBER=$(gh pr list --base qa --head dev --state open --json number --jq '.[0].number')
+            gh pr merge $PR_NUMBER --merge --admin || gh pr merge $PR_NUMBER --merge
           else
-            gh pr create \
+            PR_URL=$(gh pr create \
               --base qa \
               --head dev \
               --title "[Auto] Promote dev → qa" \
-              --body "PR automático: pruebas unitarias pasaron." \
-              --reviewer odimsom
+              --body "PR automático: pruebas unitarias pasaron.")
+            gh pr merge "$PR_URL" --merge --admin || gh pr merge "$PR_URL" --merge
           fi

@@ -49,18 +49,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Create PR to Main
+      - name: Create and Merge PR to Main
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ADMIN_PAT }}
         run: |
           PR_EXISTS=$(gh pr list --base main --head qa --state open --json number --jq length)
           if [ "$PR_EXISTS" -gt "0" ]; then
-            echo "PR qa -> main already exists."
+            PR_NUMBER=$(gh pr list --base main --head qa --state open --json number --jq '.[0].number')
+            gh pr merge $PR_NUMBER --merge --admin || gh pr merge $PR_NUMBER --merge
           else
-            gh pr create \
+            PR_URL=$(gh pr create \
               --base main \
               --head qa \
               --title "[Auto] Promote qa → main" \
-              --body "PR automático: pruebas de integración pasaron en qa." \
-              --reviewer odimsom
+              --body "PR automático: pruebas de integración pasaron en qa.")
+            gh pr merge "$PR_URL" --merge --admin || gh pr merge "$PR_URL" --merge
           fi
