@@ -1,4 +1,5 @@
 import { Role } from "../enums/role.enums";
+import { UserStatus } from "../enums/user-status.enum";
 
 export interface IUser {
   _id: string;
@@ -8,6 +9,8 @@ export interface IUser {
   firstName?: string | null;
   lastName?: string | null;
   role: Role;
-  isActive: boolean;
+  status: UserStatus;
+  verificationCode?: string | null;
+  verificationCodeExpiry?: Date | null;
   createdAt: Date;
 }

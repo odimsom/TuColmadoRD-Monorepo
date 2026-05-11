@@ -81,6 +81,38 @@ else
     set +a  # Stop exporting
 fi
 
+# 3b. Validate critical production variables
+echo "🔍 Validating production environment variables..."
+VALIDATION_FAILED=false
+
+if [ -z "$RESEND_API_KEY" ]; then
+  echo "  ❌ RESEND_API_KEY is empty — emails will not be sent in production"
+  VALIDATION_FAILED=true
+fi
+
+if [ -z "$REDIS_URL" ]; then
+  echo "  ❌ REDIS_URL is not set — notification queue will fail to start"
+  VALIDATION_FAILED=true
+fi
+
+if [ "${SERVICE_SECRET}" = "internal-secret" ] || [ "${SERVICE_SECRET}" = "internal-secret-change-in-prod" ] || [ -z "$SERVICE_SECRET" ]; then
+  echo "  ❌ SERVICE_SECRET is using the default/empty value — change it before deploying"
+  VALIDATION_FAILED=true
+fi
+
+if [ "${JWT_SECRET}" = "88f121e5fce88ce943349608a5c2cbd9fa04165dc49180bd5d3c0e8c5dd07d" ] || [ -z "$JWT_SECRET" ]; then
+  echo "  ❌ JWT_SECRET is using the example value or is empty — generate a new one with: openssl rand -hex 64"
+  VALIDATION_FAILED=true
+fi
+
+if [ "$VALIDATION_FAILED" = true ]; then
+  echo ""
+  echo "❌ Deployment aborted: fix the variables above in /app/tucolmadord/.env and retry"
+  exit 1
+fi
+
+echo "  ✅ Environment variables look good"
+
 # 4. Aggressive cleanup of existing containers and volumes
 echo "🧹 Aggressive cleanup of old Docker artifacts..."
 
@@ -187,6 +219,21 @@ if [ "$MONGO_READY" = false ]; then
   echo "⚠️  Warning: MongoDB may not be ready, but continuing..."
 fi
 
+REDIS_READY=false
+for i in {1..20}; do
+  if docker compose exec -T redis redis-cli ping 2>/dev/null | grep -q PONG; then
+    echo "✅ Redis is ready"
+    REDIS_READY=true
+    break
+  fi
+  echo "  Waiting for Redis... ($i/20)"
+  sleep 2
+done
+
+if [ "$REDIS_READY" = false ]; then
+  echo "⚠️  Warning: Redis may not be ready — notification-service may fail to start"
+fi
+
 # 9. Ensure PostgreSQL database exists before migrations
 echo "🗄️ Ensuring PostgreSQL database '${POSTGRES_DB}' exists..."
 docker compose exec -T postgres psql -U ${POSTGRES_USER} -tc \
@@ -239,9 +286,11 @@ echo ""
 echo "✅ Deployment complete!"
 echo ""
 echo "Services available at:"
-echo "  - Web Admin: https://${PUBLIC_WEB_DOMAIN}"
-echo "  - API Gateway: https://${PUBLIC_API_DOMAIN}"
-echo "  - Landing: https://${PUBLIC_LANDING_DOMAIN}"
+echo "  - Landing:              https://${PUBLIC_LANDING_DOMAIN}"
+echo "  - Web Admin:            https://${PUBLIC_WEB_DOMAIN}"
+echo "  - API Gateway:          https://${PUBLIC_API_DOMAIN}"
+echo "  - Notification Service: internal (port 4000, no public exposure)"
 echo ""
 echo "📊 Check service status with: docker compose ps"
 echo "📋 View logs with: docker compose logs -f [service_name]"
+echo "📬 Check notification queue: docker compose logs -f notification-service"

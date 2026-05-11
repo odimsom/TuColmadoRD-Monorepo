@@ -38,6 +38,65 @@ services:
     networks:
       - tucolmadord-network
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tucolmadord-network
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - tucolmadord-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    restart: on-failure:3
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-TuColmado RD <noreply@tucolmadord.com>}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM: ${TWILIO_FROM:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SERVICE_SECRET: ${SERVICE_SECRET:-internal-secret}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - tucolmadord-network
+
   auth:
     build:
       context: ./auth
@@ -50,8 +109,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       NET_API_URL: http://api:8080
+      EMAIL_SERVICE_URL: http://notification-service:4000
+      SERVICE_SECRET: ${SERVICE_SECRET:-internal-secret}
     depends_on:
       mongo:
+        condition: service_healthy
+      notification-service:
         condition: service_healthy
     ports:
       - "${AUTH_PORT:-3000}:3000"
@@ -234,6 +297,7 @@ networks:
     driver: bridge
 
 volumes:
+  redis_data:
   postgres_data:
     driver: local
     driver_opts:

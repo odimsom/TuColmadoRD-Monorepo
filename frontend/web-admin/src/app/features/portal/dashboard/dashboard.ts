@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { SaleService, SaleSummary } from '../../../core/services/sale.service';
+import { SaleService, SaleSummary, ShiftSummaryDto } from '../../../core/services/sale.service';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { CustomerService } from '../../../core/services/customer.service';
 import { RdCurrencyPipe } from '../../../core/pipes';
@@ -36,8 +36,10 @@ export class Dashboard implements OnInit, OnDestroy {
   stats = {
     totalSales: 0,
     totalRevenue: 0,
+    totalExpenses: 0,
     activeCustomers: 0
   };
+  expensesLoading = true;
 
   debtStats = { customersWithDebt: 0, totalDebt: 0 };
   debtLoading = true;
@@ -58,6 +60,7 @@ export class Dashboard implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadSales();
     this.loadShift();
+    this.loadShiftSummary();
     this.loadLowStock();
     this.loadDebtStats();
   }
@@ -81,14 +84,25 @@ export class Dashboard implements OnInit, OnDestroy {
     });
   }
 
+  loadShiftSummary(): void {
+    this.expensesLoading = true;
+    this.saleService.getShiftSummary().subscribe({
+      next: (summary: ShiftSummaryDto) => {
+        this.stats.totalExpenses = summary.totalExpenses;
+        this.expensesLoading = false;
+      },
+      error: () => { this.expensesLoading = false; },
+    });
+  }
+
   loadDebtStats(): void {
     this.debtLoading = true;
     this.customerService.getCustomers().subscribe({
       next: (customers) => {
-        const debtors = customers.filter(c => c.balance < 0);
+        const debtors = customers.filter(c => c.balance > 0);
         this.debtStats = {
           customersWithDebt: debtors.length,
-          totalDebt: debtors.reduce((sum, c) => sum + Math.abs(c.balance), 0),
+          totalDebt: debtors.reduce((sum, c) => sum + c.balance, 0),
         };
         this.debtLoading = false;
       },
