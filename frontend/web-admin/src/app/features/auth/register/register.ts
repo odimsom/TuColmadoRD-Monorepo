@@ -134,7 +134,7 @@ export class Register {
         setTimeout(() => {
           this.loading.set(false);
           if (res.requiresVerification) {
-            this.router.navigate(['/auth/login'], { queryParams: { registered: true } });
+            this.router.navigate(['/auth/verify'], { queryParams: { email: payload.email } });
           } else {
             this.router.navigate(['/portal/dashboard']).catch(err => {
               console.error('❌ Navigation failed:', err);
