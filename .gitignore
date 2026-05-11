@@ -39,3 +39,8 @@ docs
 DEPLOYMENT-CHECKLIST.md
 
 screencapture-tucolmadord-2026-04-30-11_47_26.png
+
+# Temp scripts
+remote_check.js
+remote_check.py
+ssh_expect.sh
