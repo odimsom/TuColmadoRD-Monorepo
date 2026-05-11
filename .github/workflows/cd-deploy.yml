@@ -14,23 +14,18 @@ permissions:
 jobs:
   deploy:
     name: Deploy to Production
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: 177.7.48.169
-          username: root
-          key: ${{ secrets.VPS_DEPLOY_KEY }}
-          script: |
-            export GIT_TERMINAL_PROMPT=0
-            export DEBIAN_FRONTEND=noninteractive
-            cd /app/tucolmadord
-            git fetch origin
-            git reset --hard origin/main
-            sudo bash deploy-production.sh
+      - name: Execute deployment script
+        run: |
+          export GIT_TERMINAL_PROMPT=0
+          export DEBIAN_FRONTEND=noninteractive
+          cd /app/tucolmadord
+          git fetch origin
+          git reset --hard origin/main
+          sudo bash deploy-production.sh
 
   release:
     name: Create GitHub Release
