@@ -5,6 +5,7 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '20'))
         timeout(time: 40, unit: 'MINUTES')
         disableConcurrentBuilds()
+        skipDefaultCheckout(true)
     }
 
     environment {
@@ -15,6 +16,13 @@ pipeline {
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                withEnv(['GIT_TERMINAL_PROMPT=0']) {
+                    checkout scm
+                }
+            }
+        }
 
         // ─── PRUEBAS UNITARIAS — dev y PRs hacia dev ─────────────────────
         stage('Unit Test · .NET Backend') {
@@ -165,7 +173,8 @@ pipeline {
                             -o StrictHostKeyChecking=no \
                             -o ConnectTimeout=30 \
                             root@${VPS_HOST} \
-                        "cd ${APP_DIR} && \
+                        "export GIT_TERMINAL_PROMPT=0 && \
+                         cd ${APP_DIR} && \
                          git fetch origin && \
                          git reset --hard origin/main && \
                          sudo bash deploy-production.sh"
