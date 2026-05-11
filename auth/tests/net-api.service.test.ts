@@ -1,5 +1,6 @@
+const DEFAULT_BASE_URL = "http://localhost:5000";
 const DEFAULT_ENV = {
-  apiurl: "http://localhost:5000",
+  apiurl: DEFAULT_BASE_URL,
   nodeEnv: "production",
 } as const;
 
