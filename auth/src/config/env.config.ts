@@ -11,4 +11,6 @@ export const envConfig = {
   },
   nodeEnv: process.env.NODE_ENV || "development",
   apiurl: process.env.NET_API_URL || "http://localhost:5000",
+  emailServiceUrl: process.env.EMAIL_SERVICE_URL || "http://email-service:4000",
+  serviceSecret: process.env.SERVICE_SECRET || "internal-secret",
 } as const;

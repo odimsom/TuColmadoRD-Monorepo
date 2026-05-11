@@ -13,7 +13,10 @@
         "test:e2e:task4": "node ./tests/e2e/run-task4-e2e.mjs",
         "test:e2e:task4:headed": "set E2E_HEADLESS=false&& node ./tests/e2e/run-task4-e2e.mjs",
         "test:e2e:task4:headed:slow": "set E2E_HEADLESS=false&& set E2E_STEP_DELAY_MS=1200&& node ./tests/e2e/run-task4-e2e.mjs",
-        "build:exe": "npm run build && npm run obfuscate && Remove-Item -Recurse -Force dist/web-admin/browser && Rename-Item secured browser -Path dist/web-admin/ && electron-builder --win"
+        "build:exe": "npm run build && npm run obfuscate && Remove-Item -Recurse -Force dist/web-admin/browser && Rename-Item secured browser -Path dist/web-admin/ && electron-builder --win",
+        "e2e": "playwright test",
+        "e2e:headed": "playwright test --headed",
+        "e2e:ui": "playwright test --ui"
     },
     "private": true,
     "packageManager": "npm@11.8.0",
@@ -34,6 +37,7 @@
         "@angular/compiler-cli": "^21.2.0",
         "@iconify-json/ic": "^1.2.4",
         "@iconify/tailwind": "^1.2.0",
+        "@playwright/test": "^1.59.1",
         "@tailwindcss/postcss": "^4.2.2",
         "autoprefixer": "^10.4.27",
         "daisyui": "^4.12.24",

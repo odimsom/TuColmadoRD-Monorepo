@@ -6,9 +6,11 @@ import { AuthenticatedRequest } from "../middlewares/auth.middleware";
 const router = Router();
 const controller = new AuthController();
 
-router.post("/register",    (req, res, next) => controller.register(req, res, next));
-router.post("/login",       (req, res, next) => controller.login(req, res, next));
-router.post("/pair-device", (req, res, next) => controller.pairDevice(req, res, next));
+router.post("/register",              (req, res, next) => controller.register(req, res, next));
+router.post("/login",                 (req, res, next) => controller.login(req, res, next));
+router.post("/verify-email",          (req, res, next) => controller.verifyEmail(req, res, next));
+router.post("/resend-verification",   (req, res, next) => controller.resendVerification(req, res, next));
+router.post("/pair-device",           (req, res, next) => controller.pairDevice(req, res, next));
 router.post("/renew-license", authMiddleware, (req, res, next) => controller.renewLicense(req as AuthenticatedRequest, res, next));
 
 // Employee management (Owner/Admin only)

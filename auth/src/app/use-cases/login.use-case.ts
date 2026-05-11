@@ -4,6 +4,16 @@ import { LoginDto } from "../dtos/login.dto";
 import { IAuthResponse } from "../../domain/interfaces/auth.interface";
 import { UserRepository } from "../../infra/repositories/user.repository";
 import { TenantRepository } from "../../infra/repositories/tenant.repository";
+import { UserStateMachine } from "../../domain/state-machine/user-state-machine";
+import { UserStatus } from "../../domain/enums/user-status.enum";
+import { OperationResult } from "../../domain/result/operation-result";
+import {
+  AuthDomainError,
+  InvalidCredentialsError,
+  TenantNotFoundError,
+  EmailNotVerifiedError,
+  AccountSuspendedError,
+} from "../../domain/errors/auth-domain-error";
 import { envConfig } from "../../config/env.config";
 
 export class LoginUseCase {
@@ -12,49 +22,50 @@ export class LoginUseCase {
     private readonly tenantRepo: TenantRepository,
   ) {}
 
-  async execute(dto: LoginDto): Promise<IAuthResponse> {
+  async execute(dto: LoginDto): Promise<OperationResult<IAuthResponse, AuthDomainError>> {
     const normalizedEmail = dto.email.trim().toLowerCase();
     const incomingTenantId = dto.tenantId?.trim();
 
     let resolvedTenantId: string;
-    let user;
     let subscriptionStatus: import("../../domain/interfaces/tenant.interface").SubscriptionStatus = 'active';
+    let user;
 
     if (incomingTenantId) {
       const tenant = await this.tenantRepo.findById(incomingTenantId);
       if (!tenant) {
-        throw new Error("TENANT_NOT_FOUND");
+        return OperationResult.fail(new TenantNotFoundError());
       }
-
       resolvedTenantId = incomingTenantId;
       subscriptionStatus = tenant.subscriptionStatus ?? 'active';
-      user = await this.userRepo.findByEmailAndTenant(
-        normalizedEmail,
-        resolvedTenantId,
-      );
+      user = await this.userRepo.findByEmailAndTenant(normalizedEmail, resolvedTenantId);
     } else {
       user = await this.userRepo.findByEmail(normalizedEmail);
       if (!user) {
-        throw new Error("INVALID_CREDENTIALS");
+        return OperationResult.fail(new InvalidCredentialsError());
       }
-
       resolvedTenantId = user.tenantId;
-
       const tenant = await this.tenantRepo.findById(resolvedTenantId);
       if (!tenant) {
-        throw new Error("TENANT_NOT_FOUND");
+        return OperationResult.fail(new TenantNotFoundError());
       }
-
       subscriptionStatus = tenant.subscriptionStatus ?? 'active';
     }
 
     if (!user) {
-      throw new Error("INVALID_CREDENTIALS");
+      return OperationResult.fail(new InvalidCredentialsError());
     }
 
     const isValid = await bcrypt.compare(dto.password, user.password);
     if (!isValid) {
-      throw new Error("INVALID_CREDENTIALS");
+      return OperationResult.fail(new InvalidCredentialsError());
+    }
+
+    if (!UserStateMachine.canLogin(user.status)) {
+      return OperationResult.fail(
+        user.status === UserStatus.PENDING_VERIFICATION
+          ? new EmailNotVerifiedError()
+          : new AccountSuspendedError(),
+      );
     }
 
     const token = jwt.sign(
@@ -70,17 +81,17 @@ export class LoginUseCase {
       { expiresIn: envConfig.jwt.expiresIn as jwt.SignOptions["expiresIn"] },
     );
 
-    return {
+    return OperationResult.ok({
       accessToken: token,
       user: {
-        id:                 user._id,
-        email:              user.email,
-        firstName:          user.firstName ?? null,
-        lastName:           user.lastName  ?? null,
-        role:               user.role,
-        tenantId:           resolvedTenantId,
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName ?? null,
+        lastName: user.lastName ?? null,
+        role: user.role,
+        tenantId: resolvedTenantId,
         subscriptionStatus,
       },
-    };
+    });
   }
 }

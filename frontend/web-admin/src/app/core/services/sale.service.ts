@@ -92,6 +92,16 @@ export interface ShiftDto {
   totalSalesAmount: number;
 }
 
+export interface ShiftSummaryDto {
+  shiftId: string;
+  openedAt: string;
+  openingCashAmount: number;
+  totalCashSales: number;
+  totalAccountPayments: number;
+  totalExpenses: number;
+  expectedCashAmount: number;
+}
+
 export interface OpenShiftRequest {
   openingCashAmount: number;
   cashierName: string;
@@ -136,5 +146,9 @@ export class SaleService {
 
   getShiftsPaged(page = 1, pageSize = 20, status = 'all'): Observable<any> {
     return this.gateway.get('/api/v1/sales/shifts', { page, pageSize, status });
+  }
+
+  getShiftSummary(): Observable<ShiftSummaryDto> {
+    return this.gateway.get<ShiftSummaryDto>('/api/v1/sales/shifts/current/summary');
   }
 }
