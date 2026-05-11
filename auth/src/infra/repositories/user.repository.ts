@@ -1,41 +1,24 @@
 import { IUser } from "../../domain/interfaces/user.interface";
+import { UserStatus } from "../../domain/enums/user-status.enum";
 import { UserModel } from "../models/user.model";
 
 type UserDoc = Omit<IUser, "_id"> & { _id: unknown };
 
-const toIUser = (doc: UserDoc): IUser =>
-  ({
-    ...doc,
-    _id: String(doc._id),
-  }) as IUser;
+const toIUser = (doc: UserDoc): IUser => ({ ...doc, _id: String(doc._id) }) as IUser;
 
 export class UserRepository {
-  async findByEmailAndTenant(
-    email: string,
-    tenantId: string,
-  ): Promise<IUser | null> {
-    const doc = await UserModel.findOne({
-      email,
-      tenantId,
-      isActive: true,
-    }).lean();
+  async findByEmailAndTenant(email: string, tenantId: string): Promise<IUser | null> {
+    const doc = await UserModel.findOne({ email, tenantId }).lean();
     return doc ? toIUser(doc as UserDoc) : null;
   }
 
   async findByEmail(email: string): Promise<IUser | null> {
-    const doc = await UserModel.findOne({
-      email,
-      isActive: true,
-    }).lean();
+    const doc = await UserModel.findOne({ email }).lean();
     return doc ? toIUser(doc as UserDoc) : null;
   }
 
   async findById(id: string, tenantId: string): Promise<IUser | null> {
-    const doc = await UserModel.findOne({
-      _id: id,
-      tenantId,
-      isActive: true,
-    }).lean();
+    const doc = await UserModel.findOne({ _id: id, tenantId }).lean();
     return doc ? toIUser(doc as UserDoc) : null;
   }
 
@@ -48,10 +31,7 @@ export class UserRepository {
     await UserModel.deleteOne({ _id: id, tenantId });
   }
 
-  async existsByEmailAndTenant(
-    email: string,
-    tenantId: string,
-  ): Promise<boolean> {
+  async existsByEmailAndTenant(email: string, tenantId: string): Promise<boolean> {
     const count = await UserModel.countDocuments({ email, tenantId });
     return count > 0;
   }
@@ -61,7 +41,11 @@ export class UserRepository {
     return docs.map(d => toIUser(d as UserDoc));
   }
 
-  async updateById(id: string, tenantId: string, data: Partial<Pick<IUser, "firstName" | "lastName" | "role" | "isActive">>): Promise<IUser | null> {
+  async updateById(
+    id: string,
+    tenantId: string,
+    data: Partial<Pick<IUser, "firstName" | "lastName" | "role" | "status">>,
+  ): Promise<IUser | null> {
     const doc = await UserModel.findOneAndUpdate(
       { _id: id, tenantId },
       { $set: data },
@@ -70,11 +54,25 @@ export class UserRepository {
     return doc ? toIUser(doc as UserDoc) : null;
   }
 
-  async deactivate(id: string, tenantId: string): Promise<void> {
-    await UserModel.updateOne({ _id: id, tenantId }, { $set: { isActive: false } });
+  async setStatus(email: string, status: UserStatus): Promise<void> {
+    await UserModel.updateOne({ email }, { $set: { status } });
   }
 
-  async activate(id: string, tenantId: string): Promise<void> {
-    await UserModel.updateOne({ _id: id, tenantId }, { $set: { isActive: true } });
+  async setStatusById(id: string, tenantId: string, status: UserStatus): Promise<void> {
+    await UserModel.updateOne({ _id: id, tenantId }, { $set: { status } });
+  }
+
+  async setVerificationCode(email: string, code: string, expiry: Date): Promise<void> {
+    await UserModel.updateOne(
+      { email },
+      { $set: { verificationCode: code, verificationCodeExpiry: expiry } },
+    );
+  }
+
+  async clearVerificationCode(email: string): Promise<void> {
+    await UserModel.updateOne(
+      { email },
+      { $set: { verificationCode: null, verificationCodeExpiry: null } },
+    );
   }
 }
