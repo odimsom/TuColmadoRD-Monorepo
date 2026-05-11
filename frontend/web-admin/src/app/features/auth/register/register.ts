@@ -128,21 +128,22 @@ export class Register {
     };
 
     this.authService.register(payload).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.success.set(true);
-        // Keep loading visible for 2 seconds so user sees success state
         setTimeout(() => {
           this.loading.set(false);
-          this.router.navigate(['/portal/dashboard']).catch(err => {
-            console.error('❌ Navigation failed:', err);
-            this.error.set('Error al redirigir. Intenta recargar la página.');
-            this.success.set(false);
-            this.loading.set(false);
-          });
+          if (res.requiresVerification) {
+            this.router.navigate(['/auth/verify'], { queryParams: { email: payload.email } });
+          } else {
+            this.router.navigate(['/portal/dashboard']).catch(err => {
+              this.error.set('Error al redirigir. Intenta recargar la página.');
+              this.success.set(false);
+              this.loading.set(false);
+            });
+          }
         }, 2000);
       },
       error: (err) => {
-        console.error('❌ Registration error:', err);
         this.loading.set(false);
         this.error.set(err.error?.message || 'Error al crear la cuenta. Inténtalo de nuevo.');
       },

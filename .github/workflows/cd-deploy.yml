@@ -53,6 +53,9 @@ jobs:
           TAG="${{ steps.vars.outputs.tag_name }}"
           SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
           
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          
           git tag -f "$TAG" -m "Release $TAG"
           git push origin "$TAG" --force
           
