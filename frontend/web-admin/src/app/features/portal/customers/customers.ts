@@ -40,9 +40,9 @@ export class Customers implements OnInit {
   });
 
   totalDebt = computed(() =>
-    this.customers().reduce((sum, c) => sum + (c.balance < 0 ? -c.balance : 0), 0)
+    this.customers().reduce((sum, c) => sum + (c.balance > 0 ? c.balance : 0), 0)
   );
-  customersWithDebt = computed(() => this.customers().filter(c => c.balance < 0).length);
+  customersWithDebt = computed(() => this.customers().filter(c => c.balance > 0).length);
 
   createForm = this.fb.nonNullable.group({
     fullName:    ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
@@ -132,8 +132,8 @@ export class Customers implements OnInit {
   }
 
   getBalanceClass(balance: number): string {
-    if (balance < 0) return 'text-red-400';
-    if (balance > 0) return 'text-green-400';
+    if (balance > 0) return 'text-red-400';   // tiene deuda
+    if (balance < 0) return 'text-amber-400'; // crédito a favor (edge case)
     return 'text-slate-400';
   }
 

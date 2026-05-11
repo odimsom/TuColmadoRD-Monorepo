@@ -2,6 +2,15 @@ import bcrypt from "bcryptjs";
 import { UserRepository } from "../../infra/repositories/user.repository";
 import { IUser } from "../../domain/interfaces/user.interface";
 import { Role } from "../../domain/enums/role.enums";
+import { UserStatus } from "../../domain/enums/user-status.enum";
+import { UserStateMachine } from "../../domain/state-machine/user-state-machine";
+import { OperationResult } from "../../domain/result/operation-result";
+import {
+  AuthDomainError,
+  EmailAlreadyExistsError,
+  InvalidRoleError,
+  EmployeeNotFoundError,
+} from "../../domain/errors/auth-domain-error";
 
 const MANAGEABLE_ROLES: Role[] = [Role.ADMIN, Role.CASHIER, Role.SELLER, Role.DELIVERY];
 
@@ -20,15 +29,16 @@ export class CreateEmployeeUseCase {
   async execute(
     tenantId: string,
     data: { email: string; password: string; firstName?: string; lastName?: string; role: string },
-  ): Promise<Omit<IUser, "password">> {
+  ): Promise<OperationResult<Omit<IUser, "password">, AuthDomainError>> {
     const role = data.role as Role;
     if (!MANAGEABLE_ROLES.includes(role)) {
-      throw new Error("INVALID_ROLE");
+      return OperationResult.fail(new InvalidRoleError());
     }
 
     const normalizedEmail = data.email.trim().toLowerCase();
-    const exists = await this.userRepo.existsByEmailAndTenant(normalizedEmail, tenantId);
-    if (exists) throw new Error("EMAIL_ALREADY_EXISTS");
+    if (await this.userRepo.existsByEmailAndTenant(normalizedEmail, tenantId)) {
+      return OperationResult.fail(new EmailAlreadyExistsError());
+    }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const user = await this.userRepo.create({
@@ -38,11 +48,13 @@ export class CreateEmployeeUseCase {
       firstName: data.firstName ?? null,
       lastName: data.lastName ?? null,
       role,
-      isActive: true,
+      status: UserStatus.ACTIVE,
+      verificationCode: null,
+      verificationCodeExpiry: null,
     });
 
     const { password: _pw, ...rest } = user;
-    return rest;
+    return OperationResult.ok(rest);
   }
 }
 
@@ -53,9 +65,9 @@ export class UpdateEmployeeUseCase {
     id: string,
     tenantId: string,
     data: { firstName?: string; lastName?: string; role?: string },
-  ): Promise<Omit<IUser, "password">> {
+  ): Promise<OperationResult<Omit<IUser, "password">, AuthDomainError>> {
     if (data.role && !MANAGEABLE_ROLES.includes(data.role as Role)) {
-      throw new Error("INVALID_ROLE");
+      return OperationResult.fail(new InvalidRoleError());
     }
 
     const updated = await this.userRepo.updateById(id, tenantId, {
@@ -63,21 +75,35 @@ export class UpdateEmployeeUseCase {
       ...(data.lastName  !== undefined && { lastName:  data.lastName }),
       ...(data.role      !== undefined && { role:      data.role as Role }),
     });
-    if (!updated) throw new Error("EMPLOYEE_NOT_FOUND");
+    if (!updated) {
+      return OperationResult.fail(new EmployeeNotFoundError());
+    }
 
     const { password: _pw, ...rest } = updated;
-    return rest;
+    return OperationResult.ok(rest);
   }
 }
 
 export class ToggleEmployeeUseCase {
   constructor(private readonly userRepo: UserRepository) {}
 
-  async execute(id: string, tenantId: string, active: boolean): Promise<void> {
-    if (active) {
-      await this.userRepo.activate(id, tenantId);
-    } else {
-      await this.userRepo.deactivate(id, tenantId);
+  async execute(
+    id: string,
+    tenantId: string,
+    activate: boolean,
+  ): Promise<OperationResult<void, AuthDomainError>> {
+    const user = await this.userRepo.findById(id, tenantId);
+    if (!user) {
+      return OperationResult.fail(new EmployeeNotFoundError());
     }
+
+    const trigger = activate ? 'REACTIVATE' : 'SUSPEND';
+    const transitionResult = UserStateMachine.transition(user.status, trigger);
+    if (!transitionResult.isOk) {
+      return OperationResult.fail(transitionResult.error);
+    }
+
+    await this.userRepo.setStatusById(id, tenantId, transitionResult.value);
+    return OperationResult.ok(undefined);
   }
 }

@@ -1,7 +1,7 @@
 <div class="px-8 py-8 space-y-8 animate-in fade-in duration-500">
   
   <!-- Quick Stats Bar (Compact & Data-Dense) -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
     <!-- Stat 1: Ingresos del turno (real desde API) -->
     <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-pos-accent transition-colors group">
       <div class="flex justify-between items-start mb-3">
@@ -87,7 +87,32 @@
       </div>
     </div>
 
-    <!-- Stat 4: Tiempo de Turno (real desde API /shifts/current) -->
+    <!-- Stat 4: Gastos del Turno -->
+    <div [class.opacity-60]="expensesLoading"
+         class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-orange-500/30 transition-colors group">
+      <div class="flex justify-between items-start mb-3">
+        <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Gastos del Turno</span>
+        <span class="p-1.5 bg-orange-500/10 rounded-lg" [class.text-orange-500]="!expensesLoading" [class.text-slate-600]="expensesLoading">
+          <span class="icon-[ic--baseline-money-off] text-sm"></span>
+        </span>
+      </div>
+      <div class="flex items-end justify-between">
+        <div class="flex flex-col">
+          @if (expensesLoading) {
+            <span class="text-2xl font-mono font-bold text-slate-600 tracking-tighter animate-pulse">···</span>
+          } @else {
+            <span class="text-2xl font-mono font-bold tracking-tighter"
+              [class.text-orange-400]="stats.totalExpenses > 0"
+              [class.text-emerald-400]="stats.totalExpenses === 0">
+              {{ stats.totalExpenses | rdCurrency }}
+            </span>
+          }
+          <span class="text-[0.6rem] text-slate-500 font-medium mt-1">registrados este turno</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat 5: Tiempo de Turno -->
     <div class="bg-pos-surface border border-pos-border p-4 rounded-xl shadow-sm hover:border-pos-accent transition-colors group">
       <div class="flex justify-between items-start mb-3">
         <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest">Tiempo de Turno</span>
