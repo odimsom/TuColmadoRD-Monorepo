@@ -36,6 +36,12 @@ export class AuthService {
     );
   }
 
+  verifyEmail(email: string, code: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/verify-email`, { email, code }).pipe(
+      tap(res => this.setSession(res))
+    );
+  }
+
   logout(): void {
     localStorage.removeItem('tc_token');
     localStorage.removeItem('tc_user');
