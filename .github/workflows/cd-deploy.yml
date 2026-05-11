@@ -1,25 +1,78 @@
-name: CD - Build & Attach Windows Installer
-
-# Jenkins (Jenkinsfile) crea la release vX.Y.Z en GitHub.
-# Este workflow solo construye el instalador .exe y lo adjunta a esa release.
+name: CD - Deploy & Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 concurrency:
-  group: installer-build
+  group: production-deploy
   cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 177.7.48.169
+          username: root
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            export GIT_TERMINAL_PROMPT=0
+            export DEBIAN_FRONTEND=noninteractive
+            cd /app/tucolmadord
+            git fetch origin
+            git reset --hard origin/main
+            sudo bash deploy-production.sh
+
+  release:
+    name: Create GitHub Release
+    needs: deploy
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.vars.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Resolve version
+        id: vars
+        run: |
+          VERSION=$(grep -m1 '"version"' frontend/package.json | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+          TAG="v${VERSION}"
+          echo "tag_name=${TAG}" >> $GITHUB_OUTPUT
+          
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.vars.outputs.tag_name }}"
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          
+          git tag -f "$TAG" -m "Release $TAG"
+          git push origin "$TAG" --force
+          
+          gh release create "$TAG" \
+            --title "TuColmadoRD $TAG" \
+            --notes "### Deploy — Producción
+            
+            **Versión:** \`${TAG}\`
+            **Commit:** [\`${SHORT_SHA}\`](https://github.com/${{ github.repository }}/commit/${GITHUB_SHA})
+            **Rama:** main
+            
+            > Instalador Windows adjuntado automáticamente por GitHub Actions." \
+            || gh release edit "$TAG" --title "TuColmadoRD $TAG"
+
   build-installer:
     name: Build & Attach Installer to Release
+    needs: release
     runs-on: windows-latest
-
     steps:
       - name: Checkout monorepo
         uses: actions/checkout@v4
@@ -27,12 +80,12 @@ jobs:
           submodules: recursive
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
@@ -44,73 +97,19 @@ jobs:
         working-directory: ./frontend/web-admin
         run: npm ci
 
-      - name: Resolve version from package.json
-        id: vars
-        run: |
-          $package = Get-Content ./frontend/package.json | ConvertFrom-Json
-          $version = $package.version
-          "APP_VERSION=$version"   | Out-File -FilePath $env:GITHUB_ENV -Append
-          "app_version=$version"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "tag_name=v$version"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-        shell: pwsh
-
       - name: Build desktop + installer
         run: |
           $env:RELEASE_TYPE       = "production"
-          $env:APP_VERSION        = "${{ steps.vars.outputs.app_version }}"
+          $env:APP_VERSION        = (Get-Content ./frontend/package.json | ConvertFrom-Json).version
           $env:TU_COLMADORD_ROOT  = "${{ github.workspace }}"
           Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
           & "${{ github.workspace }}/frontend/scripts/build-desktop.ps1"
         shell: pwsh
 
-      - name: Verify installer exists
-        run: |
-          $installerDir = Join-Path $env:GITHUB_WORKSPACE "backend/publish/installer"
-          if (-not (Test-Path $installerDir)) {
-            Write-Error "Installer directory not found: $installerDir"
-            exit 1
-          }
-          $exe = Get-ChildItem -Path $installerDir -Filter "*.exe" -File | Select-Object -First 1
-          if (-not $exe) {
-            Write-Error "No installer .exe found in $installerDir"
-            exit 1
-          }
-          Write-Host "Installer: $($exe.FullName)"
-        shell: pwsh
-
-      # Espera a que Jenkins cree la release antes de adjuntar el .exe.
-      # Jenkins puede tardar varios minutos en tests + deploy + release.
-      - name: Wait for Jenkins release to exist
-        run: |
-          $tag  = "${{ steps.vars.outputs.tag_name }}"
-          $repo = "odimsom/TuColmadoRD-Monorepo"
-          $url  = "https://api.github.com/repos/$repo/releases/tags/$tag"
-          $headers = @{ Authorization = "token ${{ secrets.GITHUB_TOKEN }}" }
-
-          Write-Host "Esperando release $tag en GitHub..."
-          for ($i = 1; $i -le 30; $i++) {
-            try {
-              $resp = Invoke-RestMethod -Uri $url -Headers $headers -ErrorAction Stop
-              Write-Host "✅ Release encontrada (intento $i): $($resp.html_url)"
-              break
-            } catch {
-              if ($i -eq 30) {
-                Write-Host "⚠️  Release no encontrada después de 5 minutos — creando una nueva..."
-              } else {
-                Write-Host "  Intento $i/30 — esperando 10s..."
-                Start-Sleep -Seconds 10
-              }
-            }
-          }
-        shell: pwsh
-
-      # Adjunta el .exe a la release que Jenkins creó.
-      # allow_updates:true → si la release ya tiene el .exe, lo reemplaza.
       - name: Attach installer to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.vars.outputs.tag_name }}
-          name: TuColmadoRD ${{ steps.vars.outputs.tag_name }}
+          tag_name: ${{ needs.release.outputs.tag_name }}
           prerelease: false
           allow_updates: true
           files: backend/publish/installer/*.exe

@@ -1,16 +1,66 @@
-name: CI - Dev → QA (DESACTIVADO — migrado a Jenkins)
+name: CI - Dev to QA
 
-# Desactivado: Jenkins maneja este pipeline via Jenkinsfile (rama dev)
-# Para reactivar temporalmente cambia workflow_dispatch por push: branches: [dev]
 on:
-  workflow_dispatch:
-
-permissions:
-  contents: write
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
 
 jobs:
-  _disabled:
-    name: Este workflow está desactivado
+  test:
+    name: Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - run: echo "CI/CD migrado a Jenkins. Ver Jenkinsfile en la raíz del repo."
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          
+      - name: Test .NET Backend
+        working-directory: backend
+        run: |
+          dotnet restore TuColmadoRD.slnx
+          dotnet build TuColmadoRD.slnx -c Release --no-restore
+          dotnet test TuColmadoRD.slnx -c Release --no-build --verbosity normal
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+      - name: Test Auth Service
+        working-directory: auth
+        run: |
+          npm install -g pnpm
+          pnpm install --frozen-lockfile
+          pnpm test
+
+  promote:
+    name: Promote Dev to QA
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create PR to QA
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_EXISTS=$(gh pr list --base qa --head dev --state open --json number --jq length)
+          if [ "$PR_EXISTS" -gt "0" ]; then
+            echo "PR dev -> qa already exists."
+          else
+            gh pr create \
+              --base qa \
+              --head dev \
+              --title "[Auto] Promote dev → qa" \
+              --body "PR automático: pruebas unitarias pasaron." \
+              --reviewer odimsom
+          fi
