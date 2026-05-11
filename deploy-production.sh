@@ -236,25 +236,31 @@ fi
 
 # 9. Ensure PostgreSQL database exists before migrations
 echo "🗄️ Ensuring PostgreSQL database '${POSTGRES_DB}' exists..."
-docker compose exec -T postgres psql -U ${POSTGRES_USER} -tc \
-  "SELECT 1 FROM pg_database WHERE datname = '${POSTGRES_DB}'" | grep -q 1 || \
-  docker compose exec -T postgres createdb -U ${POSTGRES_USER} ${POSTGRES_DB} || {
-    echo "⚠️  Warning: Could not create database. It may already exist or connection failed."
-}
-echo "  ✅ Database ready"
+docker compose exec -T postgres psql -U ${POSTGRES_USER} -d postgres -tc \
+  "SELECT 1 FROM pg_database WHERE datname = '${POSTGRES_DB}'" | grep -q 1 \
+  && echo "  ✅ Database '${POSTGRES_DB}' already exists" \
+  || { docker compose exec -T postgres createdb -U ${POSTGRES_USER} ${POSTGRES_DB} \
+       && echo "  ✅ Database '${POSTGRES_DB}' created"; }
 
 # 9a. Wait for application services
 echo "⏳ Waiting for application services to stabilize..."
 sleep 15
 
-# 10. Run database migrations
+# 10. Run EF Core migrations using a dedicated SDK container (api image has no SDK)
 echo "🗄️ Running EF Core migrations for .NET API..."
-docker compose exec -T api dotnet ef database update \
-    --project src/infrastructure/TuColmadoRD.Infrastructure.Persistence \
-    --startup-project src/Presentations/TuColmadoRD.Presentation.API \
-    --configuration Release || {
-    echo "⚠️  Migration warning: Check API logs with: docker compose logs api"
-}
+docker run --rm \
+  --network tucolmadord_tucolmadord-network \
+  -v "$(pwd)":/source \
+  -w /source/backend \
+  mcr.microsoft.com/dotnet/sdk:10.0-preview \
+  sh -c "dotnet tool install --global dotnet-ef \
+         && export PATH=\$PATH:/root/.dotnet/tools \
+         && dotnet ef database update \
+              --project src/infrastructure/TuColmadoRD.Infrastructure.Persistence \
+              --startup-project src/Presentations/TuColmadoRD.Presentation.API \
+              --context TuColmadoDbContext \
+              --connection 'Host=tucolmadord-postgres-1;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}'" \
+  || { echo "⚠️  Migration warning: Check API logs with: docker compose logs api"; }
 
 # 11. Verify all containers are healthy
 echo "✅ Verifying service health..."
