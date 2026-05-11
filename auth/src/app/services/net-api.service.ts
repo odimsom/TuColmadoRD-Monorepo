@@ -1,10 +1,14 @@
 import { envConfig } from "../../config/env.config";
 
 export class NetApiService {
-  private readonly baseUrl = (envConfig.apiurl || "http://localhost:5000").replace(/\/+$/, "");
+  private readonly baseUrl = this.normalizeBaseUrl(envConfig.apiurl);
 
   private readonly isMock = envConfig.nodeEnv === "development";
   private readonly requestTimeoutMs = 5000;
+
+  private normalizeBaseUrl(url?: string): string {
+    return (url || "http://localhost:5000").replace(/\/+$/, "");
+  }
 
   async notifyNewTenant(data: {
     tenantId: string;

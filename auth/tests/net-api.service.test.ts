@@ -1,8 +1,10 @@
+const DEFAULT_ENV = {
+  apiurl: "http://localhost:5000",
+  nodeEnv: "production",
+} as const;
+
 jest.mock("../src/config/env.config", () => ({
-  envConfig: {
-    apiurl: "http://localhost:5000",
-    nodeEnv: "production",
-  },
+  envConfig: { ...DEFAULT_ENV },
 }));
 
 import { envConfig } from "../src/config/env.config";
@@ -21,7 +23,7 @@ describe("NetApiService", () => {
   });
 
   afterEach(() => {
-    Object.assign(envConfig as any, { nodeEnv: "production", apiurl: "http://localhost:5000" });
+    Object.assign(envConfig as any, DEFAULT_ENV);
   });
 
   it("no hace llamada HTTP en modo development (mock)", async () => {
