@@ -27,6 +27,9 @@ fi
 
 echo "🚀 Starting TuColmadoRD production deployment..."
 
+export GIT_TERMINAL_PROMPT=0
+export DEBIAN_FRONTEND=noninteractive
+
 cd /app/tucolmadord
 
 # 1. Prepare git (stash any local changes and pull latest code)
