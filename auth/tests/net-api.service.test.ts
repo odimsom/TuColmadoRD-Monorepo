@@ -77,4 +77,26 @@ describe("NetApiService", () => {
     expect(clearTimeoutSpy).toHaveBeenCalled();
     clearTimeoutSpy.mockRestore();
   });
+
+  it("activa degradación temporal cuando el server no responde y reintenta luego", async () => {
+    Object.assign(envConfig as any, { nodeEnv: "production", apiurl: "http://api.local" });
+    const nowSpy = jest.spyOn(Date, "now");
+    const service = new NetApiService();
+    (global.fetch as jest.Mock)
+      .mockRejectedValueOnce(new Error("timeout"))
+      .mockResolvedValueOnce({ ok: true });
+
+    nowSpy.mockReturnValue(1_000);
+    await expect(service.notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    nowSpy.mockReturnValue(15_000);
+    await expect(service.notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    nowSpy.mockReturnValue(32_000);
+    await expect(service.notifyNewTenant(payload)).resolves.toBeUndefined();
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    nowSpy.mockRestore();
+  });
 });
