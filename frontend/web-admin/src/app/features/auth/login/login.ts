@@ -48,7 +48,11 @@ export class Login {
       },
       error: (err) => {
         this.loading = false;
-        this.error = 'Credenciales inválidas.';
+        if (err.status === 403 && err.error?.code === 'EMAIL_NOT_VERIFIED') {
+          this.router.navigate(['/auth/verify'], { queryParams: { email: payload.email } });
+        } else {
+          this.error = err.error?.message || 'Credenciales inválidas.';
+        }
       }
     });
   }
