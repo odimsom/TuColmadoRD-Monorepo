@@ -51,7 +51,7 @@ jobs:
           fetch-depth: 0
       - name: Create and Merge PR to QA
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ADMIN_PAT }}
         run: |
           PR_EXISTS=$(gh pr list --base qa --head dev --state open --json number --jq length)
           if [ "$PR_EXISTS" -gt "0" ]; then
