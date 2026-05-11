@@ -1,7 +1,7 @@
 import { envConfig } from "../../config/env.config";
 
 export class NetApiService {
-  private readonly baseUrl = envConfig.apiurl.replace(/\/+$/, "");
+  private readonly baseUrl = (envConfig.apiurl || "http://localhost:5000").replace(/\/+$/, "");
 
   private readonly isMock = envConfig.nodeEnv === "development";
   private readonly requestTimeoutMs = 5000;
@@ -30,8 +30,11 @@ export class NetApiService {
       if (!response.ok) {
         throw new Error("NET_API_ERROR");
       }
-    } catch {
-      throw new Error("NET_API_ERROR");
+    } catch (error) {
+      if (error instanceof Error && error.message === "NET_API_ERROR") {
+        throw error;
+      }
+      throw Object.assign(new Error("NET_API_ERROR"), { cause: error });
     } finally {
       clearTimeout(timeout);
     }

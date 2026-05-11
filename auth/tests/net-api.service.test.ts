@@ -20,6 +20,10 @@ describe("NetApiService", () => {
     (global as any).fetch = jest.fn();
   });
 
+  afterEach(() => {
+    Object.assign(envConfig as any, { nodeEnv: "production", apiurl: "http://localhost:5000" });
+  });
+
   it("no hace llamada HTTP en modo development (mock)", async () => {
     Object.assign(envConfig as any, { nodeEnv: "development", apiurl: "http://api.local/" });
     const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
@@ -42,6 +46,7 @@ describe("NetApiService", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: expect.any(AbortSignal),
       }),
     );
   });
@@ -58,5 +63,15 @@ describe("NetApiService", () => {
     (global.fetch as jest.Mock).mockRejectedValue(new Error("network down"));
 
     await expect(new NetApiService().notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+  });
+
+  it("limpia el timeout aunque falle la llamada", async () => {
+    Object.assign(envConfig as any, { nodeEnv: "production", apiurl: "http://api.local" });
+    const clearTimeoutSpy = jest.spyOn(global, "clearTimeout");
+    (global.fetch as jest.Mock).mockRejectedValue(new Error("network down"));
+
+    await expect(new NetApiService().notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    clearTimeoutSpy.mockRestore();
   });
 });
