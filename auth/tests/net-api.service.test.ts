@@ -5,7 +5,10 @@ const DEFAULT_ENV = {
 } as const;
 
 jest.mock("../src/config/env.config", () => ({
-  envConfig: { ...DEFAULT_ENV },
+  envConfig: {
+    apiurl: "http://localhost:5000",
+    nodeEnv: "production",
+  },
 }));
 
 import { envConfig } from "../src/config/env.config";
