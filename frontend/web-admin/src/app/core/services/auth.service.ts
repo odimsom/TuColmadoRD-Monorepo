@@ -28,6 +28,16 @@ export class AuthService {
 
   register(data: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/auth/register`, data).pipe(
+      tap(res => {
+        if (res.token || res.accessToken) {
+          this.setSession(res);
+        }
+      })
+    );
+  }
+
+  verifyEmail(email: string, code: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/verify-email`, { email, code }).pipe(
       tap(res => this.setSession(res))
     );
   }

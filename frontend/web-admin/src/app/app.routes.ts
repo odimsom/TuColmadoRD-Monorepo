@@ -30,6 +30,10 @@ export const routes: Routes = [
         path: 'register',
         canActivate: [desktopRegistrationGuard],
         loadComponent: () => import('./features/auth/register/register').then(m => m.Register)
+      },
+      {
+        path: 'verify',
+        loadComponent: () => import('./features/auth/verify/verify').then(m => m.Verify)
       }
     ]
   },
