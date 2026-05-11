@@ -27,6 +27,7 @@ import {
   EmployeeNotFoundError,
   UserNotFoundError,
   VerificationCodeExpiredError,
+  InvalidVerificationCodeError,
   NoPendingVerificationError,
   InvalidStateTransitionError,
 } from "../../domain/errors/auth-domain-error";
@@ -40,6 +41,7 @@ function domainErrorStatus(error: AuthDomainError): number {
   if (error instanceof EmployeeNotFoundError)       return 404;
   if (error instanceof EmailAlreadyExistsError)     return 409;
   if (error instanceof VerificationCodeExpiredError) return 410;
+  if (error instanceof InvalidVerificationCodeError) return 401;
   if (error instanceof InvalidRoleError)            return 400;
   if (error instanceof NoPendingVerificationError)  return 400;
   if (error instanceof InvalidStateTransitionError) return 422;
