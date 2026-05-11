@@ -20,13 +20,15 @@ jobs:
       
       - name: Execute deployment script
         run: |
-          export GIT_TERMINAL_PROMPT=0
-          export DEBIAN_FRONTEND=noninteractive
-          git config --global --add safe.directory /app/tucolmadord
-          cd /app/tucolmadord
-          git fetch origin
-          git reset --hard origin/main
-          sudo bash deploy-production.sh
+          sudo bash -c '
+            export GIT_TERMINAL_PROMPT=0
+            export DEBIAN_FRONTEND=noninteractive
+            git config --global --add safe.directory /app/tucolmadord
+            cd /app/tucolmadord
+            git fetch origin
+            git reset --hard origin/main
+            bash deploy-production.sh
+          '
 
   release:
     name: Create GitHub Release
