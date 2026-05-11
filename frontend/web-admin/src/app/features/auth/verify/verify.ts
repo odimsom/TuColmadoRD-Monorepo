@@ -50,12 +50,10 @@ export class Verify implements OnInit {
       next: () => {
         this.loading.set(false);
         this.router.navigate(['/portal/dashboard']).catch(err => {
-          console.error('❌ Navigation failed:', err);
           this.error.set('Error al redirigir al portal.');
         });
       },
       error: (err) => {
-        console.error('❌ Verification error:', err);
         this.loading.set(false);
         this.error.set(err.error?.message || 'Código inválido o expirado. Inténtalo de nuevo.');
       }
