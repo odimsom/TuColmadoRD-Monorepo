@@ -1,16 +1,66 @@
-name: CI - QA → Main (DESACTIVADO — migrado a Jenkins)
+name: CI - QA to Main
 
-# Desactivado: Jenkins maneja este pipeline via Jenkinsfile (rama qa)
-# Para reactivar temporalmente cambia workflow_dispatch por push: branches: [qa]
 on:
-  workflow_dispatch:
-
-permissions:
-  contents: write
+  push:
+    branches: [qa]
+  pull_request:
+    branches: [qa]
 
 jobs:
-  _disabled:
-    name: Este workflow está desactivado
+  test:
+    name: Integration Tests
     runs-on: ubuntu-latest
     steps:
-      - run: echo "CI/CD migrado a Jenkins. Ver Jenkinsfile en la raíz del repo."
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          
+      - name: Test .NET Backend
+        working-directory: backend
+        run: |
+          dotnet restore TuColmadoRD.slnx
+          dotnet build TuColmadoRD.slnx -c Release --no-restore
+          dotnet test TuColmadoRD.slnx -c Release --no-build --verbosity normal
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+      - name: Test Auth Service
+        working-directory: auth
+        run: |
+          npm install -g pnpm
+          pnpm install --frozen-lockfile
+          pnpm test
+
+  promote:
+    name: Promote QA to Main
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/qa'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create PR to Main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_EXISTS=$(gh pr list --base main --head qa --state open --json number --jq length)
+          if [ "$PR_EXISTS" -gt "0" ]; then
+            echo "PR qa -> main already exists."
+          else
+            gh pr create \
+              --base main \
+              --head qa \
+              --title "[Auto] Promote qa → main" \
+              --body "PR automático: pruebas de integración pasaron en qa." \
+              --reviewer odimsom
+          fi
