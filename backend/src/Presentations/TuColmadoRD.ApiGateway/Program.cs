@@ -224,6 +224,12 @@ public static class GatewayHostBuilder
         authGroup.MapPost("/login", async (HttpContext ctx, IHttpClientFactory factory) =>
             await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/login"));
 
+        authGroup.MapPost("/verify-email", async (HttpContext ctx, IHttpClientFactory factory) =>
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/verify-email"));
+
+        authGroup.MapPost("/resend-verification", async (HttpContext ctx, IHttpClientFactory factory) =>
+            await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/resend-verification"));
+
         app.MapPost("/gateway/devices/pair", async (HttpContext ctx, IHttpClientFactory factory) =>
             await ProxyRequest(ctx, factory.CreateClient("AuthClient"), "/api/auth/pair-device"))
             .RequireAuthorization();
