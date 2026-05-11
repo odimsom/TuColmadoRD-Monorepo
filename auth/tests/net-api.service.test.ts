@@ -59,16 +59,23 @@ describe("NetApiService", () => {
 
   it("lanza NET_API_ERROR cuando .NET responde con estado no exitoso", async () => {
     Object.assign(envConfig as any, { nodeEnv: "production", apiurl: "http://api.local" });
-    (global.fetch as jest.Mock).mockResolvedValue({ ok: false });
+    const service = new NetApiService();
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 400 });
 
-    await expect(new NetApiService().notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+    await expect(service.notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+    await expect(service.notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
   it("lanza NET_API_ERROR cuando falla la llamada de red", async () => {
     Object.assign(envConfig as any, { nodeEnv: "production", apiurl: "http://api.local" });
-    (global.fetch as jest.Mock).mockRejectedValue(new Error("network down"));
+    const networkError = new Error("network down");
+    (global.fetch as jest.Mock).mockRejectedValue(networkError);
 
-    await expect(new NetApiService().notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+    await expect(new NetApiService().notifyNewTenant(payload)).rejects.toMatchObject({
+      message: "NET_API_ERROR",
+      cause: networkError,
+    });
   });
 
   it("limpia el timeout aunque falle la llamada", async () => {
@@ -85,21 +92,47 @@ describe("NetApiService", () => {
     Object.assign(envConfig as any, { nodeEnv: "production", apiurl: "http://api.local" });
     const nowSpy = jest.spyOn(Date, "now");
     const service = new NetApiService();
+    const timeoutError = Object.assign(new TypeError("network timeout"), { name: "AbortError" });
     (global.fetch as jest.Mock)
-      .mockRejectedValueOnce(new Error("timeout"))
+      .mockRejectedValueOnce(timeoutError)
       .mockResolvedValueOnce({ ok: true });
 
     nowSpy.mockReturnValue(1_000);
-    await expect(service.notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+    await expect(service.notifyNewTenant(payload)).rejects.toMatchObject({
+      message: "NET_API_ERROR",
+      cause: timeoutError,
+    });
     expect(global.fetch).toHaveBeenCalledTimes(1);
 
     nowSpy.mockReturnValue(15_000);
-    await expect(service.notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+    await expect(service.notifyNewTenant(payload)).rejects.toMatchObject({
+      message: "NET_API_ERROR",
+      cause: expect.objectContaining({ message: "NET_API_TEMPORARILY_UNAVAILABLE" }),
+    });
     expect(global.fetch).toHaveBeenCalledTimes(1);
 
     nowSpy.mockReturnValue(32_000);
     await expect(service.notifyNewTenant(payload)).resolves.toBeUndefined();
     expect(global.fetch).toHaveBeenCalledTimes(2);
+    nowSpy.mockRestore();
+  });
+
+  it("activa degradación temporal con errores 5xx y bloquea reintentos durante cooldown", async () => {
+    Object.assign(envConfig as any, { nodeEnv: "production", apiurl: "http://api.local" });
+    const nowSpy = jest.spyOn(Date, "now");
+    const service = new NetApiService();
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+
+    nowSpy.mockReturnValue(10_000);
+    await expect(service.notifyNewTenant(payload)).rejects.toThrow("NET_API_ERROR");
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    nowSpy.mockReturnValue(20_000);
+    await expect(service.notifyNewTenant(payload)).rejects.toMatchObject({
+      message: "NET_API_ERROR",
+      cause: expect.objectContaining({ message: "NET_API_TEMPORARILY_UNAVAILABLE" }),
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
     nowSpy.mockRestore();
   });
 });

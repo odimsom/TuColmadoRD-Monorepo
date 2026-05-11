@@ -16,6 +16,18 @@ export class NetApiService {
   private readonly requestTimeoutMs = 5000;
   private unavailableUntilMs = 0;
 
+  private static isTransientHttpStatus(status: number): boolean {
+    return status >= 500 || status === 408 || status === 429;
+  }
+
+  private static isTransientFetchError(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+
+    return error.name === "AbortError" || error instanceof TypeError;
+  }
+
   private isTemporarilyUnavailable(): boolean {
     return this.unavailableUntilMs > Date.now();
   }
@@ -56,7 +68,9 @@ export class NetApiService {
       });
 
       if (!response.ok) {
-        this.markTemporarilyUnavailable();
+        if (NetApiService.isTransientHttpStatus(response.status)) {
+          this.markTemporarilyUnavailable();
+        }
         throw new Error(NetApiService.NET_API_ERROR);
       }
       this.markAvailable();
@@ -64,7 +78,11 @@ export class NetApiService {
       if (error instanceof Error && error.message === NetApiService.NET_API_ERROR) {
         throw error;
       }
-      this.markTemporarilyUnavailable();
+
+      if (NetApiService.isTransientFetchError(error)) {
+        this.markTemporarilyUnavailable();
+      }
+
       throw Object.assign(new Error(NetApiService.NET_API_ERROR), { cause: error });
     } finally {
       clearTimeout(timeout);
