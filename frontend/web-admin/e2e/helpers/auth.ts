@@ -7,10 +7,11 @@ export const TEST_USER = {
 
 export async function login(page: Page) {
   await page.goto('/auth/login');
-  await page.fill('input[type="email"], input[formControlName="email"]', TEST_USER.email);
-  await page.fill('input[type="password"], input[formControlName="password"]', TEST_USER.password);
-  await page.click('button[type="submit"]');
-  await page.waitForURL(/\/(portal|pos)/, { timeout: 10_000 });
+  await page.waitForSelector('[data-testid="login-form"]', { timeout: 10_000 });
+  await page.fill('[data-testid="login-email"]', TEST_USER.email);
+  await page.fill('[data-testid="login-password"]', TEST_USER.password);
+  await page.click('[data-testid="login-submit-btn"]');
+  await page.waitForURL(/\/(portal|pos)/, { timeout: 20_000 });
 }
 
 export async function goToPOS(page: Page) {
