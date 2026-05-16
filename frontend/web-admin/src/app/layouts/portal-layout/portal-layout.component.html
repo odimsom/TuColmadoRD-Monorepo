@@ -1,5 +1,10 @@
 <div class="min-h-screen bg-[#060d1a] relative overflow-hidden flex transition-all duration-500">
 
+  <!-- Mobile sidebar backdrop -->
+  @if (isMobileSidebarOpen()) {
+    <div class="fixed inset-0 z-30 bg-black/70 lg:hidden" (click)="closeMobileSidebar()"></div>
+  }
+
   <!-- Overlay de licencia vencida -->
   @if (isLicenseExpired() && !isOnSubscriptionPage()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center">
@@ -32,10 +37,16 @@
   <div class="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-900/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
   <!-- ===================== SIDEBAR ===================== -->
+  <!-- Mobile: fixed off-canvas drawer (z-40, above backdrop z-30).
+       Desktop (lg+): sticky in-flow sidebar with collapse toggle. -->
   <aside
     [class.w-72]="!isSidebarCollapsed()"
     [class.w-[72px]]="isSidebarCollapsed()"
-    class="bg-[#080f1e]/98 backdrop-blur-3xl border-r border-white/[0.06] flex flex-col h-screen sticky top-0 z-30 transition-all duration-300 ease-in-out"
+    [class.-translate-x-full]="!isMobileSidebarOpen()"
+    [class.translate-x-0]="isMobileSidebarOpen()"
+    class="fixed top-0 left-0 h-full z-40 lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 w-72
+           bg-[#080f1e]/98 backdrop-blur-3xl border-r border-white/[0.06] flex flex-col
+           transition-transform duration-300 ease-in-out"
   >
     <!-- Logo -->
     <div class="px-5 py-5 border-b border-white/[0.06] flex items-center" [class.justify-center]="isSidebarCollapsed()">
@@ -208,10 +219,14 @@
   <div class="flex-grow flex flex-col min-w-0 relative h-screen overflow-hidden">
 
     <!-- Header -->
-    <header class="h-14 border-b border-white/[0.06] flex items-center justify-between px-6 bg-[#080f1e]/80 backdrop-blur-md sticky top-0 z-20">
+    <header class="h-14 border-b border-white/[0.06] flex items-center justify-between px-3 sm:px-6 bg-[#080f1e]/80 backdrop-blur-md sticky top-0 z-20">
 
-      <!-- Left: connection + context -->
-      <div class="flex items-center gap-4">
+      <!-- Left: hamburger (mobile) + connection + context -->
+      <div class="flex items-center gap-2 sm:gap-4">
+        <!-- Hamburger — only visible on mobile -->
+        <button (click)="toggleMobileSidebar()" class="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors">
+          <span class="icon-[ic--baseline-menu] text-xl"></span>
+        </button>
         <!-- Online/Offline indicator -->
         <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06]">
           <span class="relative flex h-1.5 w-1.5">
@@ -227,7 +242,7 @@
             [class.text-red-400]="connectionStatus() === 'offline'">{{ connectionStatus() }}</span>
         </div>
 
-        <div class="h-3.5 w-px bg-white/10"></div>
+        <div class="hidden sm:block h-3.5 w-px bg-white/10"></div>
 
         <!-- Active shift indicator -->
         @if (activeShift()) {
@@ -247,9 +262,9 @@
       <!-- Right: actions -->
       <div class="flex items-center gap-3">
         <!-- Nueva Venta CTA -->
-        <a routerLink="/pos" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 flex items-center gap-1.5">
+        <a routerLink="/pos" class="px-3 sm:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 flex items-center gap-1.5">
           <span class="icon-[ic--baseline-point-of-sale] text-sm"></span>
-          Nueva Venta
+          <span class="hidden sm:inline">Nueva Venta</span>
         </a>
       </div>
     </header>
@@ -258,17 +273,17 @@
     <main class="flex-grow overflow-y-auto relative z-10">
       <!-- Banner de descarga del POS -->
       @if (showDownloadBanner() && downloadInfo()) {
-        <div class="flex items-center gap-4 px-6 py-3 bg-blue-600/10 border-b border-blue-500/20 text-sm">
+        <div class="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-3 bg-blue-600/10 border-b border-blue-500/20 text-sm">
           <span class="icon-[ic--baseline-download] text-blue-400 text-lg shrink-0"></span>
-          <div class="flex-1">
-            <span class="font-bold text-white">¿Quieres usar el POS en esta computadora?</span>
-            <span class="text-slate-400 ml-2">Versión {{ downloadInfo()!.version }} disponible · {{ downloadInfo()!.fileSize }}</span>
+          <div class="flex-1 min-w-0">
+            <span class="font-bold text-white text-xs sm:text-sm">POS disponible</span>
+            <span class="hidden sm:inline text-slate-400 ml-2">¿Quieres usarlo en esta computadora? Versión {{ downloadInfo()!.version }} · {{ downloadInfo()!.fileSize }}</span>
           </div>
           <button
             (click)="downloadPOS()"
-            class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-widest transition-all shrink-0"
+            class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-widest transition-all shrink-0"
           >
-            Descargar POS
+            <span class="hidden sm:inline">Descargar </span>POS
           </button>
           <button
             (click)="dismissBanner()"

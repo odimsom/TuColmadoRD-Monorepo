@@ -208,6 +208,20 @@ export class DeliveryLayout implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  mapsUrl(order: DeliveryOrderDto): string {
+    if (order.latitude && order.longitude)
+      return `https://www.google.com/maps/dir/?api=1&destination=${order.latitude},${order.longitude}`;
+    const addr = encodeURIComponent(`${order.street}${order.houseNumber ? ' #' + order.houseNumber : ''}, ${order.sector}, ${order.province}, República Dominicana`);
+    return `https://www.google.com/maps/dir/?api=1&destination=${addr}`;
+  }
+
+  wazeUrl(order: DeliveryOrderDto): string {
+    if (order.latitude && order.longitude)
+      return `https://waze.com/ul?ll=${order.latitude},${order.longitude}&navigate=yes`;
+    const addr = encodeURIComponent(`${order.street}, ${order.sector}, ${order.province}, República Dominicana`);
+    return `https://waze.com/ul?q=${addr}&navigate=yes`;
+  }
+
   logout(): void {
     this.auth.logout();
     this.router.navigate(['/auth/login']);

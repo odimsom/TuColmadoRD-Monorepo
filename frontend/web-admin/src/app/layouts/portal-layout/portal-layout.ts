@@ -1,7 +1,8 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { SaleService, ShiftDto } from '../../core/services/sale.service';
 import { DownloadService, DownloadInfo } from '../../core/services/download.service';
@@ -21,8 +22,9 @@ export class PortalLayout implements OnInit, OnDestroy {
   private downloads = inject(DownloadService);
   private destroyRef = inject(DestroyRef);
 
-  isSidebarCollapsed = signal(false);
-  connectionStatus   = signal<'online' | 'offline'>(navigator.onLine ? 'online' : 'offline');
+  isSidebarCollapsed   = signal(false);
+  isMobileSidebarOpen  = signal(false);
+  connectionStatus     = signal<'online' | 'offline'>(navigator.onLine ? 'online' : 'offline');
   activeShift        = signal<ShiftDto | null>(null);
   shiftElapsed       = signal('--:--:--');
   downloadInfo       = signal<DownloadInfo | null>(null);
@@ -42,6 +44,11 @@ export class PortalLayout implements OnInit, OnDestroy {
     window.addEventListener('offline', this.onOffline);
     this.loadShift();
     this.loadDownloadInfo();
+    // Close mobile sidebar on route change
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.isMobileSidebarOpen.set(false));
   }
 
   ngOnDestroy(): void {
@@ -95,6 +102,14 @@ export class PortalLayout implements OnInit, OnDestroy {
 
   toggleSidebar() {
     this.isSidebarCollapsed.set(!this.isSidebarCollapsed());
+  }
+
+  toggleMobileSidebar() {
+    this.isMobileSidebarOpen.set(!this.isMobileSidebarOpen());
+  }
+
+  closeMobileSidebar() {
+    this.isMobileSidebarOpen.set(false);
   }
 
   logout() {
