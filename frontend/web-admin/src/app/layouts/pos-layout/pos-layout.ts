@@ -688,7 +688,12 @@ export class PosLayout implements OnInit, OnDestroy {
   nextPage(): void { this.catalogPage.update(p => Math.min(this.totalPages() - 1, p + 1)); }
 
   productInitials(name: string): string {
-    return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    return name.split(' ')
+      .filter(w => /[a-zA-ZáéíóúÁÉÍÓÚñÑ]/.test(w[0]))
+      .slice(0, 2)
+      .map(w => w[0])
+      .join('')
+      .toUpperCase();
   }
 
   productColor(categoryName: string): string {

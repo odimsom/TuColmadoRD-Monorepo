@@ -18,7 +18,7 @@ test.describe('POS - Punto de Venta', () => {
   });
 
   test('abrir turno si no hay uno activo', async ({ page }) => {
-    const openShiftBtn = page.locator('button:has-text("Abrir Turno")');
+    const openShiftBtn = page.locator('button:has-text("Abrir Turno")').first();
     if (await openShiftBtn.isVisible()) {
       await openShiftBtn.click();
       await page.waitForTimeout(500);
