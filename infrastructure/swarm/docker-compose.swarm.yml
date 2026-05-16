@@ -278,7 +278,7 @@ services:
         constraints: [node.role == manager]
       labels:
         - traefik.enable=true
-        - traefik.http.routers.prometheus.rule=Host(`monitor.${DOMAIN}`) && PathPrefix(`/prometheus`)
+        - traefik.http.routers.prometheus.rule=Host(`devops.${DOMAIN}`) && PathPrefix(`/prometheus`)
         - traefik.http.routers.prometheus.entrypoints=websecure
         - traefik.http.routers.prometheus.tls.certresolver=letsencrypt
         - traefik.http.routers.prometheus.middlewares=mon-auth
@@ -290,7 +290,7 @@ services:
     image: grafana/grafana:11.1.0
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
-      GF_SERVER_ROOT_URL: https://monitor.${DOMAIN}/grafana
+      GF_SERVER_ROOT_URL: https://devops.${DOMAIN}/grafana
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       GF_AUTH_ANONYMOUS_ENABLED: "false"
     volumes:
@@ -319,7 +319,7 @@ services:
           memory: 256M
       labels:
         - traefik.enable=true
-        - traefik.http.routers.grafana.rule=Host(`monitor.${DOMAIN}`) && PathPrefix(`/grafana`)
+        - traefik.http.routers.grafana.rule=Host(`devops.${DOMAIN}`) && PathPrefix(`/grafana`)
         - traefik.http.routers.grafana.entrypoints=websecure
         - traefik.http.routers.grafana.tls.certresolver=letsencrypt
         - traefik.http.services.grafana.loadbalancer.server.port=3000
