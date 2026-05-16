@@ -1,6 +1,7 @@
 {
     "name": "web-admin",
     "version": "0.0.1-test.3",
+    "main": "main.js",
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
@@ -14,6 +15,7 @@
         "test:e2e:task4:headed": "set E2E_HEADLESS=false&& node ./tests/e2e/run-task4-e2e.mjs",
         "test:e2e:task4:headed:slow": "set E2E_HEADLESS=false&& set E2E_STEP_DELAY_MS=1200&& node ./tests/e2e/run-task4-e2e.mjs",
         "build:exe": "npm run build && npm run obfuscate && Remove-Item -Recurse -Force dist/web-admin/browser && Rename-Item secured browser -Path dist/web-admin/ && electron-builder --win",
+        "build:linux": "npm run build && electron-builder --linux",
         "e2e": "playwright test",
         "e2e:headed": "playwright test --headed",
         "e2e:ui": "playwright test --ui"
@@ -71,6 +73,13 @@
         ],
         "win": {
             "target": "nsis"
+        },
+        "linux": {
+            "target": [
+                { "target": "AppImage", "arch": ["x64"] }
+            ],
+            "artifactName": "TuColmadoRD-${version}-linux.${ext}",
+            "category": "Office"
         },
         "appId": "com.tucolmadord.admin",
         "nsis": {
