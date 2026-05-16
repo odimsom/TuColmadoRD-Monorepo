@@ -17,18 +17,29 @@ echo ""
 echo ">>> Step 1: Installing Docker and initialising Swarm..."
 ssh "$VPS_USER@$VPS_IP" bash <<'REMOTE'
 set -euo pipefail
-apt-get update -qq
-apt-get install -y -qq docker.io curl git
+export DEBIAN_FRONTEND=noninteractive
 
-# Docker Compose plugin
-mkdir -p /usr/lib/docker/cli-plugins
-if [[ ! -f /usr/lib/docker/cli-plugins/docker-compose ]]; then
-  curl -SL "https://github.com/docker/compose/releases/download/v2.29.0/docker-compose-linux-x86_64" \
-    -o /usr/lib/docker/cli-plugins/docker-compose
-  chmod +x /usr/lib/docker/cli-plugins/docker-compose
+apt-get update -qq
+apt-get install -y -qq curl git ca-certificates gnupg
+
+# Install Docker via official repo (avoids held-package conflicts with docker.io)
+if ! command -v docker &>/dev/null; then
+  install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+    | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  chmod a+r /etc/apt/keyrings/docker.gpg
+
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+    https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+    > /etc/apt/sources.list.d/docker.list
+
+  apt-get update -qq
+  apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 fi
 
 systemctl enable --now docker
+docker --version
+docker compose version
 
 # Init Swarm (idempotent)
 if ! docker info 2>/dev/null | grep -q "Swarm: active"; then
@@ -52,6 +63,18 @@ touch /opt/tucolmadord/letsencrypt/acme.json
 chmod 600 /opt/tucolmadord/letsencrypt/acme.json
 mkdir -p /opt/tucolmadord/monitoring
 REMOTE
+
+# ── Authorize deploy key (so CI never needs password) ─────────────────────────
+echo ">>> Installing deploy SSH key on VPS..."
+DEPLOY_PUBKEY="$(cat "${HOME}/.ssh/tucolmadord_deploy.pub")"
+ssh "$VPS_USER@$VPS_IP" "
+  mkdir -p ~/.ssh
+  chmod 700 ~/.ssh
+  grep -qF '${DEPLOY_PUBKEY}' ~/.ssh/authorized_keys 2>/dev/null \
+    || echo '${DEPLOY_PUBKEY}' >> ~/.ssh/authorized_keys
+  chmod 600 ~/.ssh/authorized_keys
+  echo 'Deploy key installed.'
+"
 
 echo ">>> Step 1 complete."
 
