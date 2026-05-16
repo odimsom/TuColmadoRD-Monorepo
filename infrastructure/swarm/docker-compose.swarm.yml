@@ -257,6 +257,8 @@ services:
     configs:
       - source: prometheus_config
         target: /etc/prometheus/prometheus.yml
+      - source: prometheus_alerts
+        target: /etc/prometheus/alerts/alerts.yml
     volumes:
       - prometheus-data:/prometheus
     networks:
@@ -280,6 +282,7 @@ services:
         - traefik.http.routers.prometheus.entrypoints=websecure
         - traefik.http.routers.prometheus.tls.certresolver=letsencrypt
         - traefik.http.routers.prometheus.middlewares=mon-auth
+        - traefik.http.middlewares.mon-auth.basicauth.users=${TRAEFIK_BASIC_AUTH}
         - traefik.http.services.prometheus.loadbalancer.server.port=9090
         - traefik.docker.network=monitoring-net
 
@@ -297,6 +300,12 @@ services:
         target: /etc/grafana/provisioning/datasources/ds.yml
       - source: grafana_dashboards_provider
         target: /etc/grafana/provisioning/dashboards/provider.yml
+      - source: grafana_dashboard_services
+        target: /var/lib/grafana/dashboards/services.json
+      - source: grafana_dashboard_infra
+        target: /var/lib/grafana/dashboards/infrastructure.json
+      - source: grafana_dashboard_logs
+        target: /var/lib/grafana/dashboards/logs.json
     networks:
       - monitoring-net
       - traefik-public
@@ -422,6 +431,8 @@ services:
 configs:
   prometheus_config:
     file: ../monitoring/prometheus/prometheus.yml
+  prometheus_alerts:
+    file: ../monitoring/prometheus/alerts.yml
   grafana_datasources:
     file: ../monitoring/grafana/provisioning/datasources/datasources.yml
   grafana_dashboards_provider:
@@ -432,3 +443,9 @@ configs:
     file: ../monitoring/loki/promtail.yml
   alertmanager_config:
     file: ../monitoring/alertmanager/alertmanager.yml
+  grafana_dashboard_services:
+    file: ../monitoring/grafana/dashboards/services.json
+  grafana_dashboard_infra:
+    file: ../monitoring/grafana/dashboards/infrastructure.json
+  grafana_dashboard_logs:
+    file: ../monitoring/grafana/dashboards/logs.json

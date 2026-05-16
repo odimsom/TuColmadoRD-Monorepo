@@ -1,0 +1,208 @@
+{
+  "title": "TuColmadoRD — Services",
+  "uid": "tucolmadord-services",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "tags": ["tucolmadord", "rust", "services"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request Rate (req/s)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(catalog_http_requests_total[1m])) by (status)",
+          "legendFormat": "catalog {{status}}"
+        },
+        {
+          "expr": "sum(rate(reports_http_requests_total[1m])) by (status)",
+          "legendFormat": "reports {{status}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": ".*5.." },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": ".*200" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "p95 Latency",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(catalog_http_duration_seconds_bucket[5m])) by (le, endpoint))",
+          "legendFormat": "catalog {{endpoint}} p95"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(reports_http_duration_seconds_bucket[5m])) by (le, endpoint))",
+          "legendFormat": "reports {{endpoint}} p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Circuit Breaker State",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 8, "w": 6, "h": 4 },
+      "datasource": { "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "catalog_circuit_breaker_open{breaker=\"db\"}",
+          "legendFormat": "catalog-service DB"
+        },
+        {
+          "expr": "reports_circuit_breaker_open{breaker=\"db\"}",
+          "legendFormat": "reports-service DB"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "text": "CLOSED", "color": "green" } }, "type": "value" },
+            { "options": { "1": { "text": "OPEN",   "color": "red"   } }, "type": "value" }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 1,    "color": "red"   }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 4,
+      "title": "Cache Hit Rate",
+      "type": "gauge",
+      "gridPos": { "x": 6, "y": 8, "w": 6, "h": 4 },
+      "datasource": { "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(catalog_cache_ops_total{op=\"hit\"}[5m])) / sum(rate(catalog_cache_ops_total[5m])) * 100",
+          "legendFormat": "catalog cache hit %"
+        },
+        {
+          "expr": "sum(rate(reports_cache_ops_total{op=\"hit\"}[5m])) / sum(rate(reports_cache_ops_total[5m])) * 100",
+          "legendFormat": "reports cache hit %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0, "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "red" },
+              { "value": 60,   "color": "yellow" },
+              { "value": 80,   "color": "green" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Error Rate (%)",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 8, "w": 6, "h": 4 },
+      "datasource": { "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(catalog_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(catalog_http_requests_total[5m])) * 100",
+          "legendFormat": "catalog"
+        },
+        {
+          "expr": "sum(rate(reports_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(reports_http_requests_total[5m])) * 100",
+          "legendFormat": "reports"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 1,    "color": "yellow" },
+              { "value": 5,    "color": "red" }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 6,
+      "title": "Total Requests (24h)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 8, "w": 6, "h": 4 },
+      "datasource": { "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "increase(catalog_http_requests_total[24h])",
+          "legendFormat": "catalog"
+        },
+        {
+          "expr": "increase(reports_http_requests_total[24h])",
+          "legendFormat": "reports"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0 }
+      },
+      "options": { "reduceOptions": { "calcs": ["sum"] } }
+    },
+    {
+      "id": 7,
+      "title": "Request Latency Heatmap — catalog-service",
+      "type": "heatmap",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(catalog_http_duration_seconds_bucket[5m])) by (le)",
+          "format": "heatmap",
+          "legendFormat": "{{le}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Request Latency Heatmap — reports-service",
+      "type": "heatmap",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(reports_http_duration_seconds_bucket[5m])) by (le)",
+          "format": "heatmap",
+          "legendFormat": "{{le}}"
+        }
+      ]
+    }
+  ]
+}
