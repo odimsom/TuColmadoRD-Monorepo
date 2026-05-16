@@ -11,7 +11,7 @@ test.describe('Gastos', () => {
 
   test('página de gastos carga', async ({ page }) => {
     await page.screenshot({ path: 'e2e/results/expenses-01-list.png' });
-    await expect(page.getByText('Gastos')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Gastos/i }).first()).toBeVisible();
   });
 
   test('lista de gastos muestra datos o estado vacío', async ({ page }) => {

@@ -11,7 +11,7 @@ test.describe('Inventario', () => {
 
   test('página de inventario carga con productos', async ({ page }) => {
     await page.screenshot({ path: 'e2e/results/inventory-01-list.png' });
-    await expect(page.getByText('Inventario')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Inventario' })).toBeVisible();
   });
 
   test('búsqueda de productos funciona', async ({ page }) => {

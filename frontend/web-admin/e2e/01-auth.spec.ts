@@ -11,7 +11,7 @@ test.describe('Autenticación', () => {
     await page.screenshot({ path: 'e2e/results/auth-02-filled.png' });
 
     await page.click('button[type="submit"]');
-    await page.waitForURL(/\/(portal|pos)/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/(portal|pos)/, { timeout: 15_000 });
     await page.screenshot({ path: 'e2e/results/auth-03-logged-in.png' });
 
     expect(page.url()).toMatch(/\/(portal|pos)/);

@@ -29,19 +29,15 @@ test.describe('Dashboard', () => {
     await page.screenshot({ path: 'e2e/results/dashboard-02-transactions.png' });
   });
 
-  test('fiados pendientes muestra datos correctos (balance > 0)', async ({ page }) => {
-    // Espera que los datos de deuda carguen
-    await page.waitForTimeout(2000);
+  test('fiados pendientes muestra datos correctos (no loading infinito)', async ({ page }) => {
+    // Card shows "clientes con deuda" subtitle when data has loaded
+    await expect(page.getByText('clientes con deuda')).toBeVisible({ timeout: 10_000 });
     await page.screenshot({ path: 'e2e/results/dashboard-03-debt-stats.png' });
-    // El stat de fiados NO debe mostrar "···" (loading infinito)
-    const fiadosCard = page.locator('div').filter({ hasText: 'Fiados Pendientes' }).first();
-    await expect(fiadosCard.locator('span.animate-pulse')).toHaveCount(0);
   });
 
   test('gastos del turno se carga (no queda en loading)', async ({ page }) => {
-    await page.waitForTimeout(2000);
+    // Card shows "registrados este turno" subtitle when data has loaded
+    await expect(page.getByText('registrados este turno')).toBeVisible({ timeout: 10_000 });
     await page.screenshot({ path: 'e2e/results/dashboard-04-expenses-stat.png' });
-    const gastosCard = page.locator('div').filter({ hasText: 'Gastos del Turno' }).first();
-    await expect(gastosCard.locator('span.animate-pulse')).toHaveCount(0);
   });
 });

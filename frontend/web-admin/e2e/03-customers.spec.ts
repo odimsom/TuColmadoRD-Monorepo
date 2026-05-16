@@ -11,7 +11,7 @@ test.describe('Clientes y Fiados', () => {
 
   test('página de clientes carga correctamente', async ({ page }) => {
     await page.screenshot({ path: 'e2e/results/customers-01-list.png' });
-    await expect(page.getByText('Clientes')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Clientes', exact: true })).toBeVisible();
     await expect(page.getByText('Total Clientes')).toBeVisible();
     await expect(page.getByText('Con Deuda')).toBeVisible();
     await expect(page.getByText('Deuda Total')).toBeVisible();
