@@ -1,4 +1,4 @@
-name: CI — Rust Microservices
+name: CI — Rust Microservices & Gateway
 
 on:
   push:
@@ -6,12 +6,16 @@ on:
     paths:
       - "services/catalog-service/**"
       - "services/reports-service/**"
+      - "backend/src/Presentations/TuColmadoRD.ApiGateway/**"
+      - "infrastructure/swarm/**"
       - ".github/workflows/ci-services.yml"
   pull_request:
     branches: [dev, qa, main]
     paths:
       - "services/catalog-service/**"
       - "services/reports-service/**"
+      - "backend/src/Presentations/TuColmadoRD.ApiGateway/**"
+      - "infrastructure/swarm/**"
 
 env:
   REGISTRY: ghcr.io
@@ -26,6 +30,7 @@ jobs:
     outputs:
       catalog: ${{ steps.filter.outputs.catalog }}
       reports: ${{ steps.filter.outputs.reports }}
+      swarm:   ${{ steps.filter.outputs.swarm }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -36,6 +41,8 @@ jobs:
               - 'services/catalog-service/**'
             reports:
               - 'services/reports-service/**'
+            swarm:
+              - 'infrastructure/swarm/**'
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Lint + test (runs on every affected service)
@@ -200,6 +207,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Copy Swarm configs to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "infrastructure/swarm/docker-compose.swarm.yml,infrastructure/monitoring"
+          target: /opt/tucolmadord
+          strip_components: 2
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -209,6 +226,7 @@ jobs:
           script: |
             cd /opt/tucolmadord
             set -a; source .env; set +a
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             REGISTRY=ghcr.io/synsetsolutions TAG=${{ github.sha }} \
             docker stack deploy -c docker-compose.swarm.yml tucolmadord \
               --with-registry-auth --prune
