@@ -19,11 +19,6 @@ fn month_start() -> String {
 }
 
 // ── GET /reports/sales ────────────────────────────────────────────────────────
-//
-// Lazy computation + Redis cache:
-//   - Cache key includes tenant + date range (invalidates automatically per day)
-//   - Compute only on cache miss — never eagerly
-//
 pub async fn sales_report(
     State(state): State<Arc<AppState>>,
     Query(q): Query<TenantQuery>,
@@ -32,38 +27,49 @@ pub async fn sales_report(
     let to   = q.to.clone().unwrap_or_else(today);
     let cache_key = format!("report:sales:{}:{}:{}", q.tenant_id, from, to);
 
-    // Lazy: try cache first
     let mut conn = state.redis.clone();
     if let Some(cached) = cache::get::<SalesReport>(&mut conn, &cache_key).await {
         return Json(cached).into_response();
     }
 
-    // Compute on demand
-    let pool  = state.db.clone();
-    let tid   = q.tenant_id;
-    let from2 = from.clone();
-    let to2   = to.clone();
+    let pool = state.db.clone();
+    let tid  = q.tenant_id;
 
-    let summary = match resilience::call(&state.db_cb, "pg:sales-summary", || {
-        db::fetch_sales_summary(&pool, tid, &from2, &to2)
-    })
-    .await
-    {
-        Ok(s) => s,
-        Err(e) => {
-            state.metrics.http_requests.with_label_values(&["GET", "/reports/sales", "503"]).inc();
-            return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
-                "error": "report unavailable", "detail": e.to_string()
-            }))).into_response();
+    let summary = {
+        let pool  = pool.clone();
+        let from2 = from.clone();
+        let to2   = to.clone();
+        match resilience::call(&state.db_cb, "pg:sales-summary", move || {
+            let pool  = pool.clone();
+            let from2 = from2.clone();
+            let to2   = to2.clone();
+            async move { db::fetch_sales_summary(&pool, tid, &from2, &to2).await }
+        })
+        .await
+        {
+            Ok(s) => s,
+            Err(e) => {
+                state.metrics.http_requests.with_label_values(&["GET", "/reports/sales", "503"]).inc();
+                return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+                    "error": "report unavailable", "detail": e.to_string()
+                }))).into_response();
+            }
         }
     };
 
-    let pool2 = state.db.clone();
-    let top = resilience::call(&state.db_cb, "pg:top-products", || {
-        db::fetch_top_products(&pool2, tid, &from, &to, 5)
-    })
-    .await
-    .unwrap_or_default();
+    let top = {
+        let pool  = pool.clone();
+        let from2 = from.clone();
+        let to2   = to.clone();
+        resilience::call(&state.db_cb, "pg:top-products", move || {
+            let pool  = pool.clone();
+            let from2 = from2.clone();
+            let to2   = to2.clone();
+            async move { db::fetch_top_products(&pool, tid, &from2, &to2, 5).await }
+        })
+        .await
+        .unwrap_or_default()
+    };
 
     let avg = if summary.transaction_count > 0 {
         summary.total_revenue / summary.transaction_count as f64
@@ -82,7 +88,6 @@ pub async fn sales_report(
         generated_at:      chrono::Utc::now().to_rfc3339(),
     };
 
-    // Lazy populate cache (10-minute TTL for same date range)
     let mut conn2 = state.redis.clone();
     let r2 = report.clone();
     let key2 = cache_key.clone();
@@ -106,8 +111,10 @@ pub async fn inventory_alerts(
     }
 
     let pool = state.db.clone();
-    match resilience::call(&state.db_cb, "pg:low-stock", || {
-        db::fetch_low_stock(&pool, q.tenant_id, 5.0) // threshold = 5 units
+    let tid  = q.tenant_id;
+    match resilience::call(&state.db_cb, "pg:low-stock", move || {
+        let pool = pool.clone();
+        async move { db::fetch_low_stock(&pool, tid, 5.0).await }
     })
     .await
     {
@@ -120,10 +127,10 @@ pub async fn inventory_alerts(
             let mut conn2 = state.redis.clone();
             let r2 = report.clone();
             let key2 = cache_key.clone();
-            tokio::spawn(async move { cache::set(&mut conn2, &key2, &r2, 120).await }); // 2min TTL
+            tokio::spawn(async move { cache::set(&mut conn2, &key2, &r2, 120).await });
             Json(report).into_response()
         }
-        Err(e) => (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+        Err(_) => (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
             "error": "inventory report unavailable"
         }))).into_response(),
     }
@@ -143,18 +150,20 @@ pub async fn customer_report(
     }
 
     let pool = state.db.clone();
-    match resilience::call(&state.db_cb, "pg:customer-stats", || {
-        db::fetch_customer_stats(&pool, q.tenant_id)
+    let tid  = q.tenant_id;
+    match resilience::call(&state.db_cb, "pg:customer-stats", move || {
+        let pool = pool.clone();
+        async move { db::fetch_customer_stats(&pool, tid).await }
     })
     .await
     {
-        Ok((total, with_debt, total_debt)) => {
+        Ok(stats) => {
             let report = CustomerReport {
-                tenant_id: q.tenant_id,
-                total_customers: total,
-                with_debt,
-                total_debt,
-                generated_at: chrono::Utc::now().to_rfc3339(),
+                tenant_id:       q.tenant_id,
+                total_customers: stats.total,
+                with_debt:       stats.with_debt,
+                total_debt:      stats.total_debt,
+                generated_at:    chrono::Utc::now().to_rfc3339(),
             };
             let mut conn2 = state.redis.clone();
             let r2 = report.clone();

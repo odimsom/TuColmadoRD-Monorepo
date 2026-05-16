@@ -15,9 +15,17 @@ pub async fn connect(url: &str) -> anyhow::Result<DbPool> {
     Ok(pool)
 }
 
+#[derive(sqlx::FromRow)]
 pub struct SalesRow {
     pub total_revenue:     f64,
     pub transaction_count: i64,
+}
+
+#[derive(sqlx::FromRow)]
+pub struct CustomerStatsRow {
+    pub total:      i64,
+    pub with_debt:  i64,
+    pub total_debt: f64,
 }
 
 pub async fn fetch_sales_summary(
@@ -26,20 +34,17 @@ pub async fn fetch_sales_summary(
     from:      &str,
     to:        &str,
 ) -> anyhow::Result<SalesRow> {
-    let row = sqlx::query_as!(
-        SalesRow,
-        r#"
+    let row = sqlx::query_as::<_, SalesRow>(r#"
         SELECT
-            COALESCE(SUM(s."TotalAmount"), 0)::FLOAT8 AS "total_revenue!",
-            COUNT(*)::BIGINT                          AS "transaction_count!"
+            COALESCE(SUM(s."TotalAmount"), 0)::FLOAT8 AS total_revenue,
+            COUNT(*)::BIGINT                          AS transaction_count
         FROM "Sales"."Sales" s
         WHERE s."TenantId" = $1
           AND s."CreatedAt"::DATE BETWEEN $2::DATE AND $3::DATE
-        "#,
-        tenant_id,
-        from,
-        to
-    )
+    "#)
+    .bind(tenant_id)
+    .bind(from)
+    .bind(to)
     .fetch_one(pool)
     .await?;
     Ok(row)
@@ -52,27 +57,24 @@ pub async fn fetch_top_products(
     to:        &str,
     limit:     i64,
 ) -> anyhow::Result<Vec<TopProduct>> {
-    let rows = sqlx::query_as!(
-        TopProduct,
-        r#"
+    let rows = sqlx::query_as::<_, TopProduct>(r#"
         SELECT
-            p."Name"               AS "product_name",
-            SUM(sd."Quantity")::FLOAT8     AS "units_sold!",
-            SUM(sd."UnitPrice" * sd."Quantity")::FLOAT8 AS "revenue!"
+            p."Name"                                             AS product_name,
+            SUM(sd."Quantity")::FLOAT8                          AS units_sold,
+            SUM(sd."UnitPrice" * sd."Quantity")::FLOAT8         AS revenue
         FROM "Sales"."SaleDetails" sd
-        JOIN "Sales"."Sales" s      ON s."Id" = sd."SaleId"
+        JOIN "Sales"."Sales" s        ON s."Id" = sd."SaleId"
         JOIN "Inventory"."Products" p ON p."Id" = sd."ProductId"
         WHERE s."TenantId" = $1
           AND s."CreatedAt"::DATE BETWEEN $2::DATE AND $3::DATE
         GROUP BY p."Name"
         ORDER BY revenue DESC
         LIMIT $4
-        "#,
-        tenant_id,
-        from,
-        to,
-        limit
-    )
+    "#)
+    .bind(tenant_id)
+    .bind(from)
+    .bind(to)
+    .bind(limit)
     .fetch_all(pool)
     .await?;
     Ok(rows)
@@ -83,25 +85,22 @@ pub async fn fetch_low_stock(
     tenant_id: Uuid,
     threshold: f64,
 ) -> anyhow::Result<Vec<LowStockAlert>> {
-    let rows = sqlx::query_as!(
-        LowStockAlert,
-        r#"
+    let rows = sqlx::query_as::<_, LowStockAlert>(r#"
         SELECT
-            p."Id"            AS "product_id: Uuid",
-            p."Name"          AS "product_name",
-            c."Name"          AS "category_name",
-            p."StockQuantity"::FLOAT8 AS "stock_quantity!",
-            p."SalePrice"::FLOAT8     AS "sale_price!"
+            p."Id"                         AS product_id,
+            p."Name"                       AS product_name,
+            c."Name"                       AS category_name,
+            p."StockQuantity"::FLOAT8      AS stock_quantity,
+            p."SalePrice"::FLOAT8          AS sale_price
         FROM "Inventory"."Products" p
         LEFT JOIN "Inventory"."Categories" c ON c."Id" = p."CategoryId"
         WHERE p."TenantId" = $1
           AND p."IsActive"  = true
           AND p."StockQuantity" <= $2
         ORDER BY p."StockQuantity" ASC
-        "#,
-        tenant_id,
-        threshold
-    )
+    "#)
+    .bind(tenant_id)
+    .bind(threshold)
     .fetch_all(pool)
     .await?;
     Ok(rows)
@@ -110,22 +109,19 @@ pub async fn fetch_low_stock(
 pub async fn fetch_customer_stats(
     pool:      &DbPool,
     tenant_id: Uuid,
-) -> anyhow::Result<(i64, i64, f64)> {
-    // Returns (total, with_debt, total_debt)
-    let row = sqlx::query!(
-        r#"
+) -> anyhow::Result<CustomerStatsRow> {
+    let row = sqlx::query_as::<_, CustomerStatsRow>(r#"
         SELECT
-            COUNT(*)::BIGINT                         AS "total!",
-            COUNT(*) FILTER (WHERE "Balance" > 0)::BIGINT  AS "with_debt!",
-            COALESCE(SUM("Balance") FILTER (WHERE "Balance" > 0), 0)::FLOAT8 AS "total_debt!"
+            COUNT(*)::BIGINT                                                    AS total,
+            COUNT(*) FILTER (WHERE "Balance" > 0)::BIGINT                      AS with_debt,
+            COALESCE(SUM("Balance") FILTER (WHERE "Balance" > 0), 0)::FLOAT8   AS total_debt
         FROM "Sales"."Customers"
         WHERE "TenantId" = $1
-        "#,
-        tenant_id
-    )
+    "#)
+    .bind(tenant_id)
     .fetch_one(pool)
     .await?;
-    Ok((row.total, row.with_debt, row.total_debt))
+    Ok(row)
 }
 
 pub async fn ping(pool: &DbPool) -> anyhow::Result<()> {

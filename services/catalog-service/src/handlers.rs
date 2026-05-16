@@ -33,8 +33,11 @@ pub async fn get_catalog(
     // Fast path — try Redis
     if state.redis_cb.is_available() {
         let mut conn = state.redis.clone();
-        match resilience::call(&state.redis_cb, "redis:get-catalog", || async {
-            Ok::<_, anyhow::Error>(cache::get::<Vec<Product>>(&mut conn, &cache_key).await)
+        let ck = cache_key.clone();
+        match resilience::call(&state.redis_cb, "redis:get-catalog", move || {
+            let mut conn = conn.clone();
+            let ck = ck.clone();
+            async move { Ok::<_, anyhow::Error>(cache::get::<Vec<Product>>(&mut conn, &ck).await) }
         })
         .await
         {
@@ -55,7 +58,9 @@ pub async fn get_catalog(
     // Slow path — load from PostgreSQL
     let pool = state.db.clone();
     match resilience::call(&state.db_cb, "pg:fetch-catalog", || {
-        db::fetch_catalog(&pool, q.tenant_id)
+        let pool = pool.clone();
+        let tid  = q.tenant_id;
+        async move { db::fetch_catalog(&pool, tid).await }
     })
     .await
     {
@@ -95,8 +100,11 @@ pub async fn get_categories(
 
     if state.redis_cb.is_available() {
         let mut conn = state.redis.clone();
-        if let Ok(Some(cats)) = resilience::call(&state.redis_cb, "redis:get-cats", || async {
-            Ok::<_, anyhow::Error>(cache::get::<Vec<Category>>(&mut conn, &cache_key).await)
+        let ck = cache_key.clone();
+        if let Ok(Some(cats)) = resilience::call(&state.redis_cb, "redis:get-cats", move || {
+            let mut conn = conn.clone();
+            let ck = ck.clone();
+            async move { Ok::<_, anyhow::Error>(cache::get::<Vec<Category>>(&mut conn, &ck).await) }
         })
         .await
         {
@@ -108,7 +116,9 @@ pub async fn get_categories(
 
     let pool = state.db.clone();
     match resilience::call(&state.db_cb, "pg:fetch-cats", || {
-        db::fetch_categories(&pool, q.tenant_id)
+        let pool = pool.clone();
+        let tid  = q.tenant_id;
+        async move { db::fetch_categories(&pool, tid).await }
     })
     .await
     {
@@ -121,7 +131,7 @@ pub async fn get_categories(
             }
             Json(cats).into_response()
         }
-        Err(e) => {
+        Err(_) => {
             (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
                 "error": "categories temporarily unavailable"
             }))).into_response()

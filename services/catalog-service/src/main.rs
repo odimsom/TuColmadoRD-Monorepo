@@ -10,7 +10,7 @@ use std::sync::Arc;
 use axum::{Router, routing::get};
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use tracing_subscriber::{fmt, EnvFilter};
+use tracing_subscriber::EnvFilter;
 
 pub use config::Config;
 

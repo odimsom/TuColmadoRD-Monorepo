@@ -16,48 +16,42 @@ pub async fn connect(url: &str) -> anyhow::Result<DbPool> {
 }
 
 pub async fn fetch_catalog(pool: &DbPool, tenant_id: Uuid) -> anyhow::Result<Vec<Product>> {
-    let rows = sqlx::query_as!(
-        Product,
-        r#"
+    let rows = sqlx::query_as::<_, Product>(r#"
         SELECT
-            p."Id"             AS "id: Uuid",
-            p."TenantId"       AS "tenant_id: Uuid",
-            p."Name"           AS "name",
-            p."CategoryId"     AS "category_id: Uuid",
-            c."Name"           AS "category_name",
-            CAST(p."SalePrice" AS FLOAT8)     AS "sale_price!",
-            CAST(p."StockQuantity" AS FLOAT8) AS "stock_quantity!",
-            p."IsActive"       AS "is_active"
+            p."Id"                               AS id,
+            p."TenantId"                         AS tenant_id,
+            p."Name"                             AS name,
+            p."CategoryId"                       AS category_id,
+            c."Name"                             AS category_name,
+            CAST(p."SalePrice"     AS FLOAT8)    AS sale_price,
+            CAST(p."StockQuantity" AS FLOAT8)    AS stock_quantity,
+            p."IsActive"                         AS is_active
         FROM "Inventory"."Products" p
         LEFT JOIN "Inventory"."Categories" c
                ON c."Id" = p."CategoryId"
         WHERE p."TenantId" = $1
           AND p."IsActive" = true
         ORDER BY c."Name", p."Name"
-        "#,
-        tenant_id
-    )
+    "#)
+    .bind(tenant_id)
     .fetch_all(pool)
     .await?;
     Ok(rows)
 }
 
 pub async fn fetch_categories(pool: &DbPool, tenant_id: Uuid) -> anyhow::Result<Vec<Category>> {
-    let rows = sqlx::query_as!(
-        Category,
-        r#"
+    let rows = sqlx::query_as::<_, Category>(r#"
         SELECT
-            "Id"        AS "id: Uuid",
-            "TenantId"  AS "tenant_id: Uuid",
-            "Name"      AS "name",
-            "IsActive"  AS "is_active"
+            "Id"       AS id,
+            "TenantId" AS tenant_id,
+            "Name"     AS name,
+            "IsActive" AS is_active
         FROM "Inventory"."Categories"
         WHERE "TenantId" = $1
           AND "IsActive" = true
         ORDER BY "Name"
-        "#,
-        tenant_id
-    )
+    "#)
+    .bind(tenant_id)
     .fetch_all(pool)
     .await?;
     Ok(rows)
