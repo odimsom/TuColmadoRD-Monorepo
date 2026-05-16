@@ -72,9 +72,9 @@ export class DownloadService {
     }
 
     return {
-      version: 'latest',
+      version: 'v0.3.0',
       downloadUrl: environment.downloadUrl,
-      fileSize: 'N/D',
+      fileSize: '~47 MB',
       publishedAt: ''
     };
   }
