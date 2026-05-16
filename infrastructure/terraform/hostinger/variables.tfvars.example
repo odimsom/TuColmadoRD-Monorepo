@@ -1,0 +1,5 @@
+vps_ip       = "177.7.48.169"
+ssh_user     = "root"
+ssh_key_path = "~/.ssh/tucolmadord_prod"
+domain       = "tucolmadord.com"
+acme_email   = "admin@tucolmadord.com"

@@ -1,0 +1,30 @@
+[package]
+name = "reports-service"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "reports-service"
+path = "src/main.rs"
+
+[dependencies]
+axum             = { version = "0.7", features = ["macros"] }
+tokio            = { version = "1",   features = ["full"] }
+tower-http       = { version = "0.5", features = ["trace", "cors", "compression-gzip"] }
+serde            = { version = "1",   features = ["derive"] }
+serde_json       = "1"
+sqlx             = { version = "0.8", features = ["postgres", "runtime-tokio-rustls", "uuid", "chrono"] }
+redis            = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
+prometheus       = { version = "0.13", features = ["process"] }
+tracing          = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+anyhow           = "1"
+uuid             = { version = "1",   features = ["serde", "v4"] }
+chrono           = { version = "0.4", features = ["serde"] }
+dotenvy          = "0.15"
+
+[profile.release]
+opt-level     = 3
+lto           = true
+codegen-units = 1
+strip         = true

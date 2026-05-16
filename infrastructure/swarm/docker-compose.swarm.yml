@@ -1,0 +1,434 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TuColmadoRD — Docker Swarm single-node stack
+#
+# Isolation model: every domain lives on its own overlay network.
+# Only Traefik sits on ALL networks to route between them.
+# A crashed service container is restarted without touching other services.
+# Scale to multi-node later: docker swarm join --token ... <worker-ip>
+# ─────────────────────────────────────────────────────────────────────────────
+
+networks:
+  traefik-public:
+    driver: overlay
+    attachable: true
+  catalog-net:
+    driver: overlay
+    internal: true      # no external access — only Traefik reaches in
+  reports-net:
+    driver: overlay
+    internal: true
+  app-net:
+    driver: overlay
+    internal: true
+  monitoring-net:
+    driver: overlay
+    attachable: true
+
+volumes:
+  postgres-data:
+  mongo-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Traefik — edge router / load balancer
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - --providers.swarm.endpoint=unix:///var/run/docker.sock
+      - --providers.swarm.exposedbydefault=false
+      - --providers.swarm.network=traefik-public
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --metrics.prometheus=true
+      - --metrics.prometheus.buckets=0.005,0.01,0.025,0.05,0.1,0.25,0.5,1.0,2.5,5.0
+      - --log.level=INFO
+      - --accesslog=true
+    ports:
+      - target: 80
+        published: 80
+        mode: host
+      - target: 443
+        published: 443
+        mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/tucolmadord/letsencrypt:/letsencrypt
+    networks:
+      - traefik-public
+      - catalog-net
+      - reports-net
+      - app-net
+      - monitoring-net
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # catalog-service — Rust/axum, 2 replicas, circuit-broken, lazy Redis cache
+  # ─────────────────────────────────────────────────────────────────────────────
+  catalog-service:
+    image: ${REGISTRY:-ghcr.io/synsetsolutions}/catalog-service:${TAG:-latest}
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379
+      PORT: "8080"
+      RUST_LOG: "info"
+    networks:
+      - catalog-net
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first        # blue/green within same node
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+        reservations:
+          cpus: "0.1"
+          memory: 32M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.catalog.rule=Host(`${DOMAIN}`) && PathPrefix(`/catalog-api`)
+        - traefik.http.routers.catalog.entrypoints=websecure
+        - traefik.http.routers.catalog.tls.certresolver=letsencrypt
+        - traefik.http.middlewares.catalog-strip.stripprefix.prefixes=/catalog-api
+        - traefik.http.routers.catalog.middlewares=catalog-strip
+        - traefik.http.services.catalog.loadbalancer.server.port=8080
+        - traefik.http.services.catalog.loadbalancer.healthcheck.path=/health
+        - traefik.http.services.catalog.loadbalancer.healthcheck.interval=15s
+        - traefik.docker.network=catalog-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # reports-service — Rust/axum, 2 replicas, lazy computed reports
+  # ─────────────────────────────────────────────────────────────────────────────
+  reports-service:
+    image: ${REGISTRY:-ghcr.io/synsetsolutions}/reports-service:${TAG:-latest}
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379
+      PORT: "8081"
+      CACHE_TTL_S: "600"
+      RUST_LOG: "info"
+    networks:
+      - reports-net
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+        reservations:
+          cpus: "0.1"
+          memory: 32M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.reports.rule=Host(`${DOMAIN}`) && PathPrefix(`/reports-api`)
+        - traefik.http.routers.reports.entrypoints=websecure
+        - traefik.http.routers.reports.tls.certresolver=letsencrypt
+        - traefik.http.middlewares.reports-strip.stripprefix.prefixes=/reports-api
+        - traefik.http.routers.reports.middlewares=reports-strip
+        - traefik.http.services.reports.loadbalancer.server.port=8081
+        - traefik.http.services.reports.loadbalancer.healthcheck.path=/health
+        - traefik.http.services.reports.loadbalancer.healthcheck.interval=15s
+        - traefik.docker.network=reports-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Shared infrastructure (single replicas — data layer)
+  # ─────────────────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tucolmadord}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - catalog-net
+      - reports-net
+      - app-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+      placement:
+        constraints: [node.role == manager]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --save ""
+    volumes:
+      - redis-data:/data
+    networks:
+      - catalog-net
+      - reports-net
+      - app-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 160M
+      placement:
+        constraints: [node.role == manager]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Monitoring stack
+  # ─────────────────────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
+    volumes:
+      - prometheus-data:/prometheus
+    networks:
+      - monitoring-net
+      - catalog-net
+      - reports-net
+      - traefik-public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+      placement:
+        constraints: [node.role == manager]
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.prometheus.rule=Host(`monitor.${DOMAIN}`) && PathPrefix(`/prometheus`)
+        - traefik.http.routers.prometheus.entrypoints=websecure
+        - traefik.http.routers.prometheus.tls.certresolver=letsencrypt
+        - traefik.http.routers.prometheus.middlewares=mon-auth
+        - traefik.http.services.prometheus.loadbalancer.server.port=9090
+        - traefik.docker.network=monitoring-net
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_SERVER_ROOT_URL: https://monitor.${DOMAIN}/grafana
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    configs:
+      - source: grafana_datasources
+        target: /etc/grafana/provisioning/datasources/ds.yml
+      - source: grafana_dashboards_provider
+        target: /etc/grafana/provisioning/dashboards/provider.yml
+    networks:
+      - monitoring-net
+      - traefik-public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.grafana.rule=Host(`monitor.${DOMAIN}`) && PathPrefix(`/grafana`)
+        - traefik.http.routers.grafana.entrypoints=websecure
+        - traefik.http.routers.grafana.tls.certresolver=letsencrypt
+        - traefik.http.services.grafana.loadbalancer.server.port=3000
+        - traefik.docker.network=monitoring-net
+
+  loki:
+    image: grafana/loki:3.1.0
+    command: -config.file=/etc/loki/loki.yml
+    configs:
+      - source: loki_config
+        target: /etc/loki/loki.yml
+    volumes:
+      - loki-data:/loki
+    networks:
+      - monitoring-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+
+  promtail:
+    image: grafana/promtail:3.1.0
+    command: -config.file=/etc/promtail/promtail.yml
+    configs:
+      - source: promtail_config
+        target: /etc/promtail/promtail.yml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/log:/var/log:ro
+    networks:
+      - monitoring-net
+    deploy:
+      mode: global          # one per node — collects logs from all containers on that node
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 64M
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    configs:
+      - source: alertmanager_config
+        target: /etc/alertmanager/alertmanager.yml
+    networks:
+      - monitoring-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 64M
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    command:
+      - --housekeeping_interval=15s
+      - --docker_only=true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    networks:
+      - monitoring-net
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 128M
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - monitoring-net
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 32M
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Swarm configs (inject files without bind mounts — works on multi-node too)
+# ─────────────────────────────────────────────────────────────────────────────
+configs:
+  prometheus_config:
+    file: ../monitoring/prometheus/prometheus.yml
+  grafana_datasources:
+    file: ../monitoring/grafana/provisioning/datasources/datasources.yml
+  grafana_dashboards_provider:
+    file: ../monitoring/grafana/provisioning/dashboards/provider.yml
+  loki_config:
+    file: ../monitoring/loki/loki.yml
+  promtail_config:
+    file: ../monitoring/loki/promtail.yml
+  alertmanager_config:
+    file: ../monitoring/alertmanager/alertmanager.yml

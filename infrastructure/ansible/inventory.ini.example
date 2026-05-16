@@ -1,0 +1,15 @@
+[vps]
+hostinger ansible_host=177.7.48.169 ansible_user=root ansible_ssh_private_key_file=~/.ssh/tucolmadord_prod
+
+[vps_manager]
+hostinger
+
+[aws_workers]
+# aws-worker-1 ansible_host=<public-ip> ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/aws-key.pem
+
+[azure_workers]
+# azure-worker-1 ansible_host=<public-ip> ansible_user=azureuser ansible_ssh_private_key_file=~/.ssh/azure-key
+
+[swarm_workers:children]
+aws_workers
+azure_workers
