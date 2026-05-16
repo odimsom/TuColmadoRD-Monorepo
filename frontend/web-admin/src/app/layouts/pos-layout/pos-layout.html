@@ -61,8 +61,12 @@
   <!-- MAIN -->
   <div class="flex flex-1 overflow-hidden">
 
-    <!-- LEFT — Catálogo -->
-    <div class="flex flex-col flex-1 overflow-hidden border-r border-white/[0.06]">
+    <!-- LEFT — Catálogo (hidden on mobile when cart is active) -->
+    <div class="flex flex-col overflow-hidden border-r border-white/[0.06]"
+         [class.hidden]="mobileView() === 'cart'"
+         [class.sm:flex]="mobileView() === 'cart'"
+         [class.flex]="mobileView() === 'catalog'"
+         [class.flex-1]="true">
 
       <!-- Barra de búsqueda + categorías -->
       <div class="px-4 py-3 space-y-2.5 bg-[#080f1e]/80 border-b border-white/[0.05] shrink-0">
@@ -176,8 +180,12 @@
       </div>
     </div>
 
-    <!-- RIGHT — Carrito -->
-    <div class="flex flex-col w-80 xl:w-96 bg-[#080f1e] shrink-0">
+    <!-- RIGHT — Carrito (full-width on mobile when cart is active, fixed-width on desktop) -->
+    <div class="flex flex-col bg-[#080f1e] shrink-0 sm:w-80 xl:w-96"
+         [class.hidden]="mobileView() === 'catalog'"
+         [class.sm:flex]="mobileView() === 'catalog'"
+         [class.flex]="mobileView() === 'cart'"
+         [class.w-full]="mobileView() === 'cart'">
 
       <!-- Carrito header -->
       <div class="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06] shrink-0">
@@ -277,6 +285,29 @@
       </div>
     </div>
   </div>
+
+  <!-- Mobile tab bar — only visible on small screens -->
+  <nav class="sm:hidden flex border-t border-white/[0.06] bg-[#080f1e] shrink-0">
+    <button (click)="mobileView.set('catalog')"
+      class="flex-1 flex flex-col items-center gap-0.5 py-2.5 text-[0.6rem] font-black uppercase tracking-widest transition-colors"
+      [class.text-blue-400]="mobileView() === 'catalog'"
+      [class.text-slate-600]="mobileView() === 'cart'">
+      <span class="icon-[ic--baseline-grid-view] text-xl"></span>
+      Catálogo
+    </button>
+    <button (click)="mobileView.set('cart')"
+      class="flex-1 flex flex-col items-center gap-0.5 py-2.5 text-[0.6rem] font-black uppercase tracking-widest transition-colors relative"
+      [class.text-blue-400]="mobileView() === 'cart'"
+      [class.text-slate-600]="mobileView() === 'catalog'">
+      <span class="relative">
+        <span class="icon-[ic--baseline-shopping-cart] text-xl"></span>
+        @if (cartCount() > 0) {
+          <span class="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-blue-600 text-white text-[0.55rem] font-black flex items-center justify-center">{{ cartCount() }}</span>
+        }
+      </span>
+      Carrito
+    </button>
+  </nav>
 </div>
 
 <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
