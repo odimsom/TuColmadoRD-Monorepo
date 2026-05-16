@@ -60,6 +60,7 @@ export class PosLayout implements OnInit, OnDestroy {
   allCustomers  = signal<CustomerSummary[]>([]);
 
   // ── UI state ─────────────────────────────────────
+  mobileView          = signal<'catalog' | 'cart'>('catalog');
   loading             = signal(false);
   saving              = signal(false);
   catalogSearch       = signal('');
