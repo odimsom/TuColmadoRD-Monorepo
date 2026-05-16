@@ -99,6 +99,25 @@
             </div>
           </div>
 
+          <!-- Navigation (InTransit only) -->
+          @if (order.status === 'InTransit') {
+            <div class="px-4 py-2.5 border-t border-white/[0.04] space-y-2">
+              <p class="text-[0.6rem] font-bold text-slate-500 uppercase tracking-wider">Cómo llegar</p>
+              <div class="flex gap-2">
+                <a [href]="mapsUrl(order)" target="_blank"
+                  class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-600/15 border border-blue-500/25 text-blue-400 hover:bg-blue-600/25 text-xs font-bold transition-colors">
+                  <span class="icon-[ic--baseline-map] text-sm"></span>
+                  Google Maps
+                </a>
+                <a [href]="wazeUrl(order)" target="_blank"
+                  class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 hover:bg-amber-500/20 text-xs font-bold transition-colors">
+                  <span class="icon-[ic--baseline-navigation] text-sm"></span>
+                  Waze
+                </a>
+              </div>
+            </div>
+          }
+
           <!-- Actions -->
           <div class="px-4 py-3 flex gap-2">
             @if (order.status === 'Pending') {
@@ -111,7 +130,7 @@
               <button (click)="openCompleteModal(order)" [disabled]="actingOn() === order.id"
                 class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-bold transition-colors flex items-center justify-center gap-1.5">
                 <span class="icon-[ic--baseline-check-circle]"></span>
-                Completar entrega
+                Confirmar entrega
               </button>
             }
           </div>
