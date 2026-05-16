@@ -54,7 +54,10 @@ export class DownloadService {
 
     // GitHub los devuelve ordenados por fecha descendente
     const latest = stable[0];
-    const asset = latest.assets.find(a => a.name.endsWith('.exe'));
+    const isLinux = navigator.platform.toLowerCase().includes('linux');
+    const asset = isLinux
+      ? (latest.assets.find(a => a.name.endsWith('.AppImage')) ?? latest.assets.find(a => a.name.endsWith('.exe')))
+      : latest.assets.find(a => a.name.endsWith('.exe'));
 
     if (!asset) return this.getFallbackDownloadInfo();
 

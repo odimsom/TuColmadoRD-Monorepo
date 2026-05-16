@@ -8,6 +8,10 @@ test.describe('Conectividad y Sincronización', () => {
     await page.waitForLoadState('networkidle');
   });
 
+  test.afterEach(async ({ context }) => {
+    await context.setOffline(false);
+  });
+
   test('indicador ONLINE visible y verde cuando hay conexión', async ({ page }) => {
     await page.screenshot({ path: 'e2e/results/connectivity-01-online.png' });
 

@@ -11,10 +11,10 @@ test.describe('POS - Punto de Venta', () => {
 
   test('POS carga y muestra el estado del turno', async ({ page }) => {
     await page.screenshot({ path: 'e2e/results/pos-01-initial.png' });
-    // Debe mostrar o el modal de abrir turno o el POS activo
-    const hasOpenShiftModal = await page.locator('text=Abrir Turno').isVisible().catch(() => false);
-    const hasPOSActive = await page.locator('text=Catálogo').isVisible().catch(() => false);
-    expect(hasOpenShiftModal || hasPOSActive).toBe(true);
+    // Debe mostrar el botón "Abrir turno" (sin turno activo) o la barra de búsqueda (con turno activo)
+    const hasOpenShiftBtn = await page.locator('button', { hasText: /abrir turno/i }).first().isVisible().catch(() => false);
+    const hasPOSActive = await page.locator('input[placeholder*="Buscar"], input[placeholder*="buscar"]').first().isVisible().catch(() => false);
+    expect(hasOpenShiftBtn || hasPOSActive).toBe(true);
   });
 
   test('abrir turno si no hay uno activo', async ({ page }) => {
