@@ -13,6 +13,15 @@
 **/obj/
 **/artifacts/
 
+# Rust build artifacts
+**/target/
+
+# Playwright test artifacts
+**/e2e/results/
+**/e2e/reports/
+**/test-results/
+**/playwright-report/
+
 # Logs and local env files
 *.log
 *.tmp
