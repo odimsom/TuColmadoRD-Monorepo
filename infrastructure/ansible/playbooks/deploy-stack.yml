@@ -1,0 +1,58 @@
+---
+- name: Deploy TuColmadoRD Swarm Stack
+  hosts: vps_manager
+  become: true
+  vars:
+    app_dir: /opt/tucolmadord
+    registry: ghcr.io/synsetsolutions
+    tag: "{{ lookup('env', 'IMAGE_TAG') | default('latest') }}"
+
+  tasks:
+    - name: Copy Swarm compose file
+      copy:
+        src: "{{ playbook_dir }}/../../swarm/docker-compose.swarm.yml"
+        dest: "{{ app_dir }}/docker-compose.swarm.yml"
+
+    - name: Copy monitoring configs
+      copy:
+        src: "{{ playbook_dir }}/../../monitoring/"
+        dest: "{{ app_dir }}/monitoring/"
+
+    - name: Load .env secrets (must exist on server)
+      stat:
+        path: "{{ app_dir }}/.env"
+      register: env_file
+      failed_when: not env_file.stat.exists
+
+    - name: Deploy / update Swarm stack
+      shell: |
+        cd {{ app_dir }}
+        set -a; source .env; set +a
+        REGISTRY={{ registry }} TAG={{ tag }} \
+        docker stack deploy -c docker-compose.swarm.yml tucolmadord \
+          --with-registry-auth --prune
+      register: stack_deploy
+
+    - name: Show deploy output
+      debug:
+        msg: "{{ stack_deploy.stdout_lines }}"
+
+    - name: Wait for catalog-service to be healthy
+      shell: |
+        docker service ls --filter name=tucolmadord_catalog-service \
+          --format "{{ '{{' }}.Replicas{{ '}}' }}"
+      register: replicas
+      until: replicas.stdout | regex_search('^\d+/\d+') and
+             replicas.stdout.split('/')[0] == replicas.stdout.split('/')[1]
+      retries: 20
+      delay: 10
+
+    - name: Wait for reports-service to be healthy
+      shell: |
+        docker service ls --filter name=tucolmadord_reports-service \
+          --format "{{ '{{' }}.Replicas{{ '}}' }}"
+      register: replicas
+      until: replicas.stdout | regex_search('^\d+/\d+') and
+             replicas.stdout.split('/')[0] == replicas.stdout.split('/')[1]
+      retries: 20
+      delay: 10

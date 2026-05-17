@@ -1,0 +1,85 @@
+# Local development stack — no Swarm, no TLS, no Traefik.
+# Builds images locally from source.
+#
+# Usage:
+#   cd infrastructure/swarm
+#   docker compose -f docker-compose.dev.yml up --build
+
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tucolmadord
+      POSTGRES_USER: tucolmado
+      POSTGRES_PASSWORD: devpass
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tucolmado"]
+      interval: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+
+  catalog-service:
+    build:
+      context: ../../services/catalog-service
+    environment:
+      DATABASE_URL: postgresql://tucolmado:devpass@postgres:5432/tucolmadord
+      REDIS_URL: redis://redis:6379
+      PORT: "8080"
+      RUST_LOG: "debug"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+
+  reports-service:
+    build:
+      context: ../../services/reports-service
+    environment:
+      DATABASE_URL: postgresql://tucolmado:devpass@postgres:5432/tucolmadord
+      REDIS_URL: redis://redis:6379
+      PORT: "8081"
+      CACHE_TTL_S: "60"
+      RUST_LOG: "debug"
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.dev.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus.dev.yml:/etc/prometheus/prometheus.dev.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
