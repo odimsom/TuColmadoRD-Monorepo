@@ -19,7 +19,7 @@
       { id: 'inventory', label: 'Inventario', icon: 'icon-[ic--baseline-inventory-2]' },
       { id: 'customers', label: 'Clientes',   icon: 'icon-[ic--baseline-people]' }
     ]; track tab.id) {
-      <button (click)="setTab(tab.id as any)"
+      <button (click)="setTab($any(tab.id))"
         class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[0.7rem] font-black uppercase tracking-widest transition-all"
         [class.bg-blue-600]="activeTab() === tab.id"
         [class.text-white]="activeTab() === tab.id"
