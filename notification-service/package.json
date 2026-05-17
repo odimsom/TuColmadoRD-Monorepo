@@ -12,7 +12,7 @@
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "ioredis": "^5.10.1",
-    "nodemailer": "^6.10.1"
+    "nodemailer": "^8.0.5"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
