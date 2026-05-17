@@ -123,6 +123,9 @@ echo "🧹 Aggressive cleanup of old Docker artifacts..."
 echo "  Stopping and removing all tucolmadord containers..."
 docker ps -q --filter "label=com.docker.compose.project=tucolmadord" | xargs -r docker rm -f 2>/dev/null || true
 docker compose down --remove-orphans 2>/dev/null || true
+# Also force-remove any containers with the tucolmadord- name prefix that may have
+# been started outside of compose (manual runs) and therefore lack compose labels
+docker ps -aq --filter "name=tucolmadord-" | xargs -r docker rm -f 2>/dev/null || true
 
 # 4b. Remove ALL tucolmadord Named volumes explicitly (with force if they're in use)
 echo "  Removing Named volumes..."
