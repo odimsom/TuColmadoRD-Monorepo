@@ -324,6 +324,15 @@ services:
         - traefik.http.routers.grafana.tls.certresolver=letsencrypt
         - traefik.http.services.grafana.loadbalancer.server.port=3000
         - traefik.docker.network=monitoring-net
+        - traefik.http.routers.devops-root.rule=Host(`devops.${DOMAIN}`)
+        - traefik.http.routers.devops-root.entrypoints=websecure
+        - traefik.http.routers.devops-root.tls=true
+        - traefik.http.routers.devops-root.tls.certresolver=letsencrypt
+        - traefik.http.routers.devops-root.middlewares=devops-redirect
+        - traefik.http.routers.devops-root.service=grafana
+        - traefik.http.middlewares.devops-redirect.redirectregex.regex=^https://([^/]+)/?$$
+        - traefik.http.middlewares.devops-redirect.redirectregex.replacement=https://$${1}/grafana/
+        - traefik.http.middlewares.devops-redirect.redirectregex.permanent=true
 
   loki:
     image: grafana/loki:3.1.0
