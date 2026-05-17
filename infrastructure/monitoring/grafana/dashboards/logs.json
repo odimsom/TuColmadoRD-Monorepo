@@ -1,0 +1,102 @@
+{
+  "title": "TuColmadoRD — Logs",
+  "uid": "tucolmadord-logs",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "tags": ["tucolmadord", "logs", "loki"],
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "type": "custom",
+        "label": "Service",
+        "options": [
+          { "text": "All",             "value": "",                          "selected": true },
+          { "text": "catalog-service", "value": "tucolmadord_catalog-service" },
+          { "text": "reports-service", "value": "tucolmadord_reports-service" },
+          { "text": "traefik",         "value": "tucolmadord_traefik" }
+        ]
+      },
+      {
+        "name": "level",
+        "type": "custom",
+        "label": "Level",
+        "options": [
+          { "text": "All",   "value": "",      "selected": true },
+          { "text": "ERROR", "value": "ERROR" },
+          { "text": "WARN",  "value": "WARN"  },
+          { "text": "INFO",  "value": "INFO"  }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Log volume",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 5 },
+      "datasource": { "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service=~\"$service\"} |= \"$level\" [1m])) by (service)",
+          "legendFormat": "{{service}}",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "custom": { "drawStyle": "bars", "barAlignment": 0 } }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Error logs",
+      "type": "logs",
+      "gridPos": { "x": 0, "y": 5, "w": 24, "h": 12 },
+      "datasource": { "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{service=~\"$service\"} |= \"ERROR\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true,
+        "enableLogDetails": true
+      }
+    },
+    {
+      "id": 3,
+      "title": "All logs — catalog-service",
+      "type": "logs",
+      "gridPos": { "x": 0, "y": 17, "w": 12, "h": 10 },
+      "datasource": { "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{service=\"tucolmadord_catalog-service\"}",
+          "queryType": "range"
+        }
+      ],
+      "options": { "showTime": true, "sortOrder": "Descending", "wrapLogMessage": false }
+    },
+    {
+      "id": 4,
+      "title": "All logs — reports-service",
+      "type": "logs",
+      "gridPos": { "x": 12, "y": 17, "w": 12, "h": 10 },
+      "datasource": { "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{service=\"tucolmadord_reports-service\"}",
+          "queryType": "range"
+        }
+      ],
+      "options": { "showTime": true, "sortOrder": "Descending", "wrapLogMessage": false }
+    }
+  ]
+}

@@ -30,6 +30,8 @@ public class GatewayOptions
     public bool IsLocalMode { get; set; }
     public string AuthApiUrl { get; set; } = "http://localhost:3000";
     public string CoreApiUrl { get; set; } = "http://localhost:5000";
+    public string CatalogServiceUrl { get; set; } = "http://catalog-service:8080";
+    public string ReportsServiceUrl { get; set; } = "http://reports-service:8081";
     public string JwtSecret { get; set; } = "dominican-street-premium-secret-key-2026";
     public string[] AllowedOrigins { get; set; } = Array.Empty<string>();
 }
@@ -43,12 +45,24 @@ public static class GatewayHostBuilder
         var configOptions = builder.Configuration.GetSection("GatewayOptions").Get<GatewayOptions>() ?? new GatewayOptions();
         var authApiUrl = options?.AuthApiUrl ?? configOptions.AuthApiUrl;
         var coreApiUrl = options?.CoreApiUrl ?? configOptions.CoreApiUrl;
+        var catalogServiceUrl = options?.CatalogServiceUrl ?? configOptions.CatalogServiceUrl;
+        var reportsServiceUrl = options?.ReportsServiceUrl ?? configOptions.ReportsServiceUrl;
         var jwtSecret = options?.JwtSecret ?? configOptions.JwtSecret;
         var allowedOrigins = options?.AllowedOrigins ?? configOptions.AllowedOrigins;
 
         builder.Services.AddMemoryCache();
         builder.Services.AddHttpClient("AuthClient", client => client.BaseAddress = new Uri(authApiUrl));
         builder.Services.AddHttpClient("CoreClient", client => client.BaseAddress = new Uri(coreApiUrl));
+        builder.Services.AddHttpClient("CatalogClient", client =>
+        {
+            client.BaseAddress = new Uri(catalogServiceUrl);
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
+        builder.Services.AddHttpClient("ReportsClient", client =>
+        {
+            client.BaseAddress = new Uri(reportsServiceUrl);
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
 
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(opt =>
@@ -251,6 +265,45 @@ public static class GatewayHostBuilder
             await ProxyRequest(ctx, factory.CreateClient("AuthClient"), $"/api/auth/employees/{id}"))
             .RequireAuthorization();
 
+        // ── Rust microservice health checks (no auth required) ────────────────
+        app.MapGet("/gateway/health/catalog", async (IHttpClientFactory factory) =>
+        {
+            try
+            {
+                var resp = await factory.CreateClient("CatalogClient").GetAsync("/health");
+                var body = await resp.Content.ReadAsStringAsync();
+                return Results.Content(body, "application/json", statusCode: (int)resp.StatusCode);
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new { status = "unreachable", detail = ex.Message }, statusCode: 503);
+            }
+        });
+
+        app.MapGet("/gateway/health/reports", async (IHttpClientFactory factory) =>
+        {
+            try
+            {
+                var resp = await factory.CreateClient("ReportsClient").GetAsync("/health");
+                var body = await resp.Content.ReadAsStringAsync();
+                return Results.Content(body, "application/json", statusCode: (int)resp.StatusCode);
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new { status = "unreachable", detail = ex.Message }, statusCode: 503);
+            }
+        });
+
+        // ── Rust microservices — must come before catch-all ────────────────────
+        app.Map("/gateway/api/v1/catalog/{**path}", async (string? path, HttpContext ctx, IHttpClientFactory factory) =>
+            await ProxyRequest(ctx, factory.CreateClient("CatalogClient"), $"/catalog/{path ?? string.Empty}"))
+            .RequireAuthorization();
+
+        app.Map("/gateway/api/v1/reports/{**path}", async (string? path, HttpContext ctx, IHttpClientFactory factory) =>
+            await ProxyRequest(ctx, factory.CreateClient("ReportsClient"), $"/reports/{path ?? string.Empty}"))
+            .RequireAuthorization();
+
+        // ── Catch-all → .NET Core API ──────────────────────────────────────────
         app.Map("/gateway/{**path}", async (string path, HttpContext ctx, IHttpClientFactory factory) =>
         {
             return await ProxyRequest(ctx, factory.CreateClient("CoreClient"), $"/{path}");
