@@ -31,7 +31,3 @@ pub async fn set<T: Serialize>(
     }
 }
 
-pub async fn ping(conn: &mut RedisPool) -> anyhow::Result<()> {
-    let _: String = redis::cmd("PING").query_async(conn).await?;
-    Ok(())
-}

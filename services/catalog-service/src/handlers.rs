@@ -32,7 +32,7 @@ pub async fn get_catalog(
 
     // Fast path — try Redis
     if state.redis_cb.is_available() {
-        let mut conn = state.redis.clone();
+        let conn = state.redis.clone();
         let ck = cache_key.clone();
         match resilience::call(&state.redis_cb, "redis:get-catalog", move || {
             let mut conn = conn.clone();
@@ -99,7 +99,7 @@ pub async fn get_categories(
     let cache_key = format!("categories:{}", q.tenant_id);
 
     if state.redis_cb.is_available() {
-        let mut conn = state.redis.clone();
+        let conn = state.redis.clone();
         let ck = cache_key.clone();
         if let Ok(Some(cats)) = resilience::call(&state.redis_cb, "redis:get-cats", move || {
             let mut conn = conn.clone();
