@@ -1,6 +1,12 @@
 name: CI — Rust Microservices & Gateway
 
 on:
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force build+push images even without service changes'
+        required: false
+        default: 'true'
   push:
     branches: [dev, qa, main]
     paths:
@@ -28,9 +34,9 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      catalog: ${{ steps.filter.outputs.catalog }}
-      reports: ${{ steps.filter.outputs.reports }}
-      swarm:   ${{ steps.filter.outputs.swarm }}
+      catalog: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.catalog }}
+      reports: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.reports }}
+      swarm:   ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.swarm }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
