@@ -371,11 +371,22 @@ services:
       - grafana-data:/var/lib/grafana
     labels:
       - traefik.enable=true
+      # Main route: /grafana path prefix
       - traefik.http.routers.devops-grafana.rule=Host(`${PUBLIC_DEVOPS_DOMAIN:-devops.tucolmadord.com}`) && PathPrefix(`/grafana`)
       - traefik.http.routers.devops-grafana.entrypoints=websecure
       - traefik.http.routers.devops-grafana.tls=true
       - traefik.http.routers.devops-grafana.tls.certresolver=letsencrypt
       - traefik.http.services.devops-grafana.loadbalancer.server.port=3000
+      # Root redirect: devops.tucolmadord.com → /grafana
+      - traefik.http.routers.devops-root.rule=Host(`${PUBLIC_DEVOPS_DOMAIN:-devops.tucolmadord.com}`)
+      - traefik.http.routers.devops-root.entrypoints=websecure
+      - traefik.http.routers.devops-root.tls=true
+      - traefik.http.routers.devops-root.tls.certresolver=letsencrypt
+      - traefik.http.routers.devops-root.middlewares=devops-redirect
+      - traefik.http.routers.devops-root.service=devops-grafana
+      - traefik.http.middlewares.devops-redirect.redirectregex.regex=^https://([^/]+)/?$$
+      - traefik.http.middlewares.devops-redirect.redirectregex.replacement=https://$${1}/grafana/
+      - traefik.http.middlewares.devops-redirect.redirectregex.permanent=true
     depends_on:
       - prometheus
     networks:
