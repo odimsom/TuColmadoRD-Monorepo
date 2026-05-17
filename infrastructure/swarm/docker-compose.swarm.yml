@@ -84,7 +84,7 @@ services:
   # catalog-service — Rust/axum, 2 replicas, circuit-broken, lazy Redis cache
   # ─────────────────────────────────────────────────────────────────────────────
   catalog-service:
-    image: ${REGISTRY:-ghcr.io/synsetsolutions}/catalog-service:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/odimsom}/catalog-service:${TAG:-latest}
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis:6379
@@ -135,7 +135,7 @@ services:
   # reports-service — Rust/axum, 2 replicas, lazy computed reports
   # ─────────────────────────────────────────────────────────────────────────────
   reports-service:
-    image: ${REGISTRY:-ghcr.io/synsetsolutions}/reports-service:${TAG:-latest}
+    image: ${REGISTRY:-ghcr.io/odimsom}/reports-service:${TAG:-latest}
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis:6379

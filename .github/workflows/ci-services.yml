@@ -19,7 +19,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_ORG: synsetsolutions
+  IMAGE_ORG: odimsom
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
@@ -227,7 +227,7 @@ jobs:
             cd /opt/tucolmadord
             set -a; source .env; set +a
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            REGISTRY=ghcr.io/synsetsolutions TAG=${{ github.sha }} \
+            REGISTRY=ghcr.io/odimsom TAG=${{ github.sha }} \
             docker stack deploy -c docker-compose.swarm.yml tucolmadord \
               --with-registry-auth --prune
             echo "Stack deployed: SHA ${{ github.sha }}"
