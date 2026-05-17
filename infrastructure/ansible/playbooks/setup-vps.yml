@@ -1,0 +1,110 @@
+---
+- name: Bootstrap TuColmadoRD VPS
+  hosts: vps
+  become: true
+  vars:
+    docker_compose_version: "2.29.0"
+    app_dir: /opt/tucolmadord
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      apt:
+        name:
+          - docker.io
+          - curl
+          - git
+          - htop
+          - ufw
+          - fail2ban
+        state: present
+
+    - name: Install docker compose plugin
+      shell: |
+        mkdir -p /usr/lib/docker/cli-plugins
+        curl -SL "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-linux-x86_64" \
+          -o /usr/lib/docker/cli-plugins/docker-compose
+        chmod +x /usr/lib/docker/cli-plugins/docker-compose
+      args:
+        creates: /usr/lib/docker/cli-plugins/docker-compose
+
+    - name: Enable and start Docker
+      systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Configure UFW — allow SSH
+      ufw:
+        rule: allow
+        port: "22"
+
+    - name: Configure UFW — allow HTTP/HTTPS
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+      loop: ["80", "443"]
+
+    - name: Configure UFW — allow Docker Swarm ports (internal only)
+      ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+        src: "10.0.0.0/8"
+      loop:
+        - { port: "2377", proto: tcp }
+        - { port: "7946",  proto: tcp }
+        - { port: "7946",  proto: udp }
+        - { port: "4789",  proto: udp }
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+
+    - name: Create app directory structure
+      file:
+        path: "{{ app_dir }}/{{ item }}"
+        state: directory
+        mode: "0750"
+      loop:
+        - letsencrypt
+        - monitoring
+
+    - name: Create Let's Encrypt acme.json with correct permissions
+      file:
+        path: "{{ app_dir }}/letsencrypt/acme.json"
+        state: touch
+        mode: "0600"
+
+    - name: Init Docker Swarm
+      shell: docker swarm init --advertise-addr {{ ansible_default_ipv4.address }}
+      register: swarm_init
+      failed_when: swarm_init.rc != 0 and 'already part' not in swarm_init.stderr
+
+    - name: Create traefik-public overlay network
+      shell: |
+        docker network ls | grep -q traefik-public || \
+        docker network create --driver overlay --attachable traefik-public
+
+    - name: Configure fail2ban for SSH
+      copy:
+        dest: /etc/fail2ban/jail.local
+        content: |
+          [sshd]
+          enabled = true
+          maxretry = 5
+          bantime = 3600
+          findtime = 600
+      notify: Restart fail2ban
+
+  handlers:
+    - name: Restart fail2ban
+      systemd:
+        name: fail2ban
+        state: restarted

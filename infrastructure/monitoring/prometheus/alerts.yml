@@ -1,0 +1,68 @@
+groups:
+  - name: services
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Instance {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: CircuitBreakerOpen
+        expr: reports_circuit_breaker_open{breaker="db"} == 1 or catalog_circuit_breaker_open{breaker="db"} == 1
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Circuit breaker open on {{ $labels.job }}"
+          description: "The DB circuit breaker has been open for over 30s — service is rejecting requests."
+
+      - alert: HighErrorRate
+        expr: |
+          rate(reports_http_requests_total{status=~"5.."}[5m]) /
+          rate(reports_http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx rate on reports-service"
+          description: "Error rate above 5% for 2 minutes."
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(reports_http_duration_seconds_bucket[5m])
+          ) > 2
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 latency > 2s on reports-service"
+
+  - name: infrastructure
+    rules:
+      - alert: HighCPU
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "VPS CPU usage above 85%"
+
+      - alert: LowMemory
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 10
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "VPS memory below 10% available"
+
+      - alert: LowDisk
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Root disk below 15% free"
