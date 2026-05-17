@@ -1,0 +1,67 @@
+name: Bug report
+description: Something isn't working as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before filing:** check [open issues](https://github.com/odimsom/TuColmadoRD-Monorepo/issues) and the [Q&A discussion](https://github.com/odimsom/TuColmadoRD-Monorepo/discussions/categories/q-a) first.
+
+  - type: dropdown
+    id: service
+    attributes:
+      label: Affected service
+      options:
+        - API Gateway
+        - Core API (.NET)
+        - Auth service
+        - Catalog service (Rust)
+        - Reports service (Rust)
+        - Notification service
+        - ECF Generator
+        - Web Admin (Angular)
+        - Landing page
+        - CI/CD / Deploy
+        - Infrastructure / Traefik
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Clear description of the bug. Include error messages verbatim.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Call endpoint `GET /api/v1/catalog?tenant_id=...`
+        2. With header `Authorization: Bearer ...`
+        3. Observe response...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: "`docker compose logs <service> | tail -50`"
+      render: shell
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "local / staging / production — Docker Compose v2.x, OS"
