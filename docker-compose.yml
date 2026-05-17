@@ -337,12 +337,58 @@ services:
     networks:
       - tucolmadord-network
 
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.external-url=/prometheus
+      - --web.route-prefix=/prometheus
+    volumes:
+      - prometheus-data:/prometheus
+      - ./infrastructure/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.devops-prometheus.rule=Host(`${PUBLIC_DEVOPS_DOMAIN:-devops.tucolmadord.com}`) && PathPrefix(`/prometheus`)
+      - traefik.http.routers.devops-prometheus.entrypoints=websecure
+      - traefik.http.routers.devops-prometheus.tls=true
+      - traefik.http.routers.devops-prometheus.tls.certresolver=letsencrypt
+      - traefik.http.services.devops-prometheus.loadbalancer.server.port=9090
+    networks:
+      - tucolmadord-network
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_SERVER_ROOT_URL: https://${PUBLIC_DEVOPS_DOMAIN:-devops.tucolmadord.com}/grafana
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.devops-grafana.rule=Host(`${PUBLIC_DEVOPS_DOMAIN:-devops.tucolmadord.com}`) && PathPrefix(`/grafana`)
+      - traefik.http.routers.devops-grafana.entrypoints=websecure
+      - traefik.http.routers.devops-grafana.tls=true
+      - traefik.http.routers.devops-grafana.tls.certresolver=letsencrypt
+      - traefik.http.services.devops-grafana.loadbalancer.server.port=3000
+    depends_on:
+      - prometheus
+    networks:
+      - tucolmadord-network
+
 networks:
   tucolmadord-network:
     driver: bridge
 
 volumes:
   redis_data:
+  prometheus-data:
+  grafana-data:
   postgres_data:
     driver: local
     driver_opts:
