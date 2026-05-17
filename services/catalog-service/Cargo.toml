@@ -20,7 +20,7 @@ prometheus       = { version = "0.13", features = ["process"] }
 tracing          = "0.1"
 tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
 anyhow           = "1"
-thiserror        = "1"
+thiserror        = "2"
 uuid             = { version = "1",   features = ["serde", "v4"] }
 chrono           = { version = "0.4", features = ["serde"] }
 dotenvy          = "0.15"
