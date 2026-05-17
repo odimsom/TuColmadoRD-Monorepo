@@ -187,6 +187,10 @@ echo "  ✅ Bind-mount directories ready"
 
 # 7. Run docker compose with rebuild
 echo "🐳 Rebuilding and starting Docker services..."
+# Login to GHCR to pull catalog-service and reports-service images
+if [ -n "$GHCR_TOKEN" ]; then
+  echo "$GHCR_TOKEN" | docker login ghcr.io -u odimsom --password-stdin
+fi
 docker compose pull
 docker compose up --build -d
 
