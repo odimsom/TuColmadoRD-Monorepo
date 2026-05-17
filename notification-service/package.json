@@ -8,17 +8,17 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "bullmq": "^5.76.6",
-    "dotenv": "^16.5.0",
-    "express": "^4.21.2",
+    "bullmq": "^5.76.9",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "ioredis": "^5.10.1",
-    "nodemailer": "^8.0.5"
+    "nodemailer": "^8.0.7"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
-    "@types/node": "^22.15.17",
-    "@types/nodemailer": "^6.4.17",
+    "@types/node": "^25.8.0",
+    "@types/nodemailer": "^8.0.0",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.8.3"
+    "typescript": "^6.0.3"
   }
 }
