@@ -1,0 +1,62 @@
+name: Feature request
+description: Propose a new feature or improvement
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For open-ended discussion or early-stage ideas, use [Discussions → Ideas](https://github.com/odimsom/TuColmadoRD-Monorepo/discussions/categories/ideas) instead.
+        Open an issue when the feature is concrete enough to be actionable.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - POS / Sales flow
+        - Inventory management
+        - Reporting
+        - Delivery & GPS verification
+        - Employee & shift management
+        - Credit (fiado) management
+        - e-CF / DGII fiscal compliance
+        - Authentication & authorization
+        - API / Gateway
+        - Frontend (web admin)
+        - Desktop app
+        - Infrastructure / DevOps
+        - Developer experience
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem this solves
+      description: What is currently painful or impossible? Be specific.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How should it work? Include UI mockups, API shapes, or data models if helpful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you thought about and why you ruled them out.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I searched existing issues and discussions
+          required: true
+        - label: This feature fits the scope of a POS/ERP for Dominican colmados
+          required: true
