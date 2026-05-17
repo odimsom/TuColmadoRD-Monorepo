@@ -17,10 +17,10 @@ jobs:
 
     steps:
       - name: Checkout monorepo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
 
@@ -76,14 +76,14 @@ jobs:
         shell: pwsh
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: installer-${{ steps.vars.outputs.app_version }}
           path: backend/publish/installer/*.exe
           if-no-files-found: error
 
       - name: Create GitHub prerelease
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: TuColmadoRD ${{ github.ref_name }} - Test Release
