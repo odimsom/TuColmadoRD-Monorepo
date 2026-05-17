@@ -173,6 +173,51 @@ services:
     networks:
       - tucolmadord-network
 
+  catalog-service:
+    image: ghcr.io/odimsom/catalog-service:main
+    restart: on-failure:3
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      PORT: "8080"
+      RUST_LOG: "info"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - tucolmadord-network
+
+  reports-service:
+    image: ghcr.io/odimsom/reports-service:main
+    restart: on-failure:3
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      PORT: "8081"
+      CACHE_TTL_S: "600"
+      RUST_LOG: "info"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - tucolmadord-network
+
   gateway:
     build:
       context: ./backend
