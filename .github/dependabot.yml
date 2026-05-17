@@ -1,0 +1,156 @@
+version: 2
+updates:
+
+  # ── GitHub Actions ─────────────────────────────────────────────────────────
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # ── Docker base images ─────────────────────────────────────────────────────
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      docker-images:
+        patterns: ["*"]
+
+  # ── NuGet (.NET backend) ───────────────────────────────────────────────────
+  - package-ecosystem: nuget
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: tuesday
+    groups:
+      ef-core:
+        patterns:
+          - "Microsoft.EntityFrameworkCore*"
+          - "Npgsql.EntityFrameworkCore*"
+      aspnet:
+        patterns:
+          - "Microsoft.AspNetCore*"
+          - "Microsoft.Extensions*"
+          - "Microsoft.IdentityModel*"
+      testing:
+        patterns:
+          - "xunit*"
+          - "Moq*"
+          - "FluentAssertions*"
+          - "Microsoft.NET.Test*"
+      other-nuget:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  # ── Rust microservices ─────────────────────────────────────────────────────
+  - package-ecosystem: cargo
+    directory: /services/catalog-service
+    schedule:
+      interval: weekly
+      day: tuesday
+    groups:
+      catalog-deps:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: cargo
+    directory: /services/reports-service
+    schedule:
+      interval: weekly
+      day: tuesday
+    groups:
+      reports-deps:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  # ── Node.js services ───────────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /auth
+    schedule:
+      interval: weekly
+      day: wednesday
+    groups:
+      auth-prod:
+        dependency-type: production
+        patterns: ["*"]
+      auth-dev:
+        dependency-type: development
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /notification-service
+    schedule:
+      interval: weekly
+      day: wednesday
+    groups:
+      notification-deps:
+        patterns: ["*"]
+
+  # ── Angular frontend ───────────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /frontend/web-admin
+    schedule:
+      interval: weekly
+      day: thursday
+    groups:
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "daisyui"
+          - "postcss*"
+          - "autoprefixer"
+      testing:
+        patterns:
+          - "@playwright/*"
+          - "playwright"
+          - "karma*"
+          - "jasmine*"
+      other-frontend:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: npm
+    directory: /frontend/landing-page
+    schedule:
+      interval: weekly
+      day: thursday
+    groups:
+      landing-deps:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: thursday
+    groups:
+      frontend-root:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /scripts
+    schedule:
+      interval: weekly
+      day: thursday
+    groups:
+      scripts-deps:
+        patterns: ["*"]
+
+  # ── Python (ECF Generator) ─────────────────────────────────────────────────
+  - package-ecosystem: pip
+    directory: /generadordexmle-cf
+    schedule:
+      interval: weekly
+      day: wednesday
+    groups:
+      ecf-deps:
+        patterns: ["*"]
