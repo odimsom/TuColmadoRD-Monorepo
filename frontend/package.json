@@ -1,9 +1,9 @@
 {
     "version": "0.3.0",
     "devDependencies":  {
-                            "autoprefixer":  "^10.4.27",
-                            "postcss":  "^8.5.8",
-                            "tailwindcss":  "^4.2.2"
+                            "autoprefixer":  "^10.5.0",
+                            "postcss":  "^8.5.14",
+                            "tailwindcss":  "^4.3.0"
                         }
 }
 
