@@ -1,18 +1,16 @@
-use std::sync::Arc;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
+use std::sync::Arc;
 
 use crate::{
-    AppState,
-    cache,
-    db,
+    cache, db,
     metrics::Timer,
     models::{Category, HealthStatus, Product, TenantQuery},
-    resilience,
+    resilience, AppState,
 };
 
 // ── GET /catalog ──────────────────────────────────────────────────────────────
@@ -42,15 +40,31 @@ pub async fn get_catalog(
         .await
         {
             Ok(Some(products)) => {
-                state.metrics.cache_ops.with_label_values(&["hit", "/catalog"]).inc();
-                state.metrics.http_requests.with_label_values(&["GET", "/catalog", "200"]).inc();
+                state
+                    .metrics
+                    .cache_ops
+                    .with_label_values(&["hit", "/catalog"])
+                    .inc();
+                state
+                    .metrics
+                    .http_requests
+                    .with_label_values(&["GET", "/catalog", "200"])
+                    .inc();
                 return Json(products).into_response();
             }
             Ok(None) => {
-                state.metrics.cache_ops.with_label_values(&["miss", "/catalog"]).inc();
+                state
+                    .metrics
+                    .cache_ops
+                    .with_label_values(&["miss", "/catalog"])
+                    .inc();
             }
             Err(_) => {
-                state.metrics.cache_ops.with_label_values(&["error", "/catalog"]).inc();
+                state
+                    .metrics
+                    .cache_ops
+                    .with_label_values(&["error", "/catalog"])
+                    .inc();
             }
         }
     }
@@ -59,7 +73,7 @@ pub async fn get_catalog(
     let pool = state.db.clone();
     match resilience::call(&state.db_cb, "pg:fetch-catalog", || {
         let pool = pool.clone();
-        let tid  = q.tenant_id;
+        let tid = q.tenant_id;
         async move { db::fetch_catalog(&pool, tid).await }
     })
     .await
@@ -75,16 +89,28 @@ pub async fn get_catalog(
                     cache::set(&mut conn, &key, &data, ttl).await;
                 });
             }
-            state.metrics.http_requests.with_label_values(&["GET", "/catalog", "200"]).inc();
+            state
+                .metrics
+                .http_requests
+                .with_label_values(&["GET", "/catalog", "200"])
+                .inc();
             Json(products).into_response()
         }
         Err(e) => {
             tracing::error!(tenant_id = %q.tenant_id, error = %e, "catalog fetch failed");
-            state.metrics.http_requests.with_label_values(&["GET", "/catalog", "503"]).inc();
-            (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
-                "error": "catalog temporarily unavailable",
-                "detail": e.to_string()
-            }))).into_response()
+            state
+                .metrics
+                .http_requests
+                .with_label_values(&["GET", "/catalog", "503"])
+                .inc();
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "catalog temporarily unavailable",
+                    "detail": e.to_string()
+                })),
+            )
+                .into_response()
         }
     }
 }
@@ -108,16 +134,24 @@ pub async fn get_categories(
         })
         .await
         {
-            state.metrics.cache_ops.with_label_values(&["hit", "/catalog/categories"]).inc();
+            state
+                .metrics
+                .cache_ops
+                .with_label_values(&["hit", "/catalog/categories"])
+                .inc();
             return Json(cats).into_response();
         }
-        state.metrics.cache_ops.with_label_values(&["miss", "/catalog/categories"]).inc();
+        state
+            .metrics
+            .cache_ops
+            .with_label_values(&["miss", "/catalog/categories"])
+            .inc();
     }
 
     let pool = state.db.clone();
     match resilience::call(&state.db_cb, "pg:fetch-cats", || {
         let pool = pool.clone();
-        let tid  = q.tenant_id;
+        let tid = q.tenant_id;
         async move { db::fetch_categories(&pool, tid).await }
     })
     .await
@@ -131,11 +165,13 @@ pub async fn get_categories(
             }
             Json(cats).into_response()
         }
-        Err(_) => {
-            (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+        Err(_) => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
                 "error": "categories temporarily unavailable"
-            }))).into_response()
-        }
+            })),
+        )
+            .into_response(),
     }
 }
 
@@ -154,27 +190,45 @@ pub async fn health(State(state): State<Arc<AppState>>) -> Response {
     }
 
     let all_ok = redis_ok && db_ok;
-    let status = if all_ok { StatusCode::OK } else { StatusCode::SERVICE_UNAVAILABLE };
+    let status = if all_ok {
+        StatusCode::OK
+    } else {
+        StatusCode::SERVICE_UNAVAILABLE
+    };
 
-    (status, Json(HealthStatus {
-        status:   if all_ok { "ok" } else { "degraded" },
-        redis:    if redis_ok { "up" } else { "down" },
-        database: if db_ok   { "up" } else { "down" },
-        db_cb:    state.db_cb.state_name(),
-        redis_cb: state.redis_cb.state_name(),
-    })).into_response()
+    (
+        status,
+        Json(HealthStatus {
+            status: if all_ok { "ok" } else { "degraded" },
+            redis: if redis_ok { "up" } else { "down" },
+            database: if db_ok { "up" } else { "down" },
+            db_cb: state.db_cb.state_name(),
+            redis_cb: state.redis_cb.state_name(),
+        }),
+    )
+        .into_response()
 }
 
 // ── GET /metrics ──────────────────────────────────────────────────────────────
 
 pub async fn prometheus_metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     // Update circuit breaker gauges before scrape
-    state.metrics.cb_state
-        .with_label_values(&["redis"])
-        .set(if state.redis_cb.state_name() == "open" { 1 } else { 0 });
-    state.metrics.cb_state
+    state.metrics.cb_state.with_label_values(&["redis"]).set(
+        if state.redis_cb.state_name() == "open" {
+            1
+        } else {
+            0
+        },
+    );
+    state
+        .metrics
+        .cb_state
         .with_label_values(&["db"])
-        .set(if state.db_cb.state_name() == "open" { 1 } else { 0 });
+        .set(if state.db_cb.state_name() == "open" {
+            1
+        } else {
+            0
+        });
 
     (
         StatusCode::OK,

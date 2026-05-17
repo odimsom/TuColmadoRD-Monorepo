@@ -10,24 +10,24 @@ use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-const STATE_CLOSED:    u32 = 0;
-const STATE_OPEN:      u32 = 1;
+const STATE_CLOSED: u32 = 0;
+const STATE_OPEN: u32 = 1;
 const STATE_HALF_OPEN: u32 = 2;
 
 #[derive(Clone)]
 pub struct CircuitBreaker {
-    state:            Arc<AtomicU32>,
-    failures:         Arc<AtomicU32>,
-    last_failure_ts:  Arc<AtomicU64>,
-    threshold:        u32,
-    reset_timeout:    Duration,
+    state: Arc<AtomicU32>,
+    failures: Arc<AtomicU32>,
+    last_failure_ts: Arc<AtomicU64>,
+    threshold: u32,
+    reset_timeout: Duration,
 }
 
 impl CircuitBreaker {
     pub fn new(threshold: u32, reset_timeout: Duration) -> Self {
         Self {
-            state:           Arc::new(AtomicU32::new(STATE_CLOSED)),
-            failures:        Arc::new(AtomicU32::new(0)),
+            state: Arc::new(AtomicU32::new(STATE_CLOSED)),
+            failures: Arc::new(AtomicU32::new(0)),
             last_failure_ts: Arc::new(AtomicU64::new(0)),
             threshold,
             reset_timeout,
@@ -46,13 +46,15 @@ impl CircuitBreaker {
             STATE_CLOSED => true,
             STATE_HALF_OPEN => true, // allow probe
             STATE_OPEN => {
-                let elapsed = Self::now_secs()
-                    .saturating_sub(self.last_failure_ts.load(Ordering::Relaxed));
+                let elapsed =
+                    Self::now_secs().saturating_sub(self.last_failure_ts.load(Ordering::Relaxed));
                 if elapsed >= self.reset_timeout.as_secs() {
                     // Transition to half-open for probe
                     let _ = self.state.compare_exchange(
-                        STATE_OPEN, STATE_HALF_OPEN,
-                        Ordering::AcqRel, Ordering::Relaxed,
+                        STATE_OPEN,
+                        STATE_HALF_OPEN,
+                        Ordering::AcqRel,
+                        Ordering::Relaxed,
                     );
                     true
                 } else {
@@ -70,7 +72,8 @@ impl CircuitBreaker {
 
     pub fn on_failure(&self) {
         let fails = self.failures.fetch_add(1, Ordering::Relaxed) + 1;
-        self.last_failure_ts.store(Self::now_secs(), Ordering::Relaxed);
+        self.last_failure_ts
+            .store(Self::now_secs(), Ordering::Relaxed);
         if fails >= self.threshold {
             self.state.store(STATE_OPEN, Ordering::Relaxed);
             tracing::warn!(
@@ -83,10 +86,10 @@ impl CircuitBreaker {
 
     pub fn state_name(&self) -> &'static str {
         match self.state.load(Ordering::Relaxed) {
-            STATE_CLOSED    => "closed",
-            STATE_OPEN      => "open",
+            STATE_CLOSED => "closed",
+            STATE_OPEN => "open",
             STATE_HALF_OPEN => "half_open",
-            _               => "unknown",
+            _ => "unknown",
         }
     }
 }

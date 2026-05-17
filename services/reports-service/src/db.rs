@@ -1,6 +1,6 @@
+use crate::models::{LowStockAlert, TopProduct};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use uuid::Uuid;
-use crate::models::{LowStockAlert, TopProduct};
 
 pub type DbPool = Pool<Postgres>;
 
@@ -17,31 +17,33 @@ pub async fn connect(url: &str) -> anyhow::Result<DbPool> {
 
 #[derive(sqlx::FromRow)]
 pub struct SalesRow {
-    pub total_revenue:     f64,
+    pub total_revenue: f64,
     pub transaction_count: i64,
 }
 
 #[derive(sqlx::FromRow)]
 pub struct CustomerStatsRow {
-    pub total:      i64,
-    pub with_debt:  i64,
+    pub total: i64,
+    pub with_debt: i64,
     pub total_debt: f64,
 }
 
 pub async fn fetch_sales_summary(
-    pool:      &DbPool,
+    pool: &DbPool,
     tenant_id: Uuid,
-    from:      &str,
-    to:        &str,
+    from: &str,
+    to: &str,
 ) -> anyhow::Result<SalesRow> {
-    let row = sqlx::query_as::<_, SalesRow>(r#"
+    let row = sqlx::query_as::<_, SalesRow>(
+        r#"
         SELECT
             COALESCE(SUM(s."TotalAmount"), 0)::FLOAT8 AS total_revenue,
             COUNT(*)::BIGINT                          AS transaction_count
         FROM "Sales"."Sales" s
         WHERE s."TenantId" = $1
           AND s."CreatedAt"::DATE BETWEEN $2::DATE AND $3::DATE
-    "#)
+    "#,
+    )
     .bind(tenant_id)
     .bind(from)
     .bind(to)
@@ -51,13 +53,14 @@ pub async fn fetch_sales_summary(
 }
 
 pub async fn fetch_top_products(
-    pool:      &DbPool,
+    pool: &DbPool,
     tenant_id: Uuid,
-    from:      &str,
-    to:        &str,
-    limit:     i64,
+    from: &str,
+    to: &str,
+    limit: i64,
 ) -> anyhow::Result<Vec<TopProduct>> {
-    let rows = sqlx::query_as::<_, TopProduct>(r#"
+    let rows = sqlx::query_as::<_, TopProduct>(
+        r#"
         SELECT
             p."Name"                                             AS product_name,
             SUM(sd."Quantity")::FLOAT8                          AS units_sold,
@@ -70,7 +73,8 @@ pub async fn fetch_top_products(
         GROUP BY p."Name"
         ORDER BY revenue DESC
         LIMIT $4
-    "#)
+    "#,
+    )
     .bind(tenant_id)
     .bind(from)
     .bind(to)
@@ -81,11 +85,12 @@ pub async fn fetch_top_products(
 }
 
 pub async fn fetch_low_stock(
-    pool:      &DbPool,
+    pool: &DbPool,
     tenant_id: Uuid,
     threshold: f64,
 ) -> anyhow::Result<Vec<LowStockAlert>> {
-    let rows = sqlx::query_as::<_, LowStockAlert>(r#"
+    let rows = sqlx::query_as::<_, LowStockAlert>(
+        r#"
         SELECT
             p."Id"                         AS product_id,
             p."Name"                       AS product_name,
@@ -98,7 +103,8 @@ pub async fn fetch_low_stock(
           AND p."IsActive"  = true
           AND p."StockQuantity" <= $2
         ORDER BY p."StockQuantity" ASC
-    "#)
+    "#,
+    )
     .bind(tenant_id)
     .bind(threshold)
     .fetch_all(pool)
@@ -107,17 +113,19 @@ pub async fn fetch_low_stock(
 }
 
 pub async fn fetch_customer_stats(
-    pool:      &DbPool,
+    pool: &DbPool,
     tenant_id: Uuid,
 ) -> anyhow::Result<CustomerStatsRow> {
-    let row = sqlx::query_as::<_, CustomerStatsRow>(r#"
+    let row = sqlx::query_as::<_, CustomerStatsRow>(
+        r#"
         SELECT
             COUNT(*)::BIGINT                                                    AS total,
             COUNT(*) FILTER (WHERE "Balance" > 0)::BIGINT                      AS with_debt,
             COALESCE(SUM("Balance") FILTER (WHERE "Balance" > 0), 0)::FLOAT8   AS total_debt
         FROM "Sales"."Customers"
         WHERE "TenantId" = $1
-    "#)
+    "#,
+    )
     .bind(tenant_id)
     .fetch_one(pool)
     .await?;

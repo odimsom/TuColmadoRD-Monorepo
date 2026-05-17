@@ -1,6 +1,6 @@
+use crate::models::{Category, Product};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use uuid::Uuid;
-use crate::models::{Product, Category};
 
 pub type DbPool = Pool<Postgres>;
 
@@ -16,7 +16,8 @@ pub async fn connect(url: &str) -> anyhow::Result<DbPool> {
 }
 
 pub async fn fetch_catalog(pool: &DbPool, tenant_id: Uuid) -> anyhow::Result<Vec<Product>> {
-    let rows = sqlx::query_as::<_, Product>(r#"
+    let rows = sqlx::query_as::<_, Product>(
+        r#"
         SELECT
             p."Id"                               AS id,
             p."TenantId"                         AS tenant_id,
@@ -32,7 +33,8 @@ pub async fn fetch_catalog(pool: &DbPool, tenant_id: Uuid) -> anyhow::Result<Vec
         WHERE p."TenantId" = $1
           AND p."IsActive" = true
         ORDER BY c."Name", p."Name"
-    "#)
+    "#,
+    )
     .bind(tenant_id)
     .fetch_all(pool)
     .await?;
@@ -40,7 +42,8 @@ pub async fn fetch_catalog(pool: &DbPool, tenant_id: Uuid) -> anyhow::Result<Vec
 }
 
 pub async fn fetch_categories(pool: &DbPool, tenant_id: Uuid) -> anyhow::Result<Vec<Category>> {
-    let rows = sqlx::query_as::<_, Category>(r#"
+    let rows = sqlx::query_as::<_, Category>(
+        r#"
         SELECT
             "Id"       AS id,
             "TenantId" AS tenant_id,
@@ -50,7 +53,8 @@ pub async fn fetch_categories(pool: &DbPool, tenant_id: Uuid) -> anyhow::Result<
         WHERE "TenantId" = $1
           AND "IsActive" = true
         ORDER BY "Name"
-    "#)
+    "#,
+    )
     .bind(tenant_id)
     .fetch_all(pool)
     .await?;

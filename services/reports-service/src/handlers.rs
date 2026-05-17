@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -6,13 +5,17 @@ use axum::{
     Json,
 };
 use chrono::{Datelike, Local};
+use std::sync::Arc;
 
 use crate::{
-    AppState, cache, db, resilience,
+    cache, db,
     models::{CustomerReport, InventoryAlertsReport, SalesReport, TenantQuery},
+    resilience, AppState,
 };
 
-fn today() -> String { Local::now().format("%Y-%m-%d").to_string() }
+fn today() -> String {
+    Local::now().format("%Y-%m-%d").to_string()
+}
 fn month_start() -> String {
     let n = Local::now();
     format!("{}-{:02}-01", n.year(), n.month())
@@ -24,7 +27,7 @@ pub async fn sales_report(
     Query(q): Query<TenantQuery>,
 ) -> Response {
     let from = q.from.clone().unwrap_or_else(month_start);
-    let to   = q.to.clone().unwrap_or_else(today);
+    let to = q.to.clone().unwrap_or_else(today);
     let cache_key = format!("report:sales:{}:{}:{}", q.tenant_id, from, to);
 
     let mut conn = state.redis.clone();
@@ -33,38 +36,46 @@ pub async fn sales_report(
     }
 
     let pool = state.db.clone();
-    let tid  = q.tenant_id;
+    let tid = q.tenant_id;
 
     let summary = {
-        let pool  = pool.clone();
+        let pool = pool.clone();
         let from2 = from.clone();
-        let to2   = to.clone();
+        let to2 = to.clone();
         match resilience::call(&state.db_cb, "pg:sales-summary", move || {
-            let pool  = pool.clone();
+            let pool = pool.clone();
             let from2 = from2.clone();
-            let to2   = to2.clone();
+            let to2 = to2.clone();
             async move { db::fetch_sales_summary(&pool, tid, &from2, &to2).await }
         })
         .await
         {
             Ok(s) => s,
             Err(e) => {
-                state.metrics.http_requests.with_label_values(&["GET", "/reports/sales", "503"]).inc();
-                return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
-                    "error": "report unavailable", "detail": e.to_string()
-                }))).into_response();
+                state
+                    .metrics
+                    .http_requests
+                    .with_label_values(&["GET", "/reports/sales", "503"])
+                    .inc();
+                return (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(serde_json::json!({
+                        "error": "report unavailable", "detail": e.to_string()
+                    })),
+                )
+                    .into_response();
             }
         }
     };
 
     let top = {
-        let pool  = pool.clone();
+        let pool = pool.clone();
         let from2 = from.clone();
-        let to2   = to.clone();
+        let to2 = to.clone();
         resilience::call(&state.db_cb, "pg:top-products", move || {
-            let pool  = pool.clone();
+            let pool = pool.clone();
             let from2 = from2.clone();
-            let to2   = to2.clone();
+            let to2 = to2.clone();
             async move { db::fetch_top_products(&pool, tid, &from2, &to2, 5).await }
         })
         .await
@@ -78,14 +89,14 @@ pub async fn sales_report(
     };
 
     let report = SalesReport {
-        tenant_id:         q.tenant_id,
-        period_from:       from,
-        period_to:         to,
-        total_revenue:     summary.total_revenue,
+        tenant_id: q.tenant_id,
+        period_from: from,
+        period_to: to,
+        total_revenue: summary.total_revenue,
         transaction_count: summary.transaction_count,
-        average_ticket:    avg,
-        top_products:      top,
-        generated_at:      chrono::Utc::now().to_rfc3339(),
+        average_ticket: avg,
+        top_products: top,
+        generated_at: chrono::Utc::now().to_rfc3339(),
     };
 
     let mut conn2 = state.redis.clone();
@@ -93,7 +104,11 @@ pub async fn sales_report(
     let key2 = cache_key.clone();
     tokio::spawn(async move { cache::set(&mut conn2, &key2, &r2, 600).await });
 
-    state.metrics.http_requests.with_label_values(&["GET", "/reports/sales", "200"]).inc();
+    state
+        .metrics
+        .http_requests
+        .with_label_values(&["GET", "/reports/sales", "200"])
+        .inc();
     Json(report).into_response()
 }
 
@@ -111,7 +126,7 @@ pub async fn inventory_alerts(
     }
 
     let pool = state.db.clone();
-    let tid  = q.tenant_id;
+    let tid = q.tenant_id;
     match resilience::call(&state.db_cb, "pg:low-stock", move || {
         let pool = pool.clone();
         async move { db::fetch_low_stock(&pool, tid, 5.0).await }
@@ -120,8 +135,8 @@ pub async fn inventory_alerts(
     {
         Ok(alerts) => {
             let report = InventoryAlertsReport {
-                tenant_id:    q.tenant_id,
-                low_stock:    alerts,
+                tenant_id: q.tenant_id,
+                low_stock: alerts,
                 generated_at: chrono::Utc::now().to_rfc3339(),
             };
             let mut conn2 = state.redis.clone();
@@ -130,9 +145,13 @@ pub async fn inventory_alerts(
             tokio::spawn(async move { cache::set(&mut conn2, &key2, &r2, 120).await });
             Json(report).into_response()
         }
-        Err(_) => (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
-            "error": "inventory report unavailable"
-        }))).into_response(),
+        Err(_) => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "inventory report unavailable"
+            })),
+        )
+            .into_response(),
     }
 }
 
@@ -150,7 +169,7 @@ pub async fn customer_report(
     }
 
     let pool = state.db.clone();
-    let tid  = q.tenant_id;
+    let tid = q.tenant_id;
     match resilience::call(&state.db_cb, "pg:customer-stats", move || {
         let pool = pool.clone();
         async move { db::fetch_customer_stats(&pool, tid).await }
@@ -159,11 +178,11 @@ pub async fn customer_report(
     {
         Ok(stats) => {
             let report = CustomerReport {
-                tenant_id:       q.tenant_id,
+                tenant_id: q.tenant_id,
                 total_customers: stats.total,
-                with_debt:       stats.with_debt,
-                total_debt:      stats.total_debt,
-                generated_at:    chrono::Utc::now().to_rfc3339(),
+                with_debt: stats.with_debt,
+                total_debt: stats.total_debt,
+                generated_at: chrono::Utc::now().to_rfc3339(),
             };
             let mut conn2 = state.redis.clone();
             let r2 = report.clone();
@@ -171,9 +190,13 @@ pub async fn customer_report(
             tokio::spawn(async move { cache::set(&mut conn2, &key2, &r2, 300).await });
             Json(report).into_response()
         }
-        Err(_) => (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
-            "error": "customer report unavailable"
-        }))).into_response(),
+        Err(_) => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "customer report unavailable"
+            })),
+        )
+            .into_response(),
     }
 }
 
@@ -181,20 +204,34 @@ pub async fn customer_report(
 
 pub async fn health(State(state): State<Arc<AppState>>) -> Response {
     let db_ok = db::ping(&state.db).await.is_ok();
-    let status = if db_ok { StatusCode::OK } else { StatusCode::SERVICE_UNAVAILABLE };
-    (status, Json(serde_json::json!({
-        "status":   if db_ok { "ok" } else { "degraded" },
-        "database": if db_ok { "up" } else { "down" },
-        "db_cb":    state.db_cb.state_name(),
-    }))).into_response()
+    let status = if db_ok {
+        StatusCode::OK
+    } else {
+        StatusCode::SERVICE_UNAVAILABLE
+    };
+    (
+        status,
+        Json(serde_json::json!({
+            "status":   if db_ok { "ok" } else { "degraded" },
+            "database": if db_ok { "up" } else { "down" },
+            "db_cb":    state.db_cb.state_name(),
+        })),
+    )
+        .into_response()
 }
 
 // ── GET /metrics ───────────────────────────────────────────────────────────────
 
 pub async fn prometheus_metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    state.metrics.cb_state
+    state
+        .metrics
+        .cb_state
         .with_label_values(&["db"])
-        .set(if state.db_cb.state_name() == "open" { 1 } else { 0 });
+        .set(if state.db_cb.state_name() == "open" {
+            1
+        } else {
+            0
+        });
     (
         StatusCode::OK,
         [("content-type", "text/plain; version=0.0.4")],
