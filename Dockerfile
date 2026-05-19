@@ -5,7 +5,7 @@
 # Run:    docker run -p 5032:5032 -e DB_HOST=... tucolmadord
 
 # ─── Stage 1: Build .NET gateway and API ──────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0-preview AS build
 WORKDIR /source
 
 # Copy solution and all project files first for layer caching
@@ -29,7 +29,7 @@ RUN dotnet publish backend/src/Presentations/TuColmadoRD.ApiGateway/TuColmadoRD.
     -c Release -o /app/gateway
 
 # ─── Stage 2: Runtime image ───────────────────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:11.0-preview AS runtime
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y supervisor && rm -rf /var/lib/apt/lists/*

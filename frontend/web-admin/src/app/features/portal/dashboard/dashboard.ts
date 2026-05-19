@@ -44,7 +44,7 @@ export class Dashboard implements OnInit, OnDestroy {
   debtStats = { customersWithDebt: 0, totalDebt: 0 };
   debtLoading = true;
 
-  lowStock: { count: number; items: { productId: string; name: string; stockQuantity: number }[] } = { count: 0, items: [] };
+  lowStock: { count: number; items: { presentationId: string; productName: string; presentationDisplayName: string; stockQuantity: number }[] } = { count: 0, items: [] };
   lowStockLoading = true;
 
   // Turno activo
@@ -112,8 +112,8 @@ export class Dashboard implements OnInit, OnDestroy {
 
   loadLowStock(): void {
     this.lowStockLoading = true;
-    this.inventoryService.getLowStock(5).subscribe({
-      next: data => {
+    this.inventoryService.getLowStockPresentations().subscribe({
+      next: (data) => {
         this.lowStock = data;
         this.lowStockLoading = false;
       },

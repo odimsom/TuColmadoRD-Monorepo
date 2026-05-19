@@ -6,10 +6,11 @@ using TuColmadoRD.Core.Domain.ValueObjects.Base;
 namespace TuColmadoRD.Core.Application.Sales.Commands;
 
 /// <summary>
-/// Request item for creating a sale.
+/// Request item for creating a sale. PresentationId identifies which form of the product is being sold.
 /// </summary>
 public sealed record SaleItemRequest(
     Guid ProductId,
+    Guid PresentationId,
     decimal Quantity);
 
 /// <summary>

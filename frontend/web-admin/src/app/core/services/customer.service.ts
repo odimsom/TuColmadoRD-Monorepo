@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { GatewayService } from './gateway.service';
+import { API_PATHS } from '../constants';
 
 export interface CustomerSummary {
   customerId: string;
@@ -55,18 +56,18 @@ export class CustomerService {
   private gateway = inject(GatewayService);
 
   getCustomers(): Observable<CustomerSummary[]> {
-    return this.gateway.get<CustomerSummary[]>('/api/v1/customers');
+    return this.gateway.get<CustomerSummary[]>(API_PATHS.CUSTOMERS);
   }
 
   createCustomer(req: CreateCustomerRequest): Observable<{ customerId: string }> {
-    return this.gateway.post('/api/v1/customers', req);
+    return this.gateway.post(API_PATHS.CUSTOMERS, req);
   }
 
   registerPayment(customerId: string, req: RegisterPaymentRequest): Observable<void> {
-    return this.gateway.post(`/api/v1/customers/${customerId}/payments`, req);
+    return this.gateway.post(API_PATHS.CUSTOMER_PAYMENTS(customerId), req);
   }
 
   getStatement(customerId: string): Observable<CustomerStatementEntry[]> {
-    return this.gateway.get<CustomerStatementEntry[]>(`/api/v1/customers/${customerId}/statement`);
+    return this.gateway.get<CustomerStatementEntry[]>(API_PATHS.CUSTOMER_STATEMENT(customerId));
   }
 }

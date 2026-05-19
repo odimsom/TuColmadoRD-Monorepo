@@ -32,12 +32,7 @@ public sealed class ProductReadRepository : IProductReadRepository
                     p.Name,
                     p.CategoryId,
                     c.Name,
-                    p.CostPrice,
-                    p.SalePrice,
-                    p.ItbisRate,
-                    p.UnitType,
-                    p.UnitType.Name,
-                    p.StockQuantity,
+                    p.ItbisRate.Rate,
                     p.IsActive,
                     p.UpdatedAt))
             .FirstOrDefaultAsync(ct);
@@ -83,12 +78,7 @@ public sealed class ProductReadRepository : IProductReadRepository
                     p.Name,
                     p.CategoryId,
                     c.Name,
-                    p.CostPrice,
-                    p.SalePrice,
-                    p.ItbisRate,
-                    p.UnitType,
-                    p.UnitType.Name,
-                    p.StockQuantity,
+                    p.ItbisRate.Rate,
                     p.IsActive,
                     p.UpdatedAt))
             .ToListAsync(ct);

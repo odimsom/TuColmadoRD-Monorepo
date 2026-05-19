@@ -8,11 +8,6 @@ public sealed record ProductDto(
     string Name,
     Guid CategoryId,
     string CategoryName,
-    decimal CostPrice,
-    decimal SalePrice,
     decimal ItbisRate,
-    int UnitTypeId,
-    string UnitTypeName,
-    decimal StockQuantity,
     bool IsActive,
     DateTime UpdatedAt);

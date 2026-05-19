@@ -151,41 +151,24 @@ public class CatalogSyncWorker : BackgroundService
         ProductSyncDto dto,
         CancellationToken ct)
     {
-        var costResult = Money.FromDecimal(0m);
-        var saleResult = Money.FromDecimal(dto.Price);
         var itbisResult = TaxRate.Create(0m);
-
-        if (!costResult.IsGood || !saleResult.IsGood || !itbisResult.IsGood)
+        if (!itbisResult.IsGood)
         {
             return OperationResult<Unit, DomainError>.Bad(
-                new SyncError("ProductMappingFailed", "invalid_product_price_or_tax"));
+                new SyncError("ProductMappingFailed", "invalid_product_tax_rate"));
         }
 
-        var cost = costResult.Result!;
-        var sale = saleResult.Result!;
         var itbis = itbisResult.Result!;
 
         var existing = await dbContext.Products.FirstOrDefaultAsync(p => p.Id == dto.ProductId, ct);
         if (existing is null)
         {
-            var createResult = Product.RehydrateForCatalogSync(dto.ProductId, tenantId, dto.CategoryId, dto.Name, cost, sale, itbis);
-            if (!createResult.IsGood || !createResult.TryGetResult(out var created) || created is null)
-            {
-                return OperationResult<Unit, DomainError>.Bad(
-                    new SyncError("ProductCreateFailed", "failed_to_create_local_product"));
-            }
+            var created = Product.Rehydrate(dto.ProductId, tenantId.Value, dto.Name, dto.CategoryId, itbis);
             dbContext.Products.Add(created);
-
             return OperationResult<Unit, DomainError>.Good(new Unit());
         }
 
-        var updateResult = existing.UpdateFromCatalogSync(dto.CategoryId, dto.Name, cost, sale);
-        if (!updateResult.IsGood)
-        {
-            return OperationResult<Unit, DomainError>.Bad(
-                new SyncError("ProductUpdateFailed", "failed_to_update_local_product"));
-        }
-
+        existing.UpdateName(dto.Name);
         return OperationResult<Unit, DomainError>.Good(new Unit());
     }
     

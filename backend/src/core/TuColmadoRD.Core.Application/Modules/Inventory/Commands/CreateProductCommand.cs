@@ -6,13 +6,10 @@ using TuColmadoRD.Core.Domain.Base.Result;
 namespace TuColmadoRD.Core.Application.Inventory.Commands;
 
 /// <summary>
-/// Command to create a product.
+/// Command to create a product. Prices and unit info live on ProductPresentation.
 /// </summary>
 public record CreateProductCommand(
     string Name,
     Guid CategoryId,
-    decimal CostPrice,
-    decimal SalePrice,
-    decimal ItbisRate,
-    int UnitType
+    decimal ItbisRate
 ) : IRequest<OperationResult<Guid, DomainError>>, ICommandMarker;

@@ -26,18 +26,22 @@ internal sealed class GetLowStockQueryHandler
         var tenantId  = (Guid)_tenantProvider.TenantId;
         var threshold = Math.Max(0, request.Threshold);
 
-        var items = await _dbContext.Set<TuColmadoRD.Core.Domain.Entities.Inventory.Product>()
+        var items = await (from ps in _dbContext.PackagedStocks
+                           join pp in _dbContext.ProductPresentations on ps.PresentationId equals pp.Id
+                           join p in _dbContext.Products on pp.ProductId equals p.Id
+                           where ps.TenantId.Value == tenantId
+                              && pp.IsActive
+                              && p.IsActive
+                              && ps.Quantity <= threshold
+                           orderby ps.Quantity
+                           select new LowStockItemDto(
+                               ps.PresentationId,
+                               p.Id,
+                               p.Name,
+                               pp.DisplayName,
+                               ps.Quantity,
+                               threshold))
             .AsNoTracking()
-            .Where(p =>
-                p.TenantId.Value == tenantId &&
-                p.IsActive &&
-                p.StockQuantity <= threshold)
-            .OrderBy(p => p.StockQuantity)
-            .Select(p => new LowStockItemDto(
-                p.Id,
-                p.Name,
-                p.StockQuantity,
-                threshold))
             .ToListAsync(cancellationToken);
 
         var response = new LowStockResponse(items.Count, items.AsReadOnly());

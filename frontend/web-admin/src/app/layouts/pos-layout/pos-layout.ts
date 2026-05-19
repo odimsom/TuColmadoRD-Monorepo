@@ -10,10 +10,13 @@ import { InventoryService, ProductDto } from '../../core/services/inventory.serv
 import { CustomerService, CustomerSummary } from '../../core/services/customer.service';
 import { SettingsService, TenantProfileDto } from '../../core/services/settings.service';
 import { RdCurrencyPipe, RncPipe } from '../../core/pipes';
+import { PAYMENT_METHOD as PM, UNIT_TYPE, LOW_STOCK_THRESHOLD, CATALOG_PAGE_SIZE, PRODUCT_COLORS, NOMINATIM_BASE_URL, DR_LOCALE, DR_CURRENCY_CODE, WHATSAPP_BASE_URL, DEFAULT_CREDIT_LIMIT } from '../../core/constants';
 
 export interface CartItem {
   productId: string;
+  presentationId: string;
   name: string;
+  displayName: string;
   salePrice: number;
   itbisRate: number;
   unitTypeId: number;
@@ -23,8 +26,20 @@ export interface CartItem {
   lineTotal: number;
 }
 
-/** Payment method IDs as defined in the backend PaymentMethod enum. */
-const PM = { Cash: 1, Card: 2, Transfer: 3, Credit: 4, Delivery: 5 } as const;
+export interface CatalogPresentation {
+  productId: string;
+  productName: string;
+  presentationId: string;
+  displayName: string;
+  salePrice: number;
+  itbisRate: number;
+  unitTypeId: number;
+  stockQuantity: number;
+  categoryName: string;
+  presentationType: number;
+  sellMode: number;
+  isActive: boolean;
+}
 
 @Component({
   selector: 'app-pos-layout',
@@ -49,7 +64,7 @@ export class PosLayout implements OnInit, OnDestroy {
   @ViewChild('cashTenderedInput') cashTenderedInput?: ElementRef<HTMLInputElement>;
 
   // ── Data signals ─────────────────────────────────
-  catalog       = signal<ProductDto[]>([]);
+  catalog       = signal<CatalogPresentation[]>([]);
   cartItems     = signal<CartItem[]>([]);
   activeShift   = signal<ShiftDto | null>(null);
   lastSale      = signal<CreateSaleResult | null>(null);
@@ -89,10 +104,10 @@ export class PosLayout implements OnInit, OnDestroy {
   // ── Quick Sale ────────────────────────────────────
   quickSaleSearch = signal('');
   quickSaleAmount = signal<number | null>(null);
-  selectedQuickProduct = signal<ProductDto | null>(null);
+  selectedQuickProduct = signal<CatalogPresentation | null>(null);
 
   // ── Catalog pagination ────────────────────────────
-  readonly PAGE_SIZE = 24;
+  readonly PAGE_SIZE = CATALOG_PAGE_SIZE;
   catalogPage = signal(0);
 
   @HostListener('window:keydown', ['$event'])
@@ -127,7 +142,7 @@ export class PosLayout implements OnInit, OnDestroy {
     this.showCloseShiftModal.set(false);
   }
 
-  openQuickSaleModal(preselect?: ProductDto): void {
+  openQuickSaleModal(preselect?: CatalogPresentation): void {
     if (!this.activeShift()) {
       this.showOpenShiftModal.set(true);
       return;
@@ -143,7 +158,7 @@ export class PosLayout implements OnInit, OnDestroy {
     const q = this.quickSaleSearch().toLowerCase().trim();
     const sorted = [...this.catalog()].sort((a, b) => b.stockQuantity - a.stockQuantity);
     if (!q) return sorted.slice(0, 8);
-    return sorted.filter(p => p.name.toLowerCase().includes(q)).slice(0, 8);
+    return sorted.filter(p => p.displayName.toLowerCase().includes(q) || p.productName.toLowerCase().includes(q)).slice(0, 8);
   });
 
   submitQuickSale(): void {
@@ -179,7 +194,7 @@ export class PosLayout implements OnInit, OnDestroy {
     fullName: ['', [Validators.required, Validators.minLength(3)]],
     phone:    [''],
     documentId: ['', [Validators.required]],
-    creditLimit: [5000, [Validators.required, Validators.min(0)]],
+    creditLimit: [DEFAULT_CREDIT_LIMIT, [Validators.required, Validators.min(0)]],
     province: [''],
     sector: [''],
     street: [''],
@@ -206,15 +221,18 @@ export class PosLayout implements OnInit, OnDestroy {
     let items = this.catalog();
     const q   = this.catalogSearch().toLowerCase().trim();
     const cat = this.selectedCategory();
-    if (q)   items = items.filter(p => p.name.toLowerCase().includes(q));
-    if (cat) items = items.filter(p => p.categoryId === cat);
+    if (q)   items = items.filter(p => p.displayName.toLowerCase().includes(q) || p.productName.toLowerCase().includes(q));
+    if (cat) items = items.filter(p => p.categoryName === cat);
     return items;
   });
 
   categories = computed(() => {
     const seen = new Map<string, string>();
     for (const p of this.catalog()) {
-      if (!seen.has(p.categoryId)) seen.set(p.categoryId, p.categoryName);
+      if (!seen.has(p.productName + '|' + p.categoryName)) {
+        const key = p.categoryName;
+        if (!seen.has(key)) seen.set(key, key);
+      }
     }
     return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
   });
@@ -245,11 +263,11 @@ export class PosLayout implements OnInit, OnDestroy {
     const phone = this.lastSaleCustomerPhone().replace(/\D/g, '');
     const name  = this.lastSaleCustomerName();
     if (!sale?.confirmationCode || !phone) return null;
-    const total = new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(sale.total);
+    const total = new Intl.NumberFormat(DR_LOCALE, { style: 'currency', currency: DR_CURRENCY_CODE }).format(sale.total);
     const text  = encodeURIComponent(
       `Hola ${name}! Tu pedido de ${total} está en camino. Tu código de confirmación de entrega es: *${sale.confirmationCode}*. Dáselo al repartidor cuando recibas el pedido.`
     );
-    return `https://wa.me/${phone}?text=${text}`;
+    return `${WHATSAPP_BASE_URL}/${phone}?text=${text}`;
   });
 
   itbisBreakdown = computed(() => {
@@ -288,7 +306,28 @@ export class PosLayout implements OnInit, OnDestroy {
     this.loading.set(true);
     this.inv.getCatalog().subscribe({
       next: products => {
-        this.catalog.set(products.filter(p => p.isActive));
+        const presentations: CatalogPresentation[] = [];
+        for (const p of products) {
+          if (!p.isActive) continue;
+          for (const pres of (p.presentations ?? [])) {
+            if (!pres.isActive) continue;
+            presentations.push({
+              productId: p.productId,
+              productName: p.name,
+              presentationId: pres.id,
+              displayName: pres.displayName,
+              salePrice: pres.salePrice,
+              itbisRate: p.itbisRate,
+              unitTypeId: pres.measureUnit,
+              stockQuantity: pres.stockQuantity,
+              categoryName: p.categoryName,
+              presentationType: pres.presentationType,
+              sellMode: pres.sellMode,
+              isActive: pres.isActive,
+            });
+          }
+        }
+        this.catalog.set(presentations);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
@@ -317,45 +356,46 @@ export class PosLayout implements OnInit, OnDestroy {
   }
 
   // ── Cart operations ───────────────────────────────
-  updateStock(productId: string, delta: number): void {
-    this.catalog.update(cats => cats.map(p => 
-      p.productId === productId ? { ...p, stockQuantity: p.stockQuantity + delta } : p
+  updateStock(presentationId: string, delta: number): void {
+    this.catalog.update(cats => cats.map(p =>
+      p.presentationId === presentationId ? { ...p, stockQuantity: p.stockQuantity + delta } : p
     ));
   }
 
-  addToCart(product: ProductDto, customQuantity?: number): void {
+  addToCart(product: CatalogPresentation, customQuantity?: number): void {
     if (!this.activeShift()) {
       this.showOpenShiftModal.set(true);
       return;
     }
 
-    // Sold-by-weight or volume: open amount dialog so cashier enters RD$ value
-    if (customQuantity === undefined && (product.unitTypeId === 2 || product.unitTypeId === 3)) {
+    if (customQuantity === undefined && (product.sellMode === 2 || product.sellMode === 3)) {
       this.openQuickSaleModal(product);
       return;
     }
 
     const qtyToAdd = customQuantity ?? 1;
     const items = this.cartItems();
-    const idx   = items.findIndex(i => i.productId === product.productId);
-    
+    const idx   = items.findIndex(i => i.presentationId === product.presentationId);
+
     if (idx >= 0) {
       this.setQuantity(idx, items[idx].quantity + qtyToAdd);
     } else {
       const sub   = product.salePrice * qtyToAdd;
       const itbis = sub * product.itbisRate;
       this.cartItems.set([...items, {
-        productId:   product.productId,
-        name:        product.name,
-        salePrice:   product.salePrice,
-        itbisRate:   product.itbisRate,
-        unitTypeId:  product.unitTypeId,
-        quantity:    qtyToAdd,
-        lineSubtotal: sub,
-        lineItbis:   itbis,
-        lineTotal:   sub + itbis
+        productId:     product.productId,
+        presentationId: product.presentationId,
+        name:          product.productName,
+        displayName:   product.displayName,
+        salePrice:     product.salePrice,
+        itbisRate:     product.itbisRate,
+        unitTypeId:    product.unitTypeId,
+        quantity:      qtyToAdd,
+        lineSubtotal:  sub,
+        lineItbis:     itbis,
+        lineTotal:     sub + itbis
       }]);
-      this.updateStock(product.productId, -qtyToAdd);
+      this.updateStock(product.presentationId, -qtyToAdd);
     }
     this.syncCashTendered();
   }
@@ -469,7 +509,7 @@ export class PosLayout implements OnInit, OnDestroy {
       `${c.street}${c.houseNumber ? ' ' + c.houseNumber : ''}, ${c.sector}, ${c.province}, República Dominicana`
     );
     try {
-      const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=do`);
+      const res  = await fetch(`${NOMINATIM_BASE_URL}?q=${query}&format=json&limit=1&countrycodes=do`);
       const data = await res.json();
       if (data?.length > 0) {
         this.selectedCustomer.update(prev => prev
@@ -521,7 +561,7 @@ export class PosLayout implements OnInit, OnDestroy {
           houseNumber: v.houseNumber || null
         });
         this.showAddCustomerModal.set(false);
-        this.customerForm.reset({ creditLimit: 5000 });
+        this.customerForm.reset({ creditLimit: DEFAULT_CREDIT_LIMIT });
         this.saving.set(false);
       },
       error: e => {
@@ -558,11 +598,11 @@ export class PosLayout implements OnInit, OnDestroy {
     this.saving.set(true);
     this.errorMsg.set(null);
     
-    const methodId = this.paymentMethod() === 'cash' ? PM.Cash
-                   : this.paymentMethod() === 'card' ? PM.Card
-                   : this.paymentMethod() === 'transfer' ? PM.Transfer
-                   : this.paymentMethod() === 'credit' ? PM.Credit
-                   : PM.Delivery;
+    const methodId = this.paymentMethod() === 'cash' ? PM.CASH
+                   : this.paymentMethod() === 'card' ? PM.CARD
+                   : this.paymentMethod() === 'transfer' ? PM.TRANSFER
+                   : this.paymentMethod() === 'credit' ? PM.CREDIT
+                   : PM.DELIVERY;
 
     let deliveryAddress = null;
     if (this.paymentMethod() === 'delivery') {
@@ -596,7 +636,7 @@ export class PosLayout implements OnInit, OnDestroy {
     }
 
     this.sales.createSale({
-      items:    this.cartItems().map(i => ({ productId: i.productId, quantity: i.quantity })),
+      items:    this.cartItems().map(i => ({ productId: i.productId, presentationId: i.presentationId, quantity: i.quantity })),
       payments: [{ 
         paymentMethodId: methodId, 
         amount: total, // For credit/delivery, the amount registered is the total
@@ -644,8 +684,8 @@ export class PosLayout implements OnInit, OnDestroy {
 
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=do`,
-        { headers: { 'Accept-Language': 'es' } }
+        `${NOMINATIM_BASE_URL}?q=${query}&format=json&limit=1&countrycodes=do`,
+        { headers: { 'Accept-Language': DR_LOCALE } }
       );
       const data = await res.json();
       if (data?.length > 0) {
@@ -663,7 +703,7 @@ export class PosLayout implements OnInit, OnDestroy {
 
   // ── Helpers ───────────────────────────────────────
   fmtDate(d: Date | string = new Date()): string {
-    return new Intl.DateTimeFormat('es-DO', {
+    return new Intl.DateTimeFormat(DR_LOCALE, {
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit'
     }).format(new Date(d));
@@ -697,11 +737,14 @@ export class PosLayout implements OnInit, OnDestroy {
       .toUpperCase();
   }
 
+  productDisplayLabel(p: CatalogPresentation): string {
+    return `${p.productName} — ${p.displayName}`;
+  }
+
   productColor(categoryName: string): string {
-    const colors = ['bg-blue-700','bg-violet-700','bg-emerald-700','bg-amber-700','bg-rose-700','bg-cyan-700','bg-indigo-700','bg-teal-700'];
     let hash = 0;
     for (let i = 0; i < categoryName.length; i++) hash = categoryName.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
+    return PRODUCT_COLORS[Math.abs(hash) % PRODUCT_COLORS.length];
   }
   setPaymentMethod(m: 'cash' | 'card' | 'transfer' | 'credit' | 'delivery'): void { this.paymentMethod.set(m); }
   setCashTendered(v: number): void { this.cashTendered.set(v); }
