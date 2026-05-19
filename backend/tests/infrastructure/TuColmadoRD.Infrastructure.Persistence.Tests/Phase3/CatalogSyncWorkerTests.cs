@@ -83,14 +83,12 @@ public class CatalogSyncWorkerTests
         var fakeHandler = new FakeHttpMessageHandler(HttpStatusCode.OK, payload);
         using var setup = CreateSetup(true, fakeHandler, null);
 
-        var existing = Product.RehydrateForCatalogSync(
+        var existing = Product.Rehydrate(
             productId,
-            setup.TenantProvider.TenantId,
-            Guid.NewGuid(),
+            (Guid)setup.TenantProvider.TenantId,
             "Viejo",
-            Money.FromDecimal(0).Result,
-            Money.FromDecimal(100).Result,
-            TaxRate.Create(0).Result).Result;
+            Guid.NewGuid(),
+            TaxRate.Create(0).Result!);
 
         setup.DbContext.Products.Add(existing);
         await setup.DbContext.SaveChangesAsync();
