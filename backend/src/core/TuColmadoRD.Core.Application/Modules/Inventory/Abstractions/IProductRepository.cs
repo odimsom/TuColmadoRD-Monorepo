@@ -33,4 +33,9 @@ public interface IProductRepository
     /// Checks whether the category exists for a tenant.
     /// </summary>
     Task<bool> CategoryExistsAsync(Guid categoryId, Guid tenantId, CancellationToken ct);
+
+    /// <summary>
+    /// Returns true if the tenant already has at least one product.
+    /// </summary>
+    Task<bool> AnyAsync(Guid tenantId, CancellationToken ct);
 }
