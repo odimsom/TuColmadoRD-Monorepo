@@ -40,4 +40,9 @@ public sealed class MonetaryFundRepository(TuColmadoDbContext dbContext) : IMone
     {
         await dbContext.MonetaryFunds.AddAsync(fund, ct);
     }
+
+    public async Task TrackNewTransactionAsync(FundTransaction tx, CancellationToken ct = default)
+    {
+        await dbContext.Set<FundTransaction>().AddAsync(tx, ct);
+    }
 }

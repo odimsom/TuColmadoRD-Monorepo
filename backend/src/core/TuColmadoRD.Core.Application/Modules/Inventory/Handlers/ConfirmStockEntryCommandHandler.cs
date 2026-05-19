@@ -128,7 +128,10 @@ public sealed class ConfirmStockEntryCommandHandler
                     request.FundExpenseJustification);
 
                 if (expenseResult.TryGetResult(out var tx) && tx is not null)
+                {
+                    await _fundRepository.TrackNewTransactionAsync(tx, cancellationToken);
                     entry.LinkFundTransaction(tx.Id);
+                }
             }
         }
 

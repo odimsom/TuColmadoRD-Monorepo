@@ -68,7 +68,7 @@ public static class InventoryEndpoints
         if (!result.TryGetResult(out var count))
             return result.Error.MapDomainError();
 
-        return TypedResults.Ok(new { message = "Productos sembrados correctamente", count });
+        return TypedResults.Ok(new { message = "Catálogo de productos inicializado correctamente", count });
     }
 
     private static async Task<IResult> CreateProduct(

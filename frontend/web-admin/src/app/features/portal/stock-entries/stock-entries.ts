@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { InventoryService, ProductPresentationDto, StockEntryDto } from '../../../core/services/inventory.service';
 import { MonetaryFundService, MonetaryFundDto } from '../../../core/services/monetary-fund.service';
 import { RdCurrencyPipe } from '../../../core/pipes';
@@ -33,6 +33,8 @@ export class StockEntries implements OnInit {
   errorMsg = signal<string | null>(null);
   successMsg = signal<string | null>(null);
   showModal = signal(false);
+  showIncompleteWarning = signal(false);
+  expandedLine = signal<number | null>(null);
 
   page = signal(1);
   totalCount = signal(0);
@@ -43,16 +45,14 @@ export class StockEntries implements OnInit {
     supplierName: [''],
     notes: [''],
     fundId: [''],
-    lines: this.fb.nonNullable.array<EntryLineForm>([]),
   });
 
   lineForms = signal<EntryLineForm[]>([]);
 
+  completeLines = computed(() => this.lineForms().filter(l => this.isLineComplete(l)));
+
   totalEntryCost = computed(() =>
-    this.lineForms().reduce((s, l) => {
-      const units = l.containerCount * l.unitsPerContainer;
-      return s + units * l.costPerUnit;
-    }, 0)
+    this.completeLines().reduce((s, l) => s + l.containerCount * l.unitsPerContainer * l.costPerUnit, 0)
   );
 
   ngOnInit(): void {
@@ -77,16 +77,16 @@ export class StockEntries implements OnInit {
   loadPresentations(): void {
     this.inventory.getCatalog().subscribe({
       next: products => {
-        const allPresentations: ProductPresentationDto[] = [];
+        const all: ProductPresentationDto[] = [];
         for (const p of products) {
           for (const pres of (p.presentations ?? [])) {
             if (pres.isActive) {
               (pres as any).productName = p.name;
-              allPresentations.push(pres);
+              all.push(pres);
             }
           }
         }
-        this.presentations.set(allPresentations);
+        this.presentations.set(all);
       },
       error: () => {},
     });
@@ -103,6 +103,8 @@ export class StockEntries implements OnInit {
     this.errorMsg.set(null);
     this.successMsg.set(null);
     this.lineForms.set([]);
+    this.expandedLine.set(null);
+    this.showIncompleteWarning.set(false);
     this.entryForm.reset({
       purchasedAt: new Date().toISOString().split('T')[0],
       supplierName: '',
@@ -114,6 +116,7 @@ export class StockEntries implements OnInit {
 
   closeModal(): void {
     this.showModal.set(false);
+    this.showIncompleteWarning.set(false);
   }
 
   addLine(): void {
@@ -124,13 +127,42 @@ export class StockEntries implements OnInit {
       nominalSizePerUnit: 1,
       costPerUnit: 0,
     }]);
+    this.expandedLine.set(this.lineForms().length - 1);
   }
 
-  removeLine(index: number): void {
-    this.lineForms.update(lines => lines.filter((_, i) => i !== index));
+  toggleLine(i: number): void {
+    this.expandedLine.update(cur => cur === i ? null : i);
   }
 
-  updateLine(index: number, field: keyof EntryLineForm, value: string | number): void {
+  removeLine(i: number): void {
+    this.lineForms.update(lines => lines.filter((_, idx) => idx !== i));
+    const exp = this.expandedLine();
+    if (exp === i) this.expandedLine.set(null);
+    else if (exp !== null && exp > i) this.expandedLine.set(exp - 1);
+  }
+
+  isLineComplete(line: EntryLineForm): boolean {
+    return !!line.presentationId && line.containerCount > 0 && line.costPerUnit > 0;
+  }
+
+  onPresentationChange(index: number, event: Event): void {
+    const presId = (event.target as HTMLSelectElement).value;
+    const pres = this.presentations().find(p => p.id === presId);
+    this.lineForms.update(lines => {
+      const updated = [...lines];
+      const line = updated[index];
+      updated[index] = {
+        ...line,
+        presentationId: presId,
+        costPerUnit: line.costPerUnit === 0 && pres ? pres.costPrice : line.costPerUnit,
+        nominalSizePerUnit: pres && pres.presentationType === 1 ? (pres.nominalCapacity ?? 1) : 1,
+      };
+      return updated;
+    });
+  }
+
+  onNumberInput(index: number, field: 'containerCount' | 'unitsPerContainer' | 'costPerUnit', event: Event): void {
+    const value = +(event.target as HTMLInputElement).value;
     this.lineForms.update(lines => {
       const updated = [...lines];
       updated[index] = { ...updated[index], [field]: value };
@@ -138,19 +170,9 @@ export class StockEntries implements OnInit {
     });
   }
 
-  onPresentationChange(index: number, event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    this.updateLine(index, 'presentationId', value);
-  }
-
-  onNumberInput(index: number, field: 'containerCount' | 'unitsPerContainer' | 'costPerUnit', event: Event): void {
-    const value = +(event.target as HTMLInputElement).value;
-    this.updateLine(index, field, value);
-  }
-
   getPresentationName(id: string): string {
     const p = this.presentations().find(p => p.id === id);
-    if (!p) return '';
+    if (!p) return '—';
     return `${(p as any).productName ?? ''} — ${p.displayName}`;
   }
 
@@ -161,16 +183,37 @@ export class StockEntries implements OnInit {
   submit(): void {
     const lines = this.lineForms();
     if (lines.length === 0) {
-      this.errorMsg.set('Agrega al menos una línea.');
+      this.errorMsg.set('Agrega al menos una línea de entrada.');
       return;
     }
-    for (const l of lines) {
-      if (!l.presentationId || l.containerCount <= 0 || l.costPerUnit <= 0) {
-        this.errorMsg.set('Completa todos los campos de cada línea.');
-        return;
-      }
-    }
+    const complete = lines.filter(l => this.isLineComplete(l));
+    const incomplete = lines.filter(l => !this.isLineComplete(l));
 
+    if (complete.length === 0) {
+      this.errorMsg.set('Completa al menos una línea (presentación, cantidad y costo).');
+      return;
+    }
+    if (incomplete.length > 0) {
+      this.showIncompleteWarning.set(true);
+      return;
+    }
+    this.doSubmit(complete);
+  }
+
+  confirmSubmitIgnoringIncomplete(): void {
+    const complete = this.lineForms().filter(l => this.isLineComplete(l));
+    this.showIncompleteWarning.set(false);
+    this.doSubmit(complete);
+  }
+
+  cancelIncompleteWarning(): void {
+    this.showIncompleteWarning.set(false);
+    // Expand the first incomplete line so the user can fix it
+    const firstIncompleteIdx = this.lineForms().findIndex(l => !this.isLineComplete(l));
+    if (firstIncompleteIdx >= 0) this.expandedLine.set(firstIncompleteIdx);
+  }
+
+  private doSubmit(lines: EntryLineForm[]): void {
     this.saving.set(true);
     this.errorMsg.set(null);
     const v = this.entryForm.getRawValue();
