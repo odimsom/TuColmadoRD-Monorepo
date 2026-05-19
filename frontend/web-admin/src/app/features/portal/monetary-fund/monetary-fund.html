@@ -1,0 +1,238 @@
+<div class="p-4 md:p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">Fondo Monetario</h1>
+      <p class="text-sm text-base-content/60">Capital del colmado para compras y operaciones</p>
+    </div>
+    <button class="btn btn-primary btn-sm" (click)="openCreate()">
+      <span class="icon-[ic--baseline-add] text-sm"></span>
+      Nuevo Fondo
+    </button>
+  </div>
+
+  <!-- Messages -->
+  @if (errorMsg()) {
+    <div class="alert alert-error alert-sm">{{ errorMsg() }}</div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert-success alert-sm">{{ successMsg() }}</div>
+  }
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 gap-3">
+    <div class="card bg-base-200 p-4">
+      <div class="text-2xl font-bold text-primary">{{ totalBalance() | rdCurrency }}</div>
+      <div class="text-xs text-base-content/60">Balance total</div>
+    </div>
+    <div class="card bg-base-200 p-4">
+      <div class="text-2xl font-bold">{{ activeFundCount() }}</div>
+      <div class="text-xs text-base-content/60">Fondos activos</div>
+    </div>
+  </div>
+
+  <!-- Funds List -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+    @for (f of funds(); track f.id) {
+      <div class="card bg-base-200 cursor-pointer hover:bg-base-300 transition-colors" (click)="selectFund(f)">
+        <div class="card-body p-4">
+          <h3 class="font-bold">{{ f.name }}</h3>
+          <div class="text-2xl font-bold text-primary">{{ f.currentBalance | rdCurrency }}</div>
+          <div class="text-xs text-base-content/50">Creado: {{ f.createdAt | date:'shortDate' }}</div>
+        </div>
+      </div>
+    } @empty {
+      <div class="col-span-full text-center py-8 text-base-content/50">
+        No hay fondos. Crea el primero para comenzar.
+      </div>
+    }
+  </div>
+
+  <!-- Selected Fund Detail -->
+  @if (selectedFund()) {
+    <div class="card bg-base-200">
+      <div class="card-body">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="card-title text-xl">{{ selectedFund()!.fund.name }}</h3>
+            <div class="text-3xl font-bold text-primary">{{ selectedFund()!.fund.currentBalance | rdCurrency }}</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn btn-success btn-sm" (click)="openDeposit()">
+              <span class="icon-[ic--baseline-arrow-downward] text-sm"></span>
+              Depósito
+            </button>
+            <button class="btn btn-error btn-sm" (click)="openExpense()">
+              <span class="icon-[ic--baseline-arrow-upward] text-sm"></span>
+              Gasto
+            </button>
+          </div>
+        </div>
+
+        <!-- Transactions -->
+        <div class="divider">Transacciones recientes</div>
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Categoría</th>
+                <th>Descripción</th>
+                <th>Monto</th>
+                <th>Balance después</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of transactions(); track t.id) {
+                <tr>
+                  <td class="whitespace-nowrap">{{ fmtDate(t.occurredAt) }}</td>
+                  <td>
+                    <span class="badge badge-sm" [class]="transactionTypeColor(t.type) === 'text-green-400' ? 'badge-success badge-outline' : 'badge-error badge-outline'">
+                      {{ transactionTypeLabel(t.type) }}
+                    </span>
+                  </td>
+                  <td>{{ categoryLabel(t.category) }}</td>
+                  <td>
+                    <div>{{ t.description }}</div>
+                    @if (t.justificationNote) {
+                      <div class="text-xs text-base-content/50 italic">Just: {{ t.justificationNote }}</div>
+                    }
+                  </td>
+                  <td [class]="transactionTypeColor(t.type)" class="font-semibold">
+                    {{ t.type === 1 ? '+' : '-' }}{{ t.amount | rdCurrency }}
+                  </td>
+                  <td class="font-mono">{{ t.balanceAfter | rdCurrency }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="6" class="text-center py-4 text-base-content/50">No hay transacciones.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-base-content/60">{{ totalCount() }} transacciones</span>
+            <div class="join">
+              <button class="join-item btn btn-sm" [disabled]="page() <= 1" (click)="prevPage()">«</button>
+              <button class="join-item btn btn-sm">{{ page() }} / {{ totalPages() }}</button>
+              <button class="join-item btn btn-sm" [disabled]="page() >= totalPages()" (click)="nextPage()">»</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Create Fund Modal -->
+  @if (showCreateModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box">
+        <h3 class="text-lg font-bold mb-4">Nuevo Fondo Monetario</h3>
+        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="space-y-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text">Nombre</span></label>
+            <input type="text" formControlName="name" class="input input-bordered input-sm" placeholder="Ej: Fondo Principal" />
+            @if (createForm.controls.name.touched && createForm.controls.name.invalid) {
+              <span class="text-error text-xs">Obligatorio (2-80 caracteres)</span>
+            }
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Depósito inicial</span></label>
+            <input type="number" formControlName="initialDeposit" class="input input-bordered input-sm" min="0" step="0.01" />
+            @if (createForm.controls.initialDeposit.touched && createForm.controls.initialDeposit.invalid) {
+              <span class="text-error text-xs">Debe ser mayor a 0</span>
+            }
+          </div>
+          @if (errorMsg()) {
+            <div class="alert alert-error alert-sm">{{ errorMsg() }}</div>
+          }
+          <div class="modal-action">
+            <button type="button" class="btn btn-sm" (click)="closeModals()">Cancelar</button>
+            <button type="submit" class="btn btn-primary btn-sm" [disabled]="saving()">
+              @if (saving()) { <span class="loading loading-spinner loading-xs"></span> }
+              Crear Fondo
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-backdrop" (click)="closeModals()"></div>
+    </div>
+  }
+
+  <!-- Deposit Modal -->
+  @if (showDepositModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box">
+        <h3 class="text-lg font-bold mb-4">Registrar Depósito</h3>
+        <form [formGroup]="depositForm" (ngSubmit)="submitDeposit()" class="space-y-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text">Monto</span></label>
+            <input type="number" formControlName="amount" class="input input-bordered input-sm" min="0.01" step="0.01" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Descripción</span></label>
+            <input type="text" formControlName="description" class="input input-bordered input-sm" placeholder="Motivo del depósito" />
+          </div>
+          @if (errorMsg()) {
+            <div class="alert alert-error alert-sm">{{ errorMsg() }}</div>
+          }
+          <div class="modal-action">
+            <button type="button" class="btn btn-sm" (click)="closeModals()">Cancelar</button>
+            <button type="submit" class="btn btn-success btn-sm" [disabled]="saving()">
+              @if (saving()) { <span class="loading loading-spinner loading-xs"></span> }
+              Depositar
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-backdrop" (click)="closeModals()"></div>
+    </div>
+  }
+
+  <!-- Expense Modal -->
+  @if (showExpenseModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box">
+        <h3 class="text-lg font-bold mb-4">Registrar Gasto</h3>
+        <form [formGroup]="expenseForm" (ngSubmit)="submitExpense()" class="space-y-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text">Monto</span></label>
+            <input type="number" formControlName="amount" class="input input-bordered input-sm" min="0.01" step="0.01" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Categoría</span></label>
+            <select formControlName="category" class="select select-bordered select-sm">
+              @for (c of expenseCategories; track c.value) {
+                <option [value]="c.value">{{ c.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Descripción</span></label>
+            <input type="text" formControlName="description" class="input input-bordered input-sm" placeholder="Motivo del gasto" />
+          </div>
+          @if (selectedFund() && expenseForm.controls.amount.value > selectedFund()!.fund.currentBalance) {
+            <div class="form-control">
+              <label class="label"><span class="label-text text-warning">Justificación (obligatoria — excede el balance)</span></label>
+              <textarea formControlName="justificationNote" class="textarea textarea-bordered textarea-sm" rows="2" placeholder="Explica por qué este gasto excede el balance..."></textarea>
+            </div>
+          }
+          @if (errorMsg()) {
+            <div class="alert alert-error alert-sm">{{ errorMsg() }}</div>
+          }
+          <div class="modal-action">
+            <button type="button" class="btn btn-sm" (click)="closeModals()">Cancelar</button>
+            <button type="submit" class="btn btn-error btn-sm" [disabled]="saving()">
+              @if (saving()) { <span class="loading loading-spinner loading-xs"></span> }
+              Registrar Gasto
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-backdrop" (click)="closeModals()"></div>
+    </div>
+  }
+</div>

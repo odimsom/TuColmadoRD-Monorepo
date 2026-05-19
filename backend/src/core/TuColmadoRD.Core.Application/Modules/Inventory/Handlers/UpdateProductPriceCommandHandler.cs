@@ -34,45 +34,10 @@ public sealed class UpdateProductPriceCommandHandler : IRequestHandler<UpdatePro
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<OperationResult<ResultUnit, DomainError>> Handle(UpdateProductPriceCommand request, CancellationToken cancellationToken)
+    public Task<OperationResult<ResultUnit, DomainError>> Handle(UpdateProductPriceCommand request, CancellationToken cancellationToken)
     {
-        var tenantId = (Guid)_tenantProvider.TenantId;
-
-        var productResult = await _productRepository.GetByIdAsync(request.ProductId, tenantId, cancellationToken);
-        if (!productResult.TryGetResult(out var product) || product is null)
-        {
-            return OperationResult<ResultUnit, DomainError>.Bad(productResult.Error);
-        }
-
-        var costResult = Money.FromDecimal(request.NewCostPrice);
-        if (!costResult.TryGetResult(out var costPrice) || costPrice is null)
-        {
-            return OperationResult<ResultUnit, DomainError>.Bad(costResult.Error);
-        }
-
-        var saleResult = Money.FromDecimal(request.NewSalePrice);
-        if (!saleResult.TryGetResult(out var salePrice) || salePrice is null)
-        {
-            return OperationResult<ResultUnit, DomainError>.Bad(saleResult.Error);
-        }
-
-        var updateResult = product.UpdatePrice(costPrice, salePrice);
-        if (!updateResult.IsGood)
-        {
-            return updateResult;
-        }
-
-        var payload = new ProductPriceUpdatedPayload(
-            product.Id,
-            tenantId,
-            product.CostPrice,
-            product.SalePrice,
-            product.UpdatedAt);
-
-        var outboxMessage = new OutboxMessage("ProductPriceUpdated", JsonSerializer.Serialize(payload));
-        await _outboxRepository.AddAsync(outboxMessage, cancellationToken);
-        await _unitOfWork.CommitAsync(cancellationToken);
-
-        return OperationResult<ResultUnit, DomainError>.Good(ResultUnit.Value);
+        return Task.FromResult(OperationResult<ResultUnit, DomainError>.Bad(
+            DomainError.Business("price.use_presentation_command",
+                "Prices are managed per ProductPresentation. Use AddProductPresentationCommand and set SalePrice/CostPrice there.")));
     }
 }

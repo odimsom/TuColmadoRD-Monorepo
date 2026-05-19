@@ -1,0 +1,173 @@
+<div class="p-4 md:p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">Entradas de Stock</h1>
+      <p class="text-sm text-base-content/60">Registra compras y recepciones de inventario</p>
+    </div>
+    <button class="btn btn-primary btn-sm" (click)="openCreate()">
+      <span class="icon-[ic--baseline-add] text-sm"></span>
+      Nueva Entrada
+    </button>
+  </div>
+
+  <!-- Messages -->
+  @if (errorMsg()) {
+    <div class="alert alert-error alert-sm">{{ errorMsg() }}</div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert-success alert-sm">{{ successMsg() }}</div>
+  }
+
+  <!-- Entries Table -->
+  <div class="card bg-base-200">
+    <div class="card-body p-0">
+      @if (loading()) {
+        <div class="flex justify-center py-8"><span class="loading loading-spinner"></span></div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Proveedor</th>
+                <th>Líneas</th>
+                <th>Costo Total</th>
+                <th>Notas</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of entries(); track e.id) {
+                <tr>
+                  <td>{{ fmtDate(e.purchasedAt) }}</td>
+                  <td>{{ e.supplierName ?? '—' }}</td>
+                  <td>{{ e.lines.length }}</td>
+                  <td class="font-semibold">{{ e.totalCost | rdCurrency }}</td>
+                  <td class="max-w-[200px] truncate">{{ e.notes ?? '—' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5" class="text-center py-8 text-base-content/50">No hay entradas registradas.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="flex items-center justify-between p-4">
+            <span class="text-sm text-base-content/60">{{ totalCount() }} entradas</span>
+            <div class="join">
+              <button class="join-item btn btn-sm" [disabled]="page() <= 1" (click)="prevPage()">«</button>
+              <button class="join-item btn btn-sm">{{ page() }} / {{ totalPages() }}</button>
+              <button class="join-item btn btn-sm" [disabled]="page() >= totalPages()" (click)="nextPage()">»</button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Create Entry Modal -->
+  @if (showModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box modal-box-lg">
+        <h3 class="text-lg font-bold mb-4">Nueva Entrada de Stock</h3>
+
+        <div class="space-y-4">
+          <!-- Header fields -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-control">
+              <label class="label"><span class="label-text">Fecha</span></label>
+              <input type="date" [formControl]="entryForm.controls.purchasedAt" class="input input-bordered input-sm" />
+            </div>
+            <div class="form-control">
+              <label class="label"><span class="label-text">Proveedor (opcional)</span></label>
+              <input type="text" [formControl]="entryForm.controls.supplierName" class="input input-bordered input-sm" placeholder="Nombre del proveedor" />
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text">Fondo monetario (opcional)</span></label>
+            <select [formControl]="entryForm.controls.fundId" class="select select-bordered select-sm">
+              <option value="">Sin fondo</option>
+              @for (f of funds(); track f.id) {
+                <option [value]="f.id">{{ f.name }} ({{ f.currentBalance | rdCurrency }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text">Notas (opcional)</span></label>
+            <textarea [formControl]="entryForm.controls.notes" class="textarea textarea-bordered textarea-sm" rows="2" placeholder="Notas adicionales..."></textarea>
+          </div>
+
+          <!-- Lines -->
+          <div class="divider">Líneas de entrada</div>
+
+          @for (line of lineForms(); track i; let i = $index) {
+            <div class="card bg-base-100 shadow-sm">
+              <div class="card-body p-3">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-semibold">Línea {{ i + 1 }}</span>
+                  <button class="btn btn-ghost btn-xs text-error" (click)="removeLine(i)">
+                    <span class="icon-[ic--baseline-close] text-sm"></span>
+                  </button>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <div class="form-control col-span-2">
+                    <label class="label"><span class="label-text">Presentación</span></label>
+                    <select class="select select-bordered select-sm" [value]="line.presentationId" (change)="onPresentationChange(i, $event)">
+                      <option value="">Seleccionar...</option>
+                      @for (p of presentations(); track p.id) {
+                        <option [value]="p.id">{{ getPresentationName(p.id) }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-control">
+                    <label class="label"><span class="label-text">Contenedores/Sacos</span></label>
+                    <input type="number" class="input input-bordered input-sm" [value]="line.containerCount" (input)="onNumberInput(i, 'containerCount', $event)" min="1" />
+                  </div>
+                  <div class="form-control">
+                    <label class="label"><span class="label-text">Unidades por contenedor</span></label>
+                    <input type="number" class="input input-bordered input-sm" [value]="line.unitsPerContainer" (input)="onNumberInput(i, 'unitsPerContainer', $event)" min="1" />
+                  </div>
+                  <div class="form-control">
+                    <label class="label"><span class="label-text">Costo por unidad</span></label>
+                    <input type="number" class="input input-bordered input-sm" [value]="line.costPerUnit" (input)="onNumberInput(i, 'costPerUnit', $event)" min="0" step="0.01" />
+                  </div>
+                </div>
+                <div class="text-right text-sm font-semibold mt-1">
+                  Subtotal: {{ getLineTotal(line) | rdCurrency }}
+                </div>
+              </div>
+            </div>
+          }
+
+          <button class="btn btn-ghost btn-sm btn-dashed w-full" (click)="addLine()">
+            <span class="icon-[ic--baseline-add] text-sm"></span>
+            Agregar línea
+          </button>
+
+          <!-- Total -->
+          <div class="flex items-center justify-between bg-base-100 p-3 rounded">
+            <span class="font-bold">Total de la entrada:</span>
+            <span class="text-xl font-bold text-primary">{{ totalEntryCost() | rdCurrency }}</span>
+          </div>
+
+          @if (errorMsg()) {
+            <div class="alert alert-error alert-sm">{{ errorMsg() }}</div>
+          }
+
+          <div class="flex justify-end gap-2">
+            <button class="btn btn-sm" (click)="closeModal()">Cancelar</button>
+            <button class="btn btn-primary btn-sm" [disabled]="saving()" (click)="submit()">
+              @if (saving()) { <span class="loading loading-spinner loading-xs"></span> }
+              Confirmar Entrada
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop" (click)="closeModal()"></div>
+    </div>
+  }
+</div>

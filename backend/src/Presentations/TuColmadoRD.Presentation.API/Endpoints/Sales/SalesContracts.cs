@@ -1,6 +1,6 @@
 namespace TuColmadoRD.Presentation.API.Endpoints.Sales;
 
-public sealed record SaleItemRequest(Guid ProductId, decimal Quantity);
+public sealed record SaleItemRequest(Guid ProductId, Guid PresentationId, decimal Quantity);
 
 public sealed record SalePaymentRequest(int PaymentMethodId, decimal Amount, string? Reference, Guid? CustomerId);
 

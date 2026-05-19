@@ -7,7 +7,6 @@ using TuColmadoRD.Core.Application.Inventory.DTOs;
 using TuColmadoRD.Core.Domain.Base.Result;
 using TuColmadoRD.Core.Domain.Entities.Inventory;
 using TuColmadoRD.Core.Domain.Entities.System;
-using TuColmadoRD.Core.Domain.Enums.Inventory_Purchasing;
 using TuColmadoRD.Core.Domain.ValueObjects;
 using TuColmadoRD.Core.Domain.ValueObjects.Base;
 
@@ -39,28 +38,10 @@ public sealed class CreateProductCommandHandler : IRequestHandler<CreateProductC
     {
         var tenantId = (Guid)_tenantProvider.TenantId;
 
-        var costResult = Money.FromDecimal(request.CostPrice);
-        if (!costResult.TryGetResult(out var costPrice) || costPrice is null)
-        {
-            return OperationResult<Guid, DomainError>.Bad(costResult.Error);
-        }
-
-        var saleResult = Money.FromDecimal(request.SalePrice);
-        if (!saleResult.TryGetResult(out var salePrice) || salePrice is null)
-        {
-            return OperationResult<Guid, DomainError>.Bad(saleResult.Error);
-        }
-
         var taxResult = TaxRate.Create(request.ItbisRate);
         if (!taxResult.TryGetResult(out var itbisRate) || itbisRate is null)
         {
             return OperationResult<Guid, DomainError>.Bad(taxResult.Error);
-        }
-
-        var unitTypeResult = UnitType.FromId(request.UnitType);
-        if (!unitTypeResult.TryGetResult(out var unitType) || unitType is null)
-        {
-            return OperationResult<Guid, DomainError>.Bad(unitTypeResult.Error);
         }
 
         var categoryExists = await _productRepository.CategoryExistsAsync(request.CategoryId, tenantId, cancellationToken);
@@ -69,7 +50,7 @@ public sealed class CreateProductCommandHandler : IRequestHandler<CreateProductC
             return OperationResult<Guid, DomainError>.Bad(DomainError.NotFound("category.not_found"));
         }
 
-        var productResult = Product.Create(tenantId, request.Name, request.CategoryId, costPrice, salePrice, itbisRate, unitType);
+        var productResult = Product.Create(tenantId, request.Name, request.CategoryId, itbisRate!);
         if (!productResult.TryGetResult(out var product) || product is null)
         {
             return OperationResult<Guid, DomainError>.Bad(productResult.Error);
@@ -80,10 +61,7 @@ public sealed class CreateProductCommandHandler : IRequestHandler<CreateProductC
             tenantId,
             product.Name,
             product.CategoryId,
-            product.CostPrice,
-            product.SalePrice,
-            product.ItbisRate,
-            product.UnitType,
+            product.ItbisRate.Rate,
             product.CreatedAt);
 
         var outboxMessage = new OutboxMessage("ProductCreated", JsonSerializer.Serialize(payload));

@@ -27,6 +27,10 @@ export class GatewayService {
     return this.http.delete<T>(`${this.base}${this.cleanPath(path)}`);
   }
 
+  patch<T>(path: string, body: any): Observable<T> {
+    return this.http.patch<T>(`${this.base}${this.cleanPath(path)}`, body);
+  }
+
   private cleanPath(path: string): string {
     return path.startsWith('/') ? path : `/${path}`;
   }

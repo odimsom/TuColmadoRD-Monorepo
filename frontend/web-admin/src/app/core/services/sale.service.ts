@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { GatewayService } from './gateway.service';
+import { API_PATHS } from '../constants';
 
 export interface SaleSummary {
   saleId: string;
@@ -23,6 +24,7 @@ export interface PagedSalesResponse {
 
 export interface CreateSaleItemRequest {
   productId: string;
+  presentationId: string;
   quantity: number;
 }
 
@@ -118,37 +120,35 @@ export interface CloseShiftRequest {
 export class SaleService {
   private gateway = inject(GatewayService);
 
-  // Sales
   getSales(page = 1, pageSize = 10): Observable<PagedSalesResponse> {
-    return this.gateway.get<PagedSalesResponse>('/api/v1/sales', { page, pageSize });
+    return this.gateway.get<PagedSalesResponse>(API_PATHS.SALES, { page, pageSize });
   }
 
   createSale(cmd: CreateSaleRequest): Observable<CreateSaleResult> {
-    return this.gateway.post<CreateSaleResult>('/api/v1/sales', cmd);
+    return this.gateway.post<CreateSaleResult>(API_PATHS.SALES, cmd);
   }
 
   voidSale(id: string, reason: string): Observable<void> {
-    return this.gateway.post(`/api/v1/sales/${id}/void`, { voidReason: reason });
+    return this.gateway.post(`${API_PATHS.SALES}/${id}/void`, { voidReason: reason });
   }
 
-  // Shifts
   getCurrentShift(): Observable<ShiftDto> {
-    return this.gateway.get<ShiftDto>('/api/v1/sales/shifts/current');
+    return this.gateway.get<ShiftDto>(API_PATHS.SALES_SHIFTS_CURRENT);
   }
 
   openShift(cmd: OpenShiftRequest): Observable<{ shiftId: string }> {
-    return this.gateway.post('/api/v1/sales/shifts/open', cmd);
+    return this.gateway.post(API_PATHS.SALES_SHIFTS + '/open', cmd);
   }
 
   closeShift(shiftId: string, cmd: CloseShiftRequest): Observable<any> {
-    return this.gateway.post(`/api/v1/sales/shifts/${shiftId}/close`, cmd);
+    return this.gateway.post(`${API_PATHS.SALES_SHIFTS}/${shiftId}/close`, cmd);
   }
 
   getShiftsPaged(page = 1, pageSize = 20, status = 'all'): Observable<any> {
-    return this.gateway.get('/api/v1/sales/shifts', { page, pageSize, status });
+    return this.gateway.get(API_PATHS.SALES_SHIFTS, { page, pageSize, status });
   }
 
   getShiftSummary(): Observable<ShiftSummaryDto> {
-    return this.gateway.get<ShiftSummaryDto>('/api/v1/sales/shifts/current/summary');
+    return this.gateway.get<ShiftSummaryDto>(API_PATHS.SALES_SHIFTS_SUMMARY);
   }
 }
