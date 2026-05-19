@@ -51,4 +51,7 @@ public class ProductRepository(TuColmadoDbContext dbContext) : GenericRepository
         return await _context.Set<Category>()
             .AnyAsync(c => c.Id == categoryId && c.TenantId.Value == tenantId, ct);
     }
+
+    public async Task<bool> AnyAsync(Guid tenantId, CancellationToken ct) =>
+        await _context.Set<Product>().AnyAsync(p => p.TenantId.Value == tenantId, ct);
 }

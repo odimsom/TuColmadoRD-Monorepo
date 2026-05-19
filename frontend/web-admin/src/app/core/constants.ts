@@ -185,6 +185,7 @@ export const SHIFT_STATUS_LABELS: Record<string, string> = {
 
 export const API_PATHS = {
   INVENTORY_PRODUCTS: '/api/v1/inventory/products',
+  INVENTORY_PRODUCTS_SEED: '/api/v1/inventory/products/seed-defaults',
   INVENTORY_CATEGORIES: '/api/v1/inventory/categories',
   INVENTORY_CATALOG: '/api/v1/inventory/catalog',
   INVENTORY_LOW_STOCK: '/api/v1/inventory/products/low-stock',
