@@ -4,9 +4,9 @@ public sealed record PresentationDto(
     Guid Id,
     Guid ProductId,
     string DisplayName,
-    int PresentationTypeId,
+    int PresentationType,
     string PresentationTypeName,
-    int SellModeId,
+    int SellMode,
     string SellModeName,
     int MeasureUnit,
     string? Brand,
@@ -15,4 +15,6 @@ public sealed record PresentationDto(
     decimal CostPrice,
     bool IsActive,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    int PackagedStockQuantity,
+    int OpenContainersCount);
