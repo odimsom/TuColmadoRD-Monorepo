@@ -9,6 +9,7 @@ using TuColmadoRD.Core.Domain.Base.Result;
 using TuColmadoRD.Core.Domain.Entities.Inventory;
 using TuColmadoRD.Core.Domain.Entities.Sales;
 using TuColmadoRD.Core.Domain.Entities.System;
+using TuColmadoRD.Core.Domain.Enums.Inventory_Purchasing;
 using TuColmadoRD.Core.Domain.ValueObjects;
 using TuColmadoRD.Core.Domain.ValueObjects.Base;
 using TuColmadoRD.Core.Domain.Interfaces.Repositories.Logistics;
@@ -17,50 +18,46 @@ using Xunit;
 
 namespace TuColmadoRD.Core.Application.Tests.Sales;
 
-/// <summary>
-/// Unit tests for the Sales application module (CreateSale and VoidSale command handlers).
-/// All infrastructure is mocked via Moq — no real DB or I/O.
-/// </summary>
 public sealed class SalesModuleTests
 {
     // ─── Mocks ────────────────────────────────────────────────────────────────
-    private readonly Mock<ITenantProvider>       _tenant       = new();
-    private readonly Mock<ICurrentShiftService>  _shiftService = new();
-    private readonly Mock<IProductRepository>    _productRepo  = new();
-    private readonly Mock<ISaleRepository>       _saleRepo     = new();
-    private readonly Mock<ISaleSequenceService>  _sequence     = new();
-    private readonly Mock<IShiftRepository>      _shiftRepo    = new();
-    private readonly Mock<IOutboxRepository>     _outboxRepo   = new();
-    private readonly Mock<IUnitOfWork>           _uow          = new();
+    private readonly Mock<ITenantProvider>          _tenant           = new();
+    private readonly Mock<ICurrentShiftService>     _shiftService     = new();
+    private readonly Mock<IProductRepository>       _productRepo      = new();
+    private readonly Mock<IPresentationRepository>  _presentationRepo = new();
+    private readonly Mock<IPackagedStockRepository> _packagedStockRepo = new();
+    private readonly Mock<IStockContainerRepository> _containerRepo   = new();
+    private readonly Mock<ISaleRepository>          _saleRepo         = new();
+    private readonly Mock<ISaleSequenceService>     _sequence         = new();
+    private readonly Mock<IShiftRepository>         _shiftRepo        = new();
+    private readonly Mock<IOutboxRepository>        _outboxRepo       = new();
+    private readonly Mock<IUnitOfWork>              _uow              = new();
 
-    private readonly TenantIdentifier _tenantId = TenantIdentifier.Validate(Guid.NewGuid()).Result!;
-    private readonly Guid _terminalId  = Guid.NewGuid();
+    private readonly TenantIdentifier _tenantId  = TenantIdentifier.Validate(Guid.NewGuid()).Result!;
+    private readonly Guid             _terminalId = Guid.NewGuid();
 
-    // ─── Handlers ────────────────────────────────────────────────────
     private readonly CreateSaleCommandHandler _createSaleHandler;
-    private readonly VoidSaleCommandHandler _voidSaleHandler;
+    private readonly VoidSaleCommandHandler   _voidSaleHandler;
 
-    // ─── Setup helpers ────────────────────────────────────────────────────────
     public SalesModuleTests()
     {
         _tenant.Setup(x => x.TenantId).Returns(_tenantId);
         _tenant.Setup(x => x.TerminalId).Returns(_terminalId);
 
-        // Default async no-ops for write methods
-        _saleRepo .Setup(x => x.AddAsync   (It.IsAny<Sale>(),                    It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _saleRepo .Setup(x => x.UpdateAsync(It.IsAny<Sale>(),                    It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _saleRepo.Setup(x => x.AddAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _saleRepo.Setup(x => x.UpdateAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _productRepo.Setup(x => x.UpdateRangeAsync(It.IsAny<IReadOnlyList<Product>>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _shiftRepo.Setup(x => x.UpdateAsync(It.IsAny<Shift>(),                   It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _outboxRepo.Setup(x => x.AddAsync  (It.IsAny<OutboxMessage>(),           It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _shiftRepo.Setup(x => x.UpdateAsync(It.IsAny<Shift>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        _outboxRepo.Setup(x => x.AddAsync(It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         _uow.Setup(x => x.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         _createSaleHandler = new CreateSaleCommandHandler(
             _tenant.Object,
             _shiftService.Object,
             _productRepo.Object,
-            new Mock<IPresentationRepository>().Object,
-            new Mock<IPackagedStockRepository>().Object,
-            new Mock<IStockContainerRepository>().Object,
+            _presentationRepo.Object,
+            _packagedStockRepo.Object,
+            _containerRepo.Object,
             _saleRepo.Object,
             _sequence.Object,
             _shiftRepo.Object,
@@ -91,10 +88,28 @@ public sealed class SalesModuleTests
     public async Task CreateSale_WithValidItems_ShouldPersistSaleAndCommit()
     {
         // Arrange
-        var shiftId = Guid.NewGuid();
-        var shift   = BuildShift();
         var product = BuildProduct();
+        var presentationId = Guid.NewGuid();
 
+        var presentation = ProductPresentation.Create(
+            (Guid)_tenantId, product.Id, "Funda 1lb",
+            PresentationType.PackagedUnit, SellMode.ByUnit, UnitOfMeasure.Unit,
+            Money.FromDecimal(100m).Result!,
+            Money.FromDecimal(80m).Result!,
+            null, null).Result!;
+
+        var packagedStock = PackagedStock.Create((Guid)_tenantId, presentationId).Result!;
+        packagedStock.Add(50);
+
+        _presentationRepo
+            .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(OperationResult<ProductPresentation, DomainError>.Good(presentation));
+
+        _packagedStockRepo
+            .Setup(x => x.GetByPresentationIdAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(packagedStock);
+
+        var shift = BuildShift();
         _shiftService
             .Setup(x => x.GetOpenShiftOrFailAsync(_tenantId, _terminalId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(OperationResult<Shift, DomainError>.Good(shift));
@@ -108,7 +123,7 @@ public sealed class SalesModuleTests
             .ReturnsAsync(new List<Product> { product }.AsReadOnly());
 
         var command = new CreateSaleCommand(
-            new List<SaleItemRequest> { new(product.Id, Guid.NewGuid(), 2m) }.AsReadOnly(),
+            new List<SaleItemRequest> { new(product.Id, presentationId, 2m) }.AsReadOnly(),
             new List<SalePaymentRequest> { new(1, 300m, null, null) }.AsReadOnly(),
             null);
 
@@ -117,9 +132,9 @@ public sealed class SalesModuleTests
 
         // Assert
         result.IsGood.Should().BeTrue();
-        _saleRepo .Verify(x => x.AddAsync   (It.IsAny<Sale>(),    It.IsAny<CancellationToken>()), Times.Once);
-        _outboxRepo.Verify(x => x.AddAsync  (It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()), Times.Once);
-        _uow.Verify       (x => x.CommitAsync(It.IsAny<CancellationToken>()),                    Times.Once);
+        _saleRepo.Verify(x => x.AddAsync(It.IsAny<Sale>(), It.IsAny<CancellationToken>()), Times.Once);
+        _outboxRepo.Verify(x => x.AddAsync(It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+        _uow.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -155,7 +170,7 @@ public sealed class SalesModuleTests
     {
         // Arrange
         var shift   = BuildShift();
-        var product = BuildProduct();                     // mismo producto que va dentro de la venta
+        var product = BuildProduct();
         var sale    = BuildCompletedSale(shift.Id, product);
 
         _shiftService
@@ -220,15 +235,12 @@ public sealed class SalesModuleTests
 
     private Product BuildProduct()
     {
-        var taxRate  = TaxRate.Create(0.18m).Result!;
-        var result   = Product.Create(_tenantId, "Producto Test", Guid.NewGuid(), taxRate);
+        var taxRate = TaxRate.Create(0.18m).Result!;
+        var result  = Product.Create(_tenantId, "Producto Test", Guid.NewGuid(), taxRate);
         result.IsGood.Should().BeTrue("el producto de prueba debe crearse sin errores");
         return result.Result!;
     }
 
-    /// <summary>
-    /// Builds a completed Sale by going through the full domain lifecycle.
-    /// </summary>
     private Sale BuildCompletedSale(Guid shiftId, Product? product = null)
     {
         product ??= BuildProduct();
@@ -237,16 +249,16 @@ public sealed class SalesModuleTests
         saleResult.IsGood.Should().BeTrue();
         var sale = saleResult.Result!;
 
-        var qty      = SaleQuantity.Of(2m).Result!;
-        var cost     = Money.FromDecimal(80m).Result!;
-        var price    = Money.FromDecimal(100m).Result!;
-        var taxRate  = TaxRate.Create(0.18m).Result!;
+        var qty     = SaleQuantity.Of(2m).Result!;
+        var cost    = Money.FromDecimal(80m).Result!;
+        var price   = Money.FromDecimal(100m).Result!;
+        var taxRate = TaxRate.Create(0.18m).Result!;
 
         sale.AddItem(product.Id, product.Name, price, cost, qty, taxRate)
             .IsGood.Should().BeTrue();
 
         var paymentMethod = PaymentMethod.FromId(1).Result!;
-        var amount        = Money.FromDecimal(236m).Result!;        // 100*2*1.18 = 236
+        var amount        = Money.FromDecimal(236m).Result!;
         sale.AddPayment(paymentMethod, amount, null, null)
             .IsGood.Should().BeTrue();
 
