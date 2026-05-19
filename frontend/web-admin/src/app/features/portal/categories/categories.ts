@@ -83,11 +83,11 @@ export class Categories implements OnInit {
     this.inventoryService.seedDefaultProducts().subscribe({
       next: (res) => {
         this.seedingProducts.set(false);
-        this.successMsg.set(`${res.count} productos de ejemplo cargados correctamente.`);
+        this.successMsg.set(`${res.count} productos cargados. Ya puedes empezar a vender.`);
       },
       error: (err) => {
         this.seedingProducts.set(false);
-        this.errorMsg.set(err?.error?.message ?? 'Error al cargar los productos de ejemplo.');
+        this.errorMsg.set(err?.error?.message ?? 'Error al inicializar los productos.');
       },
     });
   }
