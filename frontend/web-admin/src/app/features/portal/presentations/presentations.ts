@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { InventoryService } from '../../../core/services/inventory.service';
 import { RdCurrencyPipe } from '../../../core/pipes';
 import type { ProductPresentationDto, StockContainerDto, CategoryDto } from '../../../core/services/inventory.service';
@@ -72,10 +73,13 @@ export class Presentations implements OnInit {
 
   load(): void {
     this.loading.set(true);
-    this.inventory.getProductById(this.productId()).subscribe({
-      next: product => {
+    forkJoin({
+      product: this.inventory.getProductById(this.productId()),
+      presentations: this.inventory.getPresentations(this.productId()),
+    }).subscribe({
+      next: ({ product, presentations }) => {
         this.productName.set(product.name);
-        this.presentations.set(product.presentations ?? []);
+        this.presentations.set(presentations);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
