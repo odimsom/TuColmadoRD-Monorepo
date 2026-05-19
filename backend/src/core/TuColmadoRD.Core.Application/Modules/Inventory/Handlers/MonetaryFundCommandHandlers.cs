@@ -87,6 +87,7 @@ public sealed class RecordFundDepositCommandHandler
         if (!depositResult.TryGetResult(out var tx))
             return OperationResult<Guid, DomainError>.Bad(depositResult.Error);
 
+        await _fundRepository.TrackNewTransactionAsync(tx!, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);
         return OperationResult<Guid, DomainError>.Good(tx!.Id);
     }
@@ -130,6 +131,7 @@ public sealed class RecordFundExpenseCommandHandler
         if (!expenseResult.TryGetResult(out var tx))
             return OperationResult<Guid, DomainError>.Bad(expenseResult.Error);
 
+        await _fundRepository.TrackNewTransactionAsync(tx!, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);
         return OperationResult<Guid, DomainError>.Good(tx!.Id);
     }
