@@ -7,7 +7,9 @@ using TuColmadoRD.Core.Application.Sales.Commands;
 using TuColmadoRD.Core.Application.Sales.Outbox;
 using TuColmadoRD.Core.Domain.Base.Result;
 using TuColmadoRD.Core.Domain.Entities.Fiscal;
+using TuColmadoRD.Core.Domain.Entities.Inventory;
 using TuColmadoRD.Core.Domain.Entities.Sales;
+using TuColmadoRD.Core.Domain.Enums.Inventory_Purchasing;
 using TuColmadoRD.Core.Domain.Interfaces.Repositories.Fiscal;
 using TuColmadoRD.Core.Domain.Interfaces.Repositories.System;
 using TuColmadoRD.Core.Application.Interfaces.Services;
@@ -28,6 +30,9 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
     private readonly ITenantProvider _tenantProvider;
     private readonly ICurrentShiftService _shiftService;
     private readonly IProductRepository _productRepository;
+    private readonly IPresentationRepository _presentationRepository;
+    private readonly IPackagedStockRepository _packagedStockRepository;
+    private readonly IStockContainerRepository _containerRepository;
     private readonly ISaleRepository _saleRepository;
     private readonly ISaleSequenceService _sequenceService;
     private readonly IShiftRepository _shiftRepository;
@@ -44,6 +49,9 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         ITenantProvider tenantProvider,
         ICurrentShiftService shiftService,
         IProductRepository productRepository,
+        IPresentationRepository presentationRepository,
+        IPackagedStockRepository packagedStockRepository,
+        IStockContainerRepository containerRepository,
         ISaleRepository saleRepository,
         ISaleSequenceService sequenceService,
         IShiftRepository shiftRepository,
@@ -59,6 +67,9 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         _tenantProvider = tenantProvider;
         _shiftService = shiftService;
         _productRepository = productRepository;
+        _presentationRepository = presentationRepository;
+        _packagedStockRepository = packagedStockRepository;
+        _containerRepository = containerRepository;
         _saleRepository = saleRepository;
         _sequenceService = sequenceService;
         _shiftRepository = shiftRepository;
@@ -98,6 +109,16 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
                     DomainError.NotFound("product.not_found", $"Producto {itemRequest.ProductId} no encontrado."));
         }
 
+        var presentationDict = new Dictionary<Guid, ProductPresentation>();
+        foreach (var pId in request.Items.Select(i => i.PresentationId).Distinct())
+        {
+            var pResult = await _presentationRepository.GetByIdAsync(pId, (Guid)tenantId, ct);
+            if (!pResult.TryGetResult(out var pres) || pres is null)
+                return OperationResult<CreateSaleResult, DomainError>.Bad(
+                    DomainError.NotFound("presentation.not_found", $"Presentación {pId} no encontrada."));
+            presentationDict[pId] = pres!;
+        }
+
         var quantitiesResult = ValidateAndPrepareQuantities(request.Items);
         if (!quantitiesResult.TryGetResult(out var quantities) || quantities is null)
             return OperationResult<CreateSaleResult, DomainError>.Bad(quantitiesResult.Error);
@@ -105,12 +126,29 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         for (int i = 0; i < request.Items.Count; i++)
         {
             var item = request.Items[i];
-            var product = productDict[item.ProductId];
             var qty = quantities[i];
+            var presentation = presentationDict[item.PresentationId];
 
-            var adjustResult = product.AdjustStock(-qty.Value);
-            if (!adjustResult.IsGood)
-                return OperationResult<CreateSaleResult, DomainError>.Bad(adjustResult.Error);
+            if (presentation.PresentationType == PresentationType.PackagedUnit)
+            {
+                var packaged = await _packagedStockRepository.GetByPresentationIdAsync(item.PresentationId, (Guid)tenantId, ct);
+                if (packaged is null)
+                    return OperationResult<CreateSaleResult, DomainError>.Bad(
+                        DomainError.NotFound("stock.packaged_not_found", $"Stock empacado no encontrado para presentación {item.PresentationId}."));
+                var subtractResult = packaged.Subtract((int)qty.Value);
+                if (!subtractResult.IsGood)
+                    return OperationResult<CreateSaleResult, DomainError>.Bad(subtractResult.Error);
+            }
+            else
+            {
+                var container = await _containerRepository.GetActiveSourceAsync(item.PresentationId, (Guid)tenantId, ct);
+                if (container is null)
+                    return OperationResult<CreateSaleResult, DomainError>.Bad(
+                        DomainError.NotFound("stock.no_active_container", $"No hay contenedor activo para presentación {item.PresentationId}."));
+                var drawResult = container.Draw(qty.Value, allowOverDraw: false);
+                if (!drawResult.IsGood)
+                    return OperationResult<CreateSaleResult, DomainError>.Bad(drawResult.Error);
+            }
         }
 
         var receiptResult = await _sequenceService.GenerateReceiptNumberAsync(tenantId, terminalId, ct);
@@ -126,13 +164,14 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         {
             var itemRequest = request.Items[i];
             var product = productDict[itemRequest.ProductId];
+            var presentation = presentationDict[itemRequest.PresentationId];
             var qty = quantities[i];
 
             var addItemResult = sale.AddItem(
                 product.Id,
                 product.Name,
-                product.SalePrice,
-                product.CostPrice,
+                presentation.SalePrice,
+                presentation.CostPrice,
                 qty,
                 product.ItbisRate);
 
@@ -143,9 +182,9 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
                 product.Id,
                 product.Name,
                 qty.Value,
-                product.SalePrice.Amount,
-                (product.SalePrice.Amount * qty.Value * product.ItbisRate.Rate),
-                (product.SalePrice.Amount * qty.Value * (1 + product.ItbisRate.Rate))));
+                presentation.SalePrice.Amount,
+                (presentation.SalePrice.Amount * qty.Value * product.ItbisRate.Rate),
+                (presentation.SalePrice.Amount * qty.Value * (1 + product.ItbisRate.Rate))));
         }
 
         foreach (var paymentRequest in request.Payments)
@@ -322,7 +361,6 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         // ────────────────────────────────────────────────────────────────────────
 
         await _saleRepository.AddAsync(sale, ct);
-        await _productRepository.UpdateRangeAsync(products, ct);
         await _shiftRepository.UpdateAsync(shift, ct);
         await _outboxRepository.AddAsync(outboxMessage, ct);
 

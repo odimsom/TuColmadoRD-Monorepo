@@ -4,12 +4,18 @@
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h1 class="text-2xl font-black text-white uppercase tracking-tighter">Inventario</h1>
-      <p class="text-slate-500 text-xs mt-1">Gestión de productos y stock del colmado</p>
+      <p class="text-slate-500 text-xs mt-1">Gestión de productos y presentaciones</p>
     </div>
-    <button (click)="openCreate()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 self-start sm:self-auto">
-      <span class="icon-[ic--baseline-add] text-sm"></span>
-      Nuevo Producto
-    </button>
+    <div class="flex gap-2">
+      <button routerLink="/portal/stock-entries" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2 self-start sm:self-auto">
+        <span class="icon-[ic--baseline-assignment] text-sm"></span>
+        Entradas
+      </button>
+      <button (click)="openCreate()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 self-start sm:self-auto">
+        <span class="icon-[ic--baseline-add] text-sm"></span>
+        Nuevo Producto
+      </button>
+    </div>
   </div>
 
   <!-- Stats bar -->
@@ -19,7 +25,7 @@
       <p class="text-2xl font-mono font-bold text-white">{{ totalProducts() }}</p>
     </div>
     <div class="bg-pos-surface border border-pos-border p-4 rounded-xl">
-      <p class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest mb-1">Stock Crítico (≤5)</p>
+      <p class="text-[0.6rem] font-black text-slate-500 uppercase tracking-widest mb-1">Stock Crítico</p>
       <p class="text-2xl font-mono font-bold" [class.text-amber-400]="lowStockProducts() > 0" [class.text-white]="lowStockProducts() === 0">{{ lowStockProducts() }}</p>
     </div>
     <div class="bg-pos-surface border border-pos-border p-4 rounded-xl">
@@ -58,10 +64,9 @@
           <tr>
             <th class="px-6 py-3 border-b border-white/5">Producto</th>
             <th class="px-6 py-3 border-b border-white/5">Categoría</th>
-            <th class="px-6 py-3 border-b border-white/5 text-right">Costo</th>
-            <th class="px-6 py-3 border-b border-white/5 text-right">Precio Venta</th>
+            <th class="px-6 py-3 border-b border-white/5 text-right">Precio</th>
             <th class="px-6 py-3 border-b border-white/5 text-center">Stock</th>
-            <th class="px-6 py-3 border-b border-white/5 text-center">ITBIS</th>
+            <th class="px-6 py-3 border-b border-white/5 text-center">Presentaciones</th>
             <th class="px-6 py-3 border-b border-white/5 text-center">Estado</th>
             <th class="px-6 py-3 border-b border-white/5 text-right">Acciones</th>
           </tr>
@@ -70,12 +75,12 @@
           @if (loading()) {
             @for (i of [1,2,3,4,5,6,7,8]; track i) {
               <tr class="animate-pulse">
-                <td colspan="8" class="px-6 py-4"><div class="h-4 bg-white/5 rounded w-full"></div></td>
+                <td colspan="7" class="px-6 py-4"><div class="h-4 bg-white/5 rounded w-full"></div></td>
               </tr>
             }
           } @else if (products().length === 0) {
             <tr>
-              <td colspan="8" class="text-center py-16 text-slate-500">
+              <td colspan="7" class="text-center py-16 text-slate-500">
                 <span class="icon-[ic--baseline-inventory-2] text-4xl block mb-3 opacity-20"></span>
                 <p class="text-sm font-bold">Sin productos registrados</p>
                 <p class="text-xs mt-1">Haz clic en "Nuevo Producto" para agregar el primero.</p>
@@ -87,16 +92,19 @@
                 <td class="px-6 py-3">
                   <div class="flex flex-col">
                     <span class="font-bold text-white">{{ product.name }}</span>
-                    <span class="text-slate-500 text-[0.6rem]">{{ unitTypeLabel(product.unitTypeId) }}</span>
+                    @if (product.presentations && product.presentations.length > 0) {
+                      <span class="text-slate-500 text-[0.6rem]">{{ product.presentations.length }} presentaciones</span>
+                    }
                   </div>
                 </td>
                 <td class="px-6 py-3 text-slate-400">{{ product.categoryName }}</td>
-                <td class="px-6 py-3 text-right font-mono text-slate-400">{{ product.costPrice | rdCurrency }}</td>
-                <td class="px-6 py-3 text-right font-mono font-bold text-white">{{ product.salePrice | rdCurrency }}</td>
-                <td class="px-6 py-3 text-center font-mono font-bold" [class]="getStockClass(product.stockQuantity)">
-                  {{ product.stockQuantity | number:'1.0-2' }}
+                <td class="px-6 py-3 text-right font-mono text-slate-400">{{ getPriceRange(product) }}</td>
+                <td class="px-6 py-3 text-center font-mono font-bold" [class]="getStockClass(product)">
+                  {{ getStockSummary(product) }}
                 </td>
-                <td class="px-6 py-3 text-center text-slate-400">{{ (product.itbisRate * 100) | number:'1.0-0' }}%</td>
+                <td class="px-6 py-3 text-center">
+                  <span class="text-slate-400">{{ product.presentations?.length ?? 0 }}</span>
+                </td>
                 <td class="px-6 py-3 text-center">
                   @if (product.isActive) {
                     <span class="px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 text-[0.6rem] font-black uppercase ring-1 ring-green-500/20">Activo</span>
@@ -106,12 +114,9 @@
                 </td>
                 <td class="px-6 py-3 text-right">
                   <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button (click)="openAdjustStock(product)" title="Ajustar Stock" class="p-1.5 hover:bg-blue-500/10 rounded text-slate-400 hover:text-blue-400 transition-colors">
-                      <span class="icon-[ic--baseline-add-box] text-sm"></span>
-                    </button>
-                    <button (click)="openEditPrice(product)" title="Editar Precio" class="p-1.5 hover:bg-amber-500/10 rounded text-slate-400 hover:text-amber-400 transition-colors">
-                      <span class="icon-[ic--baseline-attach-money] text-sm"></span>
-                    </button>
+                    <a [routerLink]="['/portal/presentations', product.productId]" title="Gestionar presentaciones" class="p-1.5 hover:bg-purple-500/10 rounded text-slate-400 hover:text-purple-400 transition-colors">
+                      <span class="icon-[ic--baseline-layers] text-sm"></span>
+                    </a>
                     @if (product.isActive) {
                       <button (click)="deactivate(product)" title="Desactivar" class="p-1.5 hover:bg-red-500/10 rounded text-slate-400 hover:text-red-400 transition-colors">
                         <span class="icon-[ic--baseline-remove-circle] text-sm"></span>
@@ -139,9 +144,7 @@
   </div>
 </div>
 
-<!-- ========== MODALS ========== -->
-
-<!-- Modal: Crear Producto -->
+<!-- ========== MODAL: Crear Producto ========== -->
 @if (modalMode() === 'create') {
   <div class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
     <div class="bg-[#0d1b2e] border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl">
@@ -155,7 +158,7 @@
         }
         <div>
           <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nombre del Producto *</label>
-          <input formControlName="name" type="text" placeholder="Ej: Arroz Cristal 5 lbs" class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
+          <input formControlName="name" type="text" placeholder="Ej: Arroz Cristal" class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
         </div>
         <div>
           <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Categoría *</label>
@@ -186,170 +189,19 @@
             }
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Unidad</label>
-            <select formControlName="unitType" class="w-full bg-[#0f172a] border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all">
-              @for (u of unitTypes; track u.id) {
-                <option [value]="u.id">{{ u.name }}</option>
-              }
-            </select>
-          </div>
-          <div>
-            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">ITBIS</label>
-            <select formControlName="itbisRate" class="w-full bg-[#0f172a] border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all">
-              <option [value]="0">0% - Exento</option>
-              <option [value]="0.16">16% - ITBIS Reducido</option>
-              <option [value]="0.18">18% - ITBIS Estándar</option>
-            </select>
-          </div>
+        <div>
+          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">ITBIS</label>
+          <select formControlName="itbisRate" class="w-full bg-[#0f172a] border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all">
+            <option [value]="0">0% - Exento</option>
+            <option [value]="0.16">16% - ITBIS Reducido</option>
+            <option [value]="0.18">18% - ITBIS Estándar</option>
+          </select>
         </div>
+        <p class="text-[0.6rem] text-slate-500">Se creará una presentación predeterminada. Podrás agregar más desde la gestión de presentaciones.</p>
         <div class="flex gap-3 pt-2">
           <button type="button" (click)="closeModal()" class="flex-1 py-2.5 rounded-lg border border-white/10 text-slate-400 text-xs font-bold hover:text-white transition-all">Cancelar</button>
           <button type="submit" [disabled]="saving() || createForm.invalid" class="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50">
             {{ saving() ? 'Guardando...' : 'Crear Producto' }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-}
-
-<!-- Modal: Editar Precio -->
-@if (modalMode() === 'edit-price') {
-  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-    <div class="bg-[#0d1b2e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
-      <div class="px-6 py-5 border-b border-white/5 flex justify-between items-center">
-        <div>
-          <h3 class="text-lg font-black text-white uppercase tracking-tight">Actualizar Precio</h3>
-          <p class="text-slate-400 text-xs mt-0.5">{{ selectedProduct()?.name }}</p>
-        </div>
-        <button (click)="closeModal()" class="text-slate-500 hover:text-white"><span class="icon-[ic--baseline-close] text-xl"></span></button>
-      </div>
-      <form [formGroup]="priceForm" (ngSubmit)="submitPrice()" class="p-6 space-y-4">
-        @if (errorMsg()) {
-          <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">{{ errorMsg() }}</div>
-        }
-        <div>
-          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nuevo Costo (RD$)</label>
-          <input formControlName="newCostPrice" type="number" min="0" step="0.01" class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
-        </div>
-        <div>
-          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nuevo Precio de Venta (RD$) *</label>
-          <input formControlName="newSalePrice" type="number" min="0.01" step="0.01" class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
-        </div>
-        <div class="flex gap-3 pt-2">
-          <button type="button" (click)="closeModal()" class="flex-1 py-2.5 rounded-lg border border-white/10 text-slate-400 text-xs font-bold hover:text-white transition-all">Cancelar</button>
-          <button type="submit" [disabled]="saving() || priceForm.invalid" class="flex-1 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50">
-            {{ saving() ? 'Guardando...' : 'Actualizar Precio' }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-}
-
-<!-- Modal: Ajustar Stock -->
-@if (modalMode() === 'adjust-stock') {
-  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-    <div class="bg-[#0d1b2e] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
-      <div class="px-6 py-5 border-b border-white/5 flex justify-between items-center">
-        <div>
-          <h3 class="text-lg font-black text-white uppercase tracking-tight">Movimiento de Stock</h3>
-          <p class="text-slate-400 text-xs mt-0.5">{{ selectedProduct()?.name }} · Stock actual: <strong class="text-white">{{ selectedProduct()?.stockQuantity }}</strong></p>
-        </div>
-        <button (click)="closeModal()" class="text-slate-500 hover:text-white"><span class="icon-[ic--baseline-close] text-xl"></span></button>
-      </div>
-      <form [formGroup]="stockForm" (ngSubmit)="submitStock()" class="p-6 space-y-4">
-        @if (errorMsg()) {
-          <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">{{ errorMsg() }}</div>
-        }
-
-        <!-- Tipo de movimiento -->
-        <div>
-          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Movimiento</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button type="button" (click)="setAdjustType('compra')"
-              class="py-2.5 rounded-lg border text-xs font-black uppercase tracking-widest transition-all"
-              [class.bg-green-600]="adjustType() === 'compra'"
-              [class.border-green-500]="adjustType() === 'compra'"
-              [class.text-white]="adjustType() === 'compra'"
-              [class.bg-white\/5]="adjustType() !== 'compra'"
-              [class.border-white\/10]="adjustType() !== 'compra'"
-              [class.text-slate-400]="adjustType() !== 'compra'">
-              <span class="icon-[ic--baseline-shopping-cart] mr-1"></span>Compra
-            </button>
-            <button type="button" (click)="setAdjustType('ajuste')"
-              class="py-2.5 rounded-lg border text-xs font-black uppercase tracking-widest transition-all"
-              [class.bg-blue-600]="adjustType() === 'ajuste'"
-              [class.border-blue-500]="adjustType() === 'ajuste'"
-              [class.text-white]="adjustType() === 'ajuste'"
-              [class.bg-white\/5]="adjustType() !== 'ajuste'"
-              [class.border-white\/10]="adjustType() !== 'ajuste'"
-              [class.text-slate-400]="adjustType() !== 'ajuste'">
-              <span class="icon-[ic--baseline-tune] mr-1"></span>Ajuste
-            </button>
-          </div>
-          <p class="text-[0.6rem] text-slate-500 mt-1.5">
-            @if (adjustType() === 'compra') {
-              Registra la entrada de mercancía y genera un gasto automáticamente.
-            } @else {
-              Corrige el stock manualmente (merma, conteo, corrección).
-            }
-          </p>
-        </div>
-
-        <!-- Cantidad -->
-        <div>
-          <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">
-            {{ adjustType() === 'compra' ? 'Unidades Compradas' : 'Cantidad (+/−)' }}
-          </label>
-          @if (adjustType() === 'ajuste') {
-            <p class="text-[0.6rem] text-slate-500 mb-1.5">Positivo para agregar, negativo para reducir</p>
-          }
-          <input formControlName="delta" type="number"
-            [attr.min]="adjustType() === 'compra' ? 0.001 : null"
-            step="1"
-            class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
-        </div>
-
-        <!-- Compra: gasto calculado + presupuesto -->
-        @if (adjustType() === 'compra') {
-          <div class="bg-green-500/5 border border-green-500/20 rounded-lg p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-[0.65rem] font-black text-slate-400 uppercase tracking-widest">Gasto Calculado</span>
-              <span class="text-sm font-mono font-bold text-green-400">{{ calculatedExpense() | rdCurrency }}</span>
-            </div>
-            <p class="text-[0.6rem] text-slate-500">
-              {{ stockForm.controls.delta.value | number:'1.0-2' }} × {{ selectedProduct()?.costPrice | rdCurrency }} (costo unitario)
-            </p>
-            <div>
-              <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Monto Real Pagado (RD$)</label>
-              <input formControlName="expenseAmount" type="number" min="0" step="0.01"
-                placeholder="Dejar en 0 para usar el calculado"
-                class="w-full bg-white/5 border border-white/5 focus:border-green-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
-              <p class="text-[0.55rem] text-slate-600 mt-1">Si pagaste un monto distinto al calculado, ingrésalo aquí.</p>
-            </div>
-          </div>
-        }
-
-        <!-- Ajuste: motivo -->
-        @if (adjustType() === 'ajuste') {
-          <div>
-            <label class="block text-[0.65rem] font-black text-slate-400 uppercase tracking-widest mb-1.5">Motivo *</label>
-            <input formControlName="reason" type="text" placeholder="Ej: Merma, conteo físico, corrección..." class="w-full bg-white/5 border border-white/5 focus:border-blue-500/50 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all" />
-          </div>
-        }
-
-        <div class="flex gap-3 pt-2">
-          <button type="button" (click)="closeModal()" class="flex-1 py-2.5 rounded-lg border border-white/10 text-slate-400 text-xs font-bold hover:text-white transition-all">Cancelar</button>
-          <button type="submit" [disabled]="saving()"
-            class="flex-1 py-2.5 rounded-lg text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50"
-            [class.bg-green-600]="adjustType() === 'compra'"
-            [class.hover:bg-green-500]="adjustType() === 'compra'"
-            [class.bg-blue-600]="adjustType() === 'ajuste'"
-            [class.hover:bg-blue-500]="adjustType() === 'ajuste'">
-            {{ saving() ? 'Guardando...' : (adjustType() === 'compra' ? 'Registrar Compra' : 'Aplicar Ajuste') }}
           </button>
         </div>
       </form>

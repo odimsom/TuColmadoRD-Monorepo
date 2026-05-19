@@ -17,7 +17,7 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("ProductVersion", "9.0.16")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -305,6 +305,99 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
                     b.ToTable("Categories", "Inventory");
                 });
 
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.FundTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("FundId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("JustificationNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReferenceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FundId")
+                        .HasDatabaseName("IX_FundTransactions_FundId");
+
+                    b.ToTable("FundTransactions", "Inventory");
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.MonetaryFund", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("CurrentBalance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MonetaryFunds", "Inventory");
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.PackagedStock", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PresentationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PresentationId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_PackagedStock_PresentationId");
+
+                    b.ToTable("PackagedStock", "Inventory");
+                });
+
             modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -313,9 +406,6 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid");
-
-                    b.Property<decimal>("CostPrice")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -331,13 +421,55 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Products", "Inventory");
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.ProductPresentation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<decimal>("CostPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MeasureUnit")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("NominalCapacity")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("PresentationType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("SalePrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("StockQuantity")
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<int>("UnitType")
+                    b.Property<int>("SellMode")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -345,7 +477,135 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Products", "Inventory");
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("IX_ProductPresentations_ProductId");
+
+                    b.ToTable("ProductPresentations", "Inventory");
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.StockContainer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ActualCapacity")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("ContainerCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("CurrentRemaining")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("EmptiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActiveSource")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("NominalCapacity")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("OpenedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PresentationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PurchasedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PresentationId")
+                        .HasDatabaseName("IX_StockContainers_PresentationId");
+
+                    b.HasIndex("PresentationId", "IsActiveSource")
+                        .HasDatabaseName("IX_StockContainers_PresentationId_IsActive");
+
+                    b.ToTable("StockContainers", "Inventory");
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.StockEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("FundTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("PurchasedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SupplierName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<decimal>("TotalCost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StockEntries", "Inventory");
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.StockEntryLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ContainerCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("CostPerUnit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("NominalSizePerUnit")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("PresentationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StockEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("UnitsPerContainer")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StockEntryId")
+                        .HasDatabaseName("IX_StockEntryLines_StockEntryId");
+
+                    b.ToTable("StockEntryLines", "Inventory");
                 });
 
             modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.UnitConversion", b =>
@@ -1475,6 +1735,81 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.FundTransaction", b =>
+                {
+                    b.HasOne("TuColmadoRD.Core.Domain.Entities.Inventory.MonetaryFund", null)
+                        .WithMany("Transactions")
+                        .HasForeignKey("FundId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("TuColmadoRD.Core.Domain.ValueObjects.TenantIdentifier", "TenantId", b1 =>
+                        {
+                            b1.Property<Guid>("FundTransactionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("Value")
+                                .HasColumnType("uuid")
+                                .HasColumnName("TenantId");
+
+                            b1.HasKey("FundTransactionId");
+
+                            b1.ToTable("FundTransactions", "Inventory");
+
+                            b1.WithOwner()
+                                .HasForeignKey("FundTransactionId");
+                        });
+
+                    b.Navigation("TenantId")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.MonetaryFund", b =>
+                {
+                    b.OwnsOne("TuColmadoRD.Core.Domain.ValueObjects.TenantIdentifier", "TenantId", b1 =>
+                        {
+                            b1.Property<Guid>("MonetaryFundId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("Value")
+                                .HasColumnType("uuid")
+                                .HasColumnName("TenantId");
+
+                            b1.HasKey("MonetaryFundId");
+
+                            b1.ToTable("MonetaryFunds", "Inventory");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MonetaryFundId");
+                        });
+
+                    b.Navigation("TenantId")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.PackagedStock", b =>
+                {
+                    b.OwnsOne("TuColmadoRD.Core.Domain.ValueObjects.TenantIdentifier", "TenantId", b1 =>
+                        {
+                            b1.Property<Guid>("PackagedStockId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("Value")
+                                .HasColumnType("uuid")
+                                .HasColumnName("TenantId");
+
+                            b1.HasKey("PackagedStockId");
+
+                            b1.ToTable("PackagedStock", "Inventory");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PackagedStockId");
+                        });
+
+                    b.Navigation("TenantId")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.Product", b =>
                 {
                     b.OwnsOne("TuColmadoRD.Core.Domain.ValueObjects.TenantIdentifier", "TenantId", b1 =>
@@ -1495,6 +1830,84 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("TenantId")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.ProductPresentation", b =>
+                {
+                    b.OwnsOne("TuColmadoRD.Core.Domain.ValueObjects.TenantIdentifier", "TenantId", b1 =>
+                        {
+                            b1.Property<Guid>("ProductPresentationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("Value")
+                                .HasColumnType("uuid")
+                                .HasColumnName("TenantId");
+
+                            b1.HasKey("ProductPresentationId");
+
+                            b1.ToTable("ProductPresentations", "Inventory");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProductPresentationId");
+                        });
+
+                    b.Navigation("TenantId")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.StockContainer", b =>
+                {
+                    b.OwnsOne("TuColmadoRD.Core.Domain.ValueObjects.TenantIdentifier", "TenantId", b1 =>
+                        {
+                            b1.Property<Guid>("StockContainerId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("Value")
+                                .HasColumnType("uuid")
+                                .HasColumnName("TenantId");
+
+                            b1.HasKey("StockContainerId");
+
+                            b1.ToTable("StockContainers", "Inventory");
+
+                            b1.WithOwner()
+                                .HasForeignKey("StockContainerId");
+                        });
+
+                    b.Navigation("TenantId")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.StockEntry", b =>
+                {
+                    b.OwnsOne("TuColmadoRD.Core.Domain.ValueObjects.TenantIdentifier", "TenantId", b1 =>
+                        {
+                            b1.Property<Guid>("StockEntryId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("Value")
+                                .HasColumnType("uuid")
+                                .HasColumnName("TenantId");
+
+                            b1.HasKey("StockEntryId");
+
+                            b1.ToTable("StockEntries", "Inventory");
+
+                            b1.WithOwner()
+                                .HasForeignKey("StockEntryId");
+                        });
+
+                    b.Navigation("TenantId")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.StockEntryLine", b =>
+                {
+                    b.HasOne("TuColmadoRD.Core.Domain.Entities.Inventory.StockEntry", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("StockEntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -2101,6 +2514,16 @@ namespace TuColmadoRD.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Customers.CustomerAccount", b =>
                 {
                     b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.MonetaryFund", b =>
+                {
+                    b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Inventory.StockEntry", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("TuColmadoRD.Core.Domain.Entities.Purchasing.PurchaseOrder", b =>

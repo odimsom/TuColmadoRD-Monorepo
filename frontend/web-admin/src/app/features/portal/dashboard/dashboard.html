@@ -45,8 +45,8 @@
         </div>
         @if (!lowStockLoading && lowStock.count > 0) {
           <div class="text-right max-w-[100px]">
-            @for (p of lowStock.items.slice(0, 2); track p.productId) {
-              <p class="text-[0.55rem] text-red-400/70 truncate leading-tight">{{ p.name }}</p>
+            @for (p of lowStock.items.slice(0, 2); track p.presentationId) {
+              <p class="text-[0.55rem] text-red-400/70 truncate leading-tight">{{ p.productName }} — {{ p.presentationDisplayName }}</p>
             }
             @if (lowStock.count > 2) {
               <p class="text-[0.5rem] text-slate-600">+{{ lowStock.count - 2 }} más</p>

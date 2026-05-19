@@ -2,11 +2,12 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../services/auth.service';
+import { LS_KEYS } from '../constants';
 import { catchError, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
-  const token = localStorage.getItem('tc_token');
+  const token = localStorage.getItem(LS_KEYS.TOKEN);
   const isGatewayUrl = req.url.startsWith(environment.gatewayUrl);
 
   if (token && isGatewayUrl) {

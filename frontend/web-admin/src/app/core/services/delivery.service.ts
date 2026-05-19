@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { GatewayService } from './gateway.service';
+import { API_PATHS, PAYMENT_METHOD } from '../constants';
 
 export interface DeliveryOrderDto {
   id: string;
@@ -25,11 +26,11 @@ export class DeliveryService {
   private gateway = inject(GatewayService);
 
   getPendingOrders(): Observable<DeliveryOrderDto[]> {
-    return this.gateway.get<DeliveryOrderDto[]>('/api/v1/logistics/delivery/pending');
+    return this.gateway.get<DeliveryOrderDto[]>(API_PATHS.DELIVERY_PENDING);
   }
 
   acceptOrder(id: string): Observable<{ status: string }> {
-    return this.gateway.post<{ status: string }>(`/api/v1/logistics/delivery/${id}/accept`, {});
+    return this.gateway.post<{ status: string }>(API_PATHS.DELIVERY_ACCEPT(id), {});
   }
 
   completeOrder(
@@ -39,8 +40,8 @@ export class DeliveryService {
     driverLatitude?: number | null,
     driverLongitude?: number | null
   ): Observable<{ status: string }> {
-    return this.gateway.post<{ status: string }>(`/api/v1/logistics/delivery/${id}/complete`, {
-      payments: [{ paymentMethodId: 1, amount: totalAmount, reference: null, customerId: null }],
+    return this.gateway.post<{ status: string }>(API_PATHS.DELIVERY_COMPLETE(id), {
+      payments: [{ paymentMethodId: PAYMENT_METHOD.CASH, amount: totalAmount, reference: null, customerId: null }],
       confirmationCode,
       driverLatitude: driverLatitude ?? null,
       driverLongitude: driverLongitude ?? null

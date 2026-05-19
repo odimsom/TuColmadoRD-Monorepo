@@ -1,0 +1,9 @@
+using MediatR;
+using TuColmadoRD.Core.Application.Inventory.DTOs;
+using TuColmadoRD.Core.Domain.Base.Result;
+using TuColmadoRD.Core.Domain.ValueObjects.Base;
+
+namespace TuColmadoRD.Core.Application.Inventory.Queries;
+
+public record GetPresentationsByProductQuery(Guid ProductId)
+    : IRequest<OperationResult<IReadOnlyList<PresentationDto>, DomainError>>;

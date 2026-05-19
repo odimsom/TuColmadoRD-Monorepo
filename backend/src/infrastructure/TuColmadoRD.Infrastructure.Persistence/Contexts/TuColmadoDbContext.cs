@@ -47,6 +47,13 @@ public class TuColmadoDbContext : DbContext
 
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductPresentation> ProductPresentations => Set<ProductPresentation>();
+    public DbSet<StockContainer> StockContainers => Set<StockContainer>();
+    public DbSet<PackagedStock> PackagedStocks => Set<PackagedStock>();
+    public DbSet<StockEntry> StockEntries => Set<StockEntry>();
+    public DbSet<StockEntryLine> StockEntryLines => Set<StockEntryLine>();
+    public DbSet<MonetaryFund> MonetaryFunds => Set<MonetaryFund>();
+    public DbSet<FundTransaction> FundTransactions => Set<FundTransaction>();
     public DbSet<UnitConversion> UnitConversions => Set<UnitConversion>();
     public DbSet<UnitOfMeasureEntity> UnitOfMeasures => Set<UnitOfMeasureEntity>();
 
