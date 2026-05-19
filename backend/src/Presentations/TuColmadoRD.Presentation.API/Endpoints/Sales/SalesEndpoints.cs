@@ -41,7 +41,7 @@ public static class SalesEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        var commandItems = request.Items.Select(i => new ApplicationSaleItemRequest(i.ProductId, i.Quantity)).ToList();
+        var commandItems = request.Items.Select(i => new ApplicationSaleItemRequest(i.ProductId, i.PresentationId, i.Quantity)).ToList();
         var commandPayments = request.Payments.Select(p => new ApplicationSalePaymentRequest(p.PaymentMethodId, p.Amount, p.Reference, p.CustomerId)).ToList();
 
         ApplicationDeliveryAddressRequest? deliveryAddress = null;

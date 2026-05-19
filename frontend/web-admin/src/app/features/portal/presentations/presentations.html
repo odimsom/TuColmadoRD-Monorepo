@@ -1,0 +1,257 @@
+<div class="p-4 md:p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">Presentaciones — {{ productName() }}</h1>
+      <p class="text-sm text-base-content/60">Gestiona las formas en que vendes este producto</p>
+    </div>
+    <button class="btn btn-primary btn-sm" (click)="openCreate()">
+      <span class="icon-[ic--baseline-add] text-sm"></span>
+      Nueva Presentación
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="card bg-base-200 p-4">
+      <div class="text-2xl font-bold">{{ totalPresentations() }}</div>
+      <div class="text-xs text-base-content/60">Total presentaciones</div>
+    </div>
+    <div class="card bg-base-200 p-4">
+      <div class="text-2xl font-bold">{{ activePresentations() }}</div>
+      <div class="text-xs text-base-content/60">Activas</div>
+    </div>
+    <div class="card bg-base-200 p-4">
+      <div class="text-2xl font-bold">{{ totalPackagedStock() }}</div>
+      <div class="text-xs text-base-content/60">Unidades empacadas</div>
+    </div>
+    <div class="card bg-base-200 p-4">
+      <div class="text-2xl font-bold">{{ totalOpenContainers() }}</div>
+      <div class="text-xs text-base-content/60">Contenedores abiertos</div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  @if (errorMsg()) {
+    <div class="alert alert-error alert-sm">{{ errorMsg() }}</div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert-success alert-sm">{{ successMsg() }}</div>
+  }
+
+  <!-- Presentations Table -->
+  <div class="card bg-base-200">
+    <div class="card-body p-0">
+      @if (loading()) {
+        <div class="flex justify-center py-8"><span class="loading loading-spinner"></span></div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Presentación</th>
+                <th>Tipo</th>
+                <th>Modo venta</th>
+                <th>Marca</th>
+                <th>Costo</th>
+                <th>Venta</th>
+                <th>Stock</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of presentations(); track p.id) {
+                <tr [class.opacity-50]="!p.isActive">
+                  <td>
+                    <div class="font-medium">{{ p.displayName }}</div>
+                    @if (p.nominalCapacity) {
+                      <div class="text-xs text-base-content/50">{{ p.nominalCapacity }} {{ unitLabel(p.measureUnit) }}</div>
+                    }
+                  </td>
+                  <td><span class="badge badge-sm badge-ghost">{{ presentationTypeLabel(p.presentationType) }}</span></td>
+                  <td><span class="badge badge-sm badge-ghost">{{ sellModeLabel(p.sellMode) }}</span></td>
+                  <td>{{ p.brand ?? '—' }}</td>
+                  <td>{{ p.costPrice | rdCurrency }}</td>
+                  <td class="font-semibold">{{ p.salePrice | rdCurrency }}</td>
+                  <td>
+                    @if (p.presentationType === 2) {
+                      <span>{{ p.packagedStockQuantity }} uds</span>
+                    } @else {
+                      <span>{{ p.openContainersCount }} cont.</span>
+                    }
+                  </td>
+                  <td>
+                    @if (p.isActive) {
+                      <span class="badge badge-sm badge-success">Activa</span>
+                    } @else {
+                      <span class="badge badge-sm badge-ghost">Inactiva</span>
+                    }
+                  </td>
+                  <td>
+                    <div class="flex gap-1">
+                      @if (p.presentationType === 1) {
+                        <button class="btn btn-ghost btn-xs" (click)="viewContainers(p)" title="Ver contenedores">
+                          <span class="icon-[ic--baseline-inventory-2] text-sm"></span>
+                        </button>
+                      }
+                      <button class="btn btn-ghost btn-xs" (click)="openEdit(p)" title="Editar">
+                        <span class="icon-[ic--baseline-edit] text-sm"></span>
+                      </button>
+                      @if (p.isActive) {
+                        <button class="btn btn-ghost btn-xs text-error" (click)="deactivate(p)" title="Desactivar">
+                          <span class="icon-[ic--baseline-delete] text-sm"></span>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="9" class="text-center py-8 text-base-content/50">No hay presentaciones. Crea la primera.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Containers Panel -->
+  @if (selectedPresentation() && containers().length > 0) {
+    <div class="card bg-base-200">
+      <div class="card-body">
+        <div class="flex items-center justify-between">
+          <h3 class="card-title text-lg">Contenedores — {{ selectedPresentation()?.displayName }}</h3>
+          <button class="btn btn-ghost btn-sm" (click)="hideContainers()">Cerrar</button>
+        </div>
+        @if (loadingContainers()) {
+          <div class="flex justify-center py-4"><span class="loading loading-spinner"></span></div>
+        } @else {
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            @for (c of containers(); track c.id) {
+              <div class="card bg-base-100 shadow-sm">
+                <div class="card-body p-4">
+                  <div class="flex items-center justify-between">
+                    <span class="font-mono font-bold">{{ c.containerCode }}</span>
+                    <span class="badge badge-sm" [class]="containerStatusColor(c.status)">{{ containerStatusLabel(c.status) }}</span>
+                  </div>
+                  <div class="text-sm space-y-1">
+                    <div>Capacidad: {{ c.nominalCapacity }} {{ unitLabel(selectedPresentation()?.measureUnit ?? 1) }}</div>
+                    @if (c.actualCapacity) {
+                      <div>Peso real: {{ c.actualCapacity }}</div>
+                    }
+                    <div>Restante: <span class="font-bold">{{ c.currentRemaining | number:'1.2-2' }}</span></div>
+                    @if (c.isActiveSource) {
+                      <div class="text-primary text-xs font-semibold">← Contenedor activo</div>
+                    }
+                    @if (c.openedAt) {
+                      <div class="text-xs text-base-content/50">Abierto: {{ fmtDate(c.openedAt) }}</div>
+                    }
+                  </div>
+                  <div class="card-actions justify-end mt-2">
+                    @if (c.status === 1) {
+                      <button class="btn btn-xs btn-outline" (click)="openContainer(c.id)">Abrir</button>
+                    }
+                    @if (c.status === 2) {
+                      <button class="btn btn-xs btn-error btn-outline" (click)="markContainerEmpty(c.id)">Vaciar</button>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Create/Edit Modal -->
+  @if (showModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box">
+        <h3 class="text-lg font-bold mb-4">
+          {{ selectedPresentation() ? 'Editar Presentación' : 'Nueva Presentación' }}
+        </h3>
+        <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text">Nombre</span></label>
+            <input type="text" formControlName="displayName" class="input input-bordered input-sm" placeholder="Ej: Funda 1lb, Saco 50lb" />
+            @if (form.controls.displayName.touched && form.controls.displayName.invalid) {
+              <span class="text-error text-xs">Obligatorio (2-80 caracteres)</span>
+            }
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-control">
+              <label class="label"><span class="label-text">Tipo</span></label>
+              <select formControlName="presentationType" class="select select-bordered select-sm">
+                @for (t of presentationTypes; track t.value) {
+                  <option [value]="t.value">{{ t.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-control">
+              <label class="label"><span class="label-text">Modo de venta</span></label>
+              <select formControlName="sellMode" class="select select-bordered select-sm">
+                @for (m of sellModes; track m.value) {
+                  <option [value]="m.value">{{ m.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text">Marca (opcional)</span></label>
+            <input type="text" formControlName="brand" class="input input-bordered input-sm" placeholder="Ej: La Sirena, El Sabor" />
+          </div>
+
+          @if (isBulkContainer()) {
+            <div class="form-control">
+              <label class="label"><span class="label-text">Capacidad nominal</span></label>
+              <input type="number" formControlName="nominalCapacity" class="input input-bordered input-sm" placeholder="50" min="0" step="0.01" />
+            </div>
+          }
+
+          <div class="form-control">
+            <label class="label"><span class="label-text">Unidad de medida</span></label>
+            <select formControlName="measureUnit" class="select select-bordered select-sm">
+              @for (u of unitsOfMeasure; track u.value) {
+                <option [value]="u.value">{{ u.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-control">
+              <label class="label"><span class="label-text">Precio costo</span></label>
+              <input type="number" formControlName="costPrice" class="input input-bordered input-sm" min="0" step="0.01" />
+              @if (form.controls.costPrice.touched && form.controls.costPrice.invalid) {
+                <span class="text-error text-xs">Obligatorio</span>
+              }
+            </div>
+            <div class="form-control">
+              <label class="label"><span class="label-text">Precio venta</span></label>
+              <input type="number" formControlName="salePrice" class="input input-bordered input-sm" min="0.01" step="0.01" />
+              @if (form.controls.salePrice.touched && form.controls.salePrice.invalid) {
+                <span class="text-error text-xs">Debe ser mayor a 0</span>
+              }
+            </div>
+          </div>
+
+          @if (errorMsg()) {
+            <div class="alert alert-error alert-sm">{{ errorMsg() }}</div>
+          }
+
+          <div class="modal-action">
+            <button type="button" class="btn btn-sm" (click)="closeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary btn-sm" [disabled]="saving()">
+              @if (saving()) { <span class="loading loading-spinner loading-xs"></span> }
+              {{ selectedPresentation() ? 'Guardar' : 'Crear' }}
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-backdrop" (click)="closeModal()"></div>
+    </div>
+  }
+</div>

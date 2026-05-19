@@ -4,8 +4,8 @@ using TuColmadoRD.Core.Domain.ValueObjects.Base;
 
 namespace TuColmadoRD.Core.Application.Inventory.Queries;
 
-/// <summary>Response item for a product with critical stock level.</summary>
-public sealed record LowStockItemDto(Guid ProductId, string Name, decimal StockQuantity, int Threshold);
+/// <summary>Response item for a presentation with critical stock level.</summary>
+public sealed record LowStockItemDto(Guid PresentationId, Guid ProductId, string ProductName, string PresentationDisplayName, int StockQuantity, int Threshold);
 
 /// <summary>Response wrapper for the low-stock endpoint.</summary>
 public sealed record LowStockResponse(int Count, IReadOnlyList<LowStockItemDto> Items);

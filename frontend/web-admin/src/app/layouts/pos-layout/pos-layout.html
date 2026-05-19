@@ -128,19 +128,20 @@
           </div>
         } @else {
           <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-            @for (product of pagedCatalog(); track product.productId) {
+            @for (product of pagedCatalog(); track product.presentationId) {
               <button (click)="addToCart(product)" [disabled]="product.stockQuantity <= 0"
                 class="group relative flex flex-col rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-blue-600/10 hover:border-blue-500/40 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-left overflow-hidden">
 
                 <!-- Imagen / iniciales -->
                 <div class="w-full h-20 flex items-center justify-center text-lg font-black text-white/70 transition-all"
                   [ngClass]="productColor(product.categoryName)">
-                  {{ productInitials(product.name) }}
+                  {{ productInitials(product.displayName) }}
                 </div>
 
                 <!-- Info -->
                 <div class="p-2 flex flex-col gap-0.5">
-                  <p class="text-xs font-bold text-white leading-tight line-clamp-2 group-hover:text-blue-300 transition-colors">{{ product.name }}</p>
+                  <p class="text-xs font-bold text-white leading-tight line-clamp-2 group-hover:text-blue-300 transition-colors">{{ product.productName }}</p>
+                  <p class="text-[0.6rem] text-slate-500">{{ product.displayName }}</p>
                   <p class="text-sm font-black text-blue-400 tabular-nums">{{ product.salePrice | rdCurrency }}</p>
 
                   <!-- Stock -->
@@ -211,15 +212,16 @@
             <p class="text-sm">Selecciona productos del catálogo</p>
           </div>
         }
-        @for (item of cartItems(); track item.productId; let i = $index) {
+        @for (item of cartItems(); track item.presentationId; let i = $index) {
           <div class="flex items-center gap-3 p-3 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.06] group">
             <!-- Color dot -->
             <div class="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-black text-white/80 shrink-0"
               [ngClass]="productColor(item.name)">
-              {{ productInitials(item.name) }}
+              {{ productInitials(item.displayName) }}
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-bold text-white leading-tight truncate">{{ item.name }}</p>
+              <p class="text-[0.6rem] text-slate-500">{{ item.displayName }}</p>
               <p class="text-xs text-slate-500 tabular-nums">{{ item.salePrice | rdCurrency }}
                 @if (item.itbisRate > 0) { <span class="text-slate-600">+ ITBIS</span> }
               </p>
@@ -892,13 +894,14 @@
 
         <!-- Quick Item List -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-40 overflow-y-auto pr-1">
-          @for (p of topQuickProducts(); track p.productId) {
+          @for (p of topQuickProducts(); track p.presentationId) {
             <button (click)="selectedQuickProduct.set(p); quickSaleAmountInput?.nativeElement?.focus()"
-              [class.bg-blue-600]="selectedQuickProduct()?.productId === p.productId"
-              [class.border-blue-500]="selectedQuickProduct()?.productId === p.productId"
-              [class.bg-white\/\[0\.04\]]="selectedQuickProduct()?.productId !== p.productId"
+              [class.bg-blue-600]="selectedQuickProduct()?.presentationId === p.presentationId"
+              [class.border-blue-500]="selectedQuickProduct()?.presentationId === p.presentationId"
+              [class.bg-white\/\[0\.04\]]="selectedQuickProduct()?.presentationId !== p.presentationId"
               class="flex flex-col items-start p-2.5 rounded-xl border border-white/[0.07] hover:border-blue-500/30 text-left transition-all">
-              <span class="text-xs font-bold text-white line-clamp-1">{{ p.name }}</span>
+              <span class="text-xs font-bold text-white line-clamp-1">{{ p.productName }}</span>
+              <span class="text-[0.6rem] text-slate-400">{{ p.displayName }}</span>
               <span class="text-[0.65rem] text-slate-400">{{ p.salePrice | rdCurrency }} / {{ p.unitTypeId === 2 ? 'lb' : p.unitTypeId === 3 ? 'L' : 'ud' }}</span>
             </button>
           } @empty {
@@ -923,7 +926,7 @@
             @let calculatedQty = amount / priceWithTax;
             
             <p class="text-center text-[0.65rem] text-slate-500 mt-2">
-              Se calculará: <strong class="text-white">{{ calculatedQty | number:'1.0-3' }} {{ selected.unitTypeId === 2 ? 'lbs' : selected.unitTypeId === 3 ? 'L' : 'unidades' }}</strong> de {{ selected.name }}
+              Se calculará: <strong class="text-white">{{ calculatedQty | number:'1.0-3' }} {{ selected.unitTypeId === 2 ? 'lbs' : selected.unitTypeId === 3 ? 'L' : 'unidades' }}</strong> de {{ selected.productName }} ({{ selected.displayName }})
             </p>
           </div>
         }

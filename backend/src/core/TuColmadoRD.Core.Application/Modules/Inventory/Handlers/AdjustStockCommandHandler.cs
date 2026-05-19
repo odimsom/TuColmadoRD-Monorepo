@@ -33,34 +33,10 @@ public sealed class AdjustStockCommandHandler : IRequestHandler<AdjustStockComma
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<OperationResult<ResultUnit, DomainError>> Handle(AdjustStockCommand request, CancellationToken cancellationToken)
+    public Task<OperationResult<ResultUnit, DomainError>> Handle(AdjustStockCommand request, CancellationToken cancellationToken)
     {
-        var tenantId = (Guid)_tenantProvider.TenantId;
-
-        var productResult = await _productRepository.GetByIdAsync(request.ProductId, tenantId, cancellationToken);
-        if (!productResult.TryGetResult(out var product) || product is null)
-        {
-            return OperationResult<ResultUnit, DomainError>.Bad(productResult.Error);
-        }
-
-        var adjustResult = product.AdjustStock(request.Delta);
-        if (!adjustResult.IsGood)
-        {
-            return adjustResult;
-        }
-
-        var payload = new StockAdjustedPayload(
-            product.Id,
-            tenantId,
-            request.Delta,
-            product.StockQuantity,
-            request.Reason,
-            product.UpdatedAt);
-
-        var outboxMessage = new OutboxMessage("StockAdjusted", JsonSerializer.Serialize(payload));
-        await _outboxRepository.AddAsync(outboxMessage, cancellationToken);
-        await _unitOfWork.CommitAsync(cancellationToken);
-
-        return OperationResult<ResultUnit, DomainError>.Good(ResultUnit.Value);
+        return Task.FromResult(OperationResult<ResultUnit, DomainError>.Bad(
+            DomainError.Business("stock.operation_deprecated",
+                "Stock is now tracked per presentation. Use DrawFromContainerCommand or ConfirmStockEntryCommand.")));
     }
 }

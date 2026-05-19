@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { GatewayService } from './gateway.service';
+import { API_PATHS } from '../constants';
 
 export interface TenantProfileDto {
   businessName: string;
@@ -23,10 +24,10 @@ export class SettingsService {
   private gateway = inject(GatewayService);
 
   getProfile(): Observable<TenantProfileDto | null> {
-    return this.gateway.get<TenantProfileDto | null>('/api/v1/settings/profile');
+    return this.gateway.get<TenantProfileDto | null>(API_PATHS.SETTINGS_PROFILE);
   }
 
   upsertProfile(req: UpsertTenantProfileRequest): Observable<void> {
-    return this.gateway.put<void>('/api/v1/settings/profile', req);
+    return this.gateway.put<void>(API_PATHS.SETTINGS_PROFILE, req);
   }
 }

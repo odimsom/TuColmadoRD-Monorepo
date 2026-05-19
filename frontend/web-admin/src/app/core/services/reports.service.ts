@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { GatewayService } from './gateway.service';
+import { AuthService } from './auth.service';
 
 export interface TopProduct {
   product_name: string;
@@ -44,9 +45,10 @@ export interface CustomerReport {
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   private gateway = inject(GatewayService);
+  private auth = inject(AuthService);
 
   private tenantId(): string {
-    return localStorage.getItem('tc_tenant') ?? '';
+    return this.auth.currentUser()?.tenantId ?? '';
   }
 
   getSalesReport(from?: string, to?: string): Observable<SalesReport> {

@@ -58,6 +58,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/portal/inventory/inventory').then(m => m.Inventory)
       },
       {
+        path: 'presentations/:id',
+        loadComponent: () => import('./features/portal/presentations/presentations').then(m => m.Presentations)
+      },
+      {
+        path: 'stock-entries',
+        loadComponent: () => import('./features/portal/stock-entries/stock-entries').then(m => m.StockEntries)
+      },
+      {
+        path: 'monetary-fund',
+        loadComponent: () => import('./features/portal/monetary-fund/monetary-fund').then(m => m.MonetaryFund)
+      },
+      {
         path: 'categories',
         loadComponent: () => import('./features/portal/categories/categories').then(m => m.Categories)
       },

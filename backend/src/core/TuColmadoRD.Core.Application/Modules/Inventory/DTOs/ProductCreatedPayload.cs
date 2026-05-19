@@ -8,8 +8,5 @@ public sealed record ProductCreatedPayload(
     Guid TenantId,
     string Name,
     Guid CategoryId,
-    decimal CostPrice,
-    decimal SalePrice,
     decimal ItbisRate,
-    int UnitType,
     DateTime CreatedAt);

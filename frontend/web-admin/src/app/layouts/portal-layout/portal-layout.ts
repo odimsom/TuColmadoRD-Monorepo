@@ -6,8 +6,7 @@ import { filter } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { SaleService, ShiftDto } from '../../core/services/sale.service';
 import { DownloadService, DownloadInfo } from '../../core/services/download.service';
-
-const BANNER_DISMISSED_KEY = 'tc_download_banner_dismissed';
+import { LS_KEYS } from '../../core/constants';
 
 @Component({
   selector: 'app-portal-layout',
@@ -29,7 +28,7 @@ export class PortalLayout implements OnInit, OnDestroy {
   shiftElapsed       = signal('--:--:--');
   downloadInfo       = signal<DownloadInfo | null>(null);
   showDownloadBanner = signal(
-    localStorage.getItem(BANNER_DISMISSED_KEY) !== 'true'
+    localStorage.getItem(LS_KEYS.DOWNLOAD_BANNER_DISMISSED) !== 'true'
   );
   isLicenseExpired = this.authService.isLicenseExpired;
   private router = inject(Router);
@@ -64,7 +63,7 @@ export class PortalLayout implements OnInit, OnDestroy {
   }
 
   dismissBanner(): void {
-    localStorage.setItem(BANNER_DISMISSED_KEY, 'true');
+    localStorage.setItem(LS_KEYS.DOWNLOAD_BANNER_DISMISSED, 'true');
     this.showDownloadBanner.set(false);
   }
 

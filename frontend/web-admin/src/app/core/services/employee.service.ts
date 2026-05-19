@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { GatewayService } from './gateway.service';
+import { API_PATHS } from '../constants';
 
 export interface EmployeeDto {
   _id: string;
@@ -30,22 +30,21 @@ export interface UpdateEmployeeDto {
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
-  private http = inject(HttpClient);
-  private base = `${environment.gatewayUrl}/gateway/auth/employees`;
+  private gateway = inject(GatewayService);
 
   list(): Observable<EmployeeDto[]> {
-    return this.http.get<EmployeeDto[]>(this.base);
+    return this.gateway.get<EmployeeDto[]>(API_PATHS.AUTH_EMPLOYEES);
   }
 
   create(data: CreateEmployeeDto): Observable<EmployeeDto> {
-    return this.http.post<EmployeeDto>(this.base, data);
+    return this.gateway.post<EmployeeDto>(API_PATHS.AUTH_EMPLOYEES, data);
   }
 
   update(id: string, data: UpdateEmployeeDto): Observable<EmployeeDto> {
-    return this.http.put<EmployeeDto>(`${this.base}/${id}`, data);
+    return this.gateway.put<EmployeeDto>(`${API_PATHS.AUTH_EMPLOYEES}/${id}`, data);
   }
 
   toggle(id: string, active: boolean): Observable<void> {
-    return this.http.patch<void>(`${this.base}/${id}`, { active });
+    return this.gateway.patch<void>(`${API_PATHS.AUTH_EMPLOYEES}/${id}`, { active });
   }
 }
