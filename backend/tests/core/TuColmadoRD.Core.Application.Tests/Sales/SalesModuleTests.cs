@@ -9,7 +9,6 @@ using TuColmadoRD.Core.Domain.Base.Result;
 using TuColmadoRD.Core.Domain.Entities.Inventory;
 using TuColmadoRD.Core.Domain.Entities.Sales;
 using TuColmadoRD.Core.Domain.Entities.System;
-using TuColmadoRD.Core.Domain.Enums.Inventory_Purchasing;
 using TuColmadoRD.Core.Domain.ValueObjects;
 using TuColmadoRD.Core.Domain.ValueObjects.Base;
 using TuColmadoRD.Core.Domain.Interfaces.Repositories.Logistics;
@@ -59,6 +58,9 @@ public sealed class SalesModuleTests
             _tenant.Object,
             _shiftService.Object,
             _productRepo.Object,
+            new Mock<IPresentationRepository>().Object,
+            new Mock<IPackagedStockRepository>().Object,
+            new Mock<IStockContainerRepository>().Object,
             _saleRepo.Object,
             _sequence.Object,
             _shiftRepo.Object,
@@ -75,7 +77,6 @@ public sealed class SalesModuleTests
             _tenant.Object,
             _shiftService.Object,
             _saleRepo.Object,
-            _productRepo.Object,
             _shiftRepo.Object,
             _outboxRepo.Object,
             _uow.Object,
@@ -107,7 +108,7 @@ public sealed class SalesModuleTests
             .ReturnsAsync(new List<Product> { product }.AsReadOnly());
 
         var command = new CreateSaleCommand(
-            new List<SaleItemRequest> { new(product.Id, 2m) }.AsReadOnly(),
+            new List<SaleItemRequest> { new(product.Id, Guid.NewGuid(), 2m) }.AsReadOnly(),
             new List<SalePaymentRequest> { new(1, 300m, null, null) }.AsReadOnly(),
             null);
 
@@ -131,7 +132,7 @@ public sealed class SalesModuleTests
                 DomainError.Business("shift.not_found", "No hay turno abierto")));
 
         var command = new CreateSaleCommand(
-            new List<SaleItemRequest> { new(Guid.NewGuid(), 1m) }.AsReadOnly(),
+            new List<SaleItemRequest> { new(Guid.NewGuid(), Guid.NewGuid(), 1m) }.AsReadOnly(),
             new List<SalePaymentRequest>().AsReadOnly(),
             null);
 
@@ -219,14 +220,10 @@ public sealed class SalesModuleTests
 
     private Product BuildProduct()
     {
-        var cost     = Money.FromDecimal(80m).Result!;
-        var price    = Money.FromDecimal(100m).Result!;
         var taxRate  = TaxRate.Create(0.18m).Result!;
-        var result   = Product.Create(_tenantId, "Producto Test", Guid.NewGuid(), cost, price, taxRate, UnitType.Unit);
+        var result   = Product.Create(_tenantId, "Producto Test", Guid.NewGuid(), taxRate);
         result.IsGood.Should().BeTrue("el producto de prueba debe crearse sin errores");
-        var product = result.Result!;
-        product.AdjustStock(100m);   // stock inicial para que las ventas puedan descontar
-        return product;
+        return result.Result!;
     }
 
     /// <summary>
