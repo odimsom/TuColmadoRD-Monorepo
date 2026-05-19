@@ -10,4 +10,5 @@ public interface IMonetaryFundRepository
     Task<MonetaryFund?> GetDefaultAsync(Guid tenantId, CancellationToken ct = default);
     Task<IReadOnlyList<MonetaryFund>> GetAllAsync(Guid tenantId, CancellationToken ct = default);
     Task AddAsync(MonetaryFund fund, CancellationToken ct = default);
+    Task TrackNewTransactionAsync(FundTransaction tx, CancellationToken ct = default);
 }
