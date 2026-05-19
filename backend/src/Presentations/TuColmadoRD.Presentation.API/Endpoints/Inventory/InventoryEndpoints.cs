@@ -15,6 +15,7 @@ public static class InventoryEndpoints
 
         // Products
         group.MapPost("/products", CreateProduct).WithName("CreateProduct").WithOpenApi();
+        group.MapPost("/products/seed-defaults", SeedDefaultProducts).WithName("SeedDefaultProducts").WithOpenApi();
         group.MapDelete("/products/{id:guid}", DeactivateProduct).WithName("DeactivateProduct").WithOpenApi();
         group.MapGet("/products/{id:guid}", GetProductById).WithName("GetProductById").WithOpenApi();
         group.MapGet("/products", GetProductsPaged).WithName("GetProductsPaged").WithOpenApi();
@@ -60,6 +61,15 @@ public static class InventoryEndpoints
     }
 
     // ── Products ─────────────────────────────────────────────────────────────
+
+    private static async Task<IResult> SeedDefaultProducts(IMediator mediator, CancellationToken ct)
+    {
+        var result = await mediator.Send(new SeedDefaultProductsCommand(), ct);
+        if (!result.TryGetResult(out var count))
+            return result.Error.MapDomainError();
+
+        return TypedResults.Ok(new { message = "Productos sembrados correctamente", count });
+    }
 
     private static async Task<IResult> CreateProduct(
         CreateProductRequest request, IMediator mediator, CancellationToken ct)

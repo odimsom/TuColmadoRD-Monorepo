@@ -68,6 +68,10 @@ export class InventoryService {
     return this.gateway.post<{ created: number }>(`${API_PATHS.INVENTORY_CATEGORIES}/seed-defaults`, {});
   }
 
+  seedDefaultProducts(): Observable<{ message: string; count: number }> {
+    return this.gateway.post<{ message: string; count: number }>(API_PATHS.INVENTORY_PRODUCTS_SEED, {});
+  }
+
   deactivateCategory(id: string): Observable<void> {
     return this.gateway.delete(`${API_PATHS.INVENTORY_CATEGORIES}/${id}`);
   }

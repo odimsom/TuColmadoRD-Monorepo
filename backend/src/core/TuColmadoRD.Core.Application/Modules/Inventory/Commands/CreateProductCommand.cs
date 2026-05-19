@@ -13,3 +13,10 @@ public record CreateProductCommand(
     Guid CategoryId,
     decimal ItbisRate
 ) : IRequest<OperationResult<Guid, DomainError>>, ICommandMarker;
+
+/// <summary>
+/// Seeds the catalogue with typical Dominican colmado products.
+/// Fails if products already exist for the tenant.
+/// </summary>
+public sealed record SeedDefaultProductsCommand
+    : IRequest<OperationResult<int, DomainError>>;
