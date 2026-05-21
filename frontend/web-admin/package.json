@@ -51,7 +51,7 @@
         "selenium-webdriver": "^4.34.0",
         "tailwindcss": "^3.4.17",
         "tailwindcss-animate": "^1.0.7",
-        "typescript": "~5.9.2",
+        "typescript": "~6.0.3",
         "vitest": "^4.0.8"
     },
     "build": {
