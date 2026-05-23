@@ -33,8 +33,8 @@ const perks = [
 const plans = [
   {
     name: 'Básico',
-    price: '799',
-    description: 'Para el colmado pequeño que quiere arrancar.',
+    price: '1,200',
+    description: 'Para el colmado que quiere arrancar en digital.',
     features: [
       'Inventario ilimitado',
       'Punto de venta (POS)',
@@ -48,7 +48,7 @@ const plans = [
   },
   {
     name: 'Profesional',
-    price: '1,499',
+    price: '2,200',
     description: 'El plan completo para crecer en serio.',
     features: [
       'Todo lo del plan Básico',
@@ -64,7 +64,7 @@ const plans = [
   },
   {
     name: 'Empresarial',
-    price: '2,499',
+    price: '3,800',
     description: 'Para mini-supermercados y colmados grandes.',
     features: [
       'Todo lo del plan Profesional',
