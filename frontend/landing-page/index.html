@@ -1,30 +1,79 @@
 <!doctype html>
-<html lang="en">
+<html lang="es" data-theme="tucolmadord">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary SEO -->
+    <title>TuColmadoRD — Software de Gestión para Colmados Dominicanos</title>
+    <meta name="description" content="La primera plataforma de gestión diseñada para el colmado dominicano. Controla inventario, fiados, ventas y pedidos desde tu celular. Programa pionero: primer año gratis para los primeros 20 colmados." />
+    <meta name="keywords" content="software colmado dominicano, gestión colmado RD, inventario colmado, digitalización colmado, TuColmadoRD, ventas colmado, fiados digitales, República Dominicana" />
+    <meta name="author" content="TuColmadoRD — Synset Solutions" />
+    <link rel="canonical" href="https://tucolmadord.com/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tucolmadord.com/" />
+    <meta property="og:title" content="TuColmadoRD — Software de Gestión para Colmados Dominicanos" />
+    <meta property="og:description" content="La primera plataforma diseñada para el colmadero dominicano. Gestiona tu negocio desde un solo lugar. Programa pionero activo: primer año completamente gratis." />
+    <meta property="og:image" content="https://tucolmadord.com/og-image.png" />
+    <meta property="og:locale" content="es_DO" />
+    <meta property="og:site_name" content="TuColmadoRD" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://tucolmadord.com/" />
+    <meta name="twitter:title" content="TuColmadoRD — Software para Colmados Dominicanos" />
+    <meta name="twitter:description" content="Gestiona inventario, fiados, ventas y pedidos desde tu celular. Hecho en RD para el colmadero dominicano." />
+    <meta name="twitter:image" content="https://tucolmadord.com/og-image.png" />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.svg" />
-    <title>TuColmadoRD | El futuro de tu negocio</title>
-    <!-- Open Graph / Social Preview -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="TuColmadoRD — Tu colmado digital, sin costo por un año">
-    <meta property="og:description" content="Controla inventario, fiados y ventas desde tu celular. Programa piloto: plazas limitadas, soporte RD por WhatsApp.">
-    <meta property="og:image" content="https://tucolmadord.com/assets/images/hero-colmado.png">
-    <meta property="og:image:alt" content="Interior de colmado con estantes y productos - TuColmadoRD">
-    <meta property="og:url" content="https://tucolmadord.com/">
-    <meta property="og:site_name" content="TuColmadoRD">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="TuColmadoRD — Tu colmado digital, sin costo por un año">
-    <meta name="twitter:description" content="Controla inventario, fiados y ventas desde tu celular. Programa piloto: plazas limitadas, soporte RD por WhatsApp.">
-    <meta name="twitter:image" content="https://tucolmadord.com/assets/images/hero-colmado.png">
-    <meta name="description" content="TuColmadoRD: POS y gestión para colmados dominicanos. 1 año gratis en el programa piloto. Registro rápido y soporte local.">
-    <link rel="canonical" href="https://tucolmadord.com/">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-</head>
-  <body class="antialiased min-h-screen">
+
+    <!-- Structured Data: Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "TuColmadoRD",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web, Android, iOS",
+      "url": "https://tucolmadord.com",
+      "description": "Plataforma de gestión integral para colmados dominicanos. Inventario, fiados, ventas, pedidos y más.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "DOP",
+        "description": "Programa pionero: 1 año de acceso completo sin costo para los primeros 20 colmados."
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Synset Solutions",
+        "url": "https://synsetsolutions.com"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "República Dominicana"
+      }
+    }
+    </script>
+
+    <!-- Structured Data: WebSite (enables sitelinks search) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "TuColmadoRD",
+      "url": "https://tucolmadord.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://app.tucolmadord.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+  </head>
+  <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

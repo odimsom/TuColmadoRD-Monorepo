@@ -1,0 +1,108 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@100..900&display=swap");
+
+@source "../../**/*.{vue,ts,js}";
+
+@plugin "daisyui" {
+  themes: corporate, dim, tucolmadord;
+}
+
+@theme {
+  --font-serif: "Playfair Display", serif;
+  --font-sans: "Inter", sans-serif;
+
+  --color-primary: #0047ab;
+  --color-primary-content: #ffffff;
+
+  --color-secondary: #e41e26;
+  --color-secondary-content: #ffffff;
+
+  --color-accent: #facc15;
+  --color-accent-content: #000000;
+
+  --color-neutral: #1a1a1a;
+  --color-neutral-content: #ffffff;
+
+  --color-base-100: #ffffff;
+  --color-base-200: #f8fafc;
+  --color-base-300: #f1f5f9;
+  --color-base-content: #1e293b;
+}
+
+[data-theme="tucolmadord"] {
+  --color-primary: #0047ab;
+  --color-secondary: #e41e26;
+  --color-base-100: #ffffff;
+  --color-base-200: #f1f5f9;
+  --color-base-300: #e2e8f0;
+  --color-base-content: #1e293b;
+  --color-neutral: #1a1a1a;
+  --color-neutral-content: #ffffff;
+}
+
+[data-theme="dim"] {
+  --color-primary: #3b7dd8;
+  --color-secondary: #e41e26;
+  --color-neutral: #1e2533;
+  --color-neutral-content: #e2e8f0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); }
+body { font-family: var(--font-sans); overflow-x: hidden; background-color: var(--color-base-100); }
+
+/* ── Clip shapes ─────────────────────────────────────────────── */
+.clip-logo-tab {
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 0 100%);
+}
+
+.clip-flag-left {
+  clip-path: polygon(0 0, 85% 0, 100% 100%, 0 100%);
+}
+
+.clip-flag-right {
+  clip-path: polygon(15% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* ── Reveal animations ───────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition:
+    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-56px);
+  transition:
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(56px);
+  transition:
+    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.active,
+.reveal-left.active,
+.reveal-right.active {
+  opacity: 1;
+  transform: none;
+}
+
+/* Staggered child reveals */
+.reveal-stagger > *:nth-child(1) { transition-delay: 0ms; }
+.reveal-stagger > *:nth-child(2) { transition-delay: 100ms; }
+.reveal-stagger > *:nth-child(3) { transition-delay: 200ms; }
+.reveal-stagger > *:nth-child(4) { transition-delay: 300ms; }
+.reveal-stagger > *:nth-child(5) { transition-delay: 400ms; }
+.reveal-stagger > *:nth-child(6) { transition-delay: 500ms; }
