@@ -5,7 +5,7 @@ import { useWebAdmin } from '@/composables/useWebAdmin'
 
 defineOptions({ name: 'HeroSection' })
 
-const { registerUrl } = useWebAdmin()
+const { whatsappUrl } = useWebAdmin()
 
 const highlights = [
   { label: 'Programa Pionero', value: '20 cupos' },
@@ -43,18 +43,18 @@ const highlights = [
           <span class="text-primary italic">TU NEGOCIO</span>
         </h1>
 
-        <p class="text-xl text-neutral-content/70 mb-12 leading-relaxed max-w-xl font-medium border-l-4 border-secondary pl-8">
-          La primera plataforma diseñada para el colmadero dominicano.
-          Gestiona inventario, fiados, ventas y pedidos desde un solo lugar.
-          Estamos en lanzamiento — únete a los primeros 20 colmados pioneros.
+        <p class="text-lg text-neutral-content/70 mb-10 leading-relaxed max-w-lg border-l-4 border-secondary pl-6">
+          ¿Cuadernos llenos de fiados, inventario que no cuadra, cuentas que se pierden?
+          TuColmadoRD lo pone todo en orden desde tu celular. Buscamos los primeros 20 colmados
+          para arrancarlo juntos — sin costo el primer año.
         </p>
 
         <div class="flex flex-wrap gap-4">
           <AppButton
-            :href="registerUrl"
+            :href="whatsappUrl"
             size="lg"
             variant="primary"
-            class="px-10 h-14 text-base rounded-none font-black uppercase tracking-widest"
+            class="px-10 rounded-none font-black uppercase tracking-widest"
           >
             Solicitar mi cupo
           </AppButton>
@@ -62,7 +62,7 @@ const highlights = [
             href="#como-funciona"
             size="lg"
             variant="outline"
-            class="px-10 h-14 text-base text-neutral-content border-neutral-content hover:bg-neutral-content hover:text-neutral rounded-none font-black uppercase tracking-widest"
+            class="px-10 text-neutral-content border-neutral-content hover:bg-neutral-content hover:text-neutral rounded-none font-black uppercase tracking-widest"
           >
             Ver cómo funciona
           </AppButton>

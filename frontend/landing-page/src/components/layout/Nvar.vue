@@ -26,14 +26,14 @@ function toggleTheme() {
   <nav class="sticky top-0 z-50 w-full pointer-events-none overflow-visible">
     <div class="flex items-start overflow-visible">
       <!-- Logo tab — clip parallelogram, always dark -->
-      <div class="clip-logo-tab bg-neutral h-20 w-auto min-w-[200px] flex items-center px-8 z-20 shadow-xl pointer-events-auto shrink-0">
+      <div class="clip-logo-tab bg-base-200 h-20 w-auto min-w-[200px] flex items-center px-8 z-20 shadow-xl pointer-events-auto shrink-0">
         <a href="#" aria-label="TuColmadoRD inicio" class="flex items-center">
           <AppLogo />
         </a>
       </div>
 
       <!-- Nav bar -->
-      <div class="flex-1 bg-neutral/90 backdrop-blur-md border-b border-neutral-content/5 h-16 flex items-center justify-between px-8 -ml-8 z-10 pointer-events-auto relative">
+      <div class="flex-1 bg-neutral/90 backdrop-blur-md h-16 flex items-center justify-between px-8 -ml-8 z-10 pointer-events-auto relative">
         <!-- Desktop links -->
         <div class="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center gap-8">
           <a

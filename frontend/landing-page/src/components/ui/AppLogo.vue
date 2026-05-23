@@ -19,7 +19,7 @@ defineProps<Props>()
     
     <div class="flex items-baseline font-serif font-black text-3xl tracking-tighter">
       <span class="text-secondary">Tu</span>
-      <span class="text-neutral-content mx-0.5">Colmado</span>
+      <span class="text-base-content mx-0.5">Colmado</span>
       <span class="relative flex items-center">
         <span class="text-secondary">R</span>
         <span class="text-primary -ml-1">D</span>

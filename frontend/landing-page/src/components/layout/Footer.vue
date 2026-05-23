@@ -49,7 +49,7 @@ import AppLogo from '@/components/ui/AppLogo.vue'
       <div class="pt-10 border-t border-neutral-content/5 flex flex-col md:flex-row justify-between items-center gap-6 text-xs font-bold uppercase tracking-widest text-neutral-content/30">
         <p>© 2026 TuColmadoRD. Marca Registrada.</p>
         <p>
-          Socio Tecnológico: 
+          Creado por
           <a href="https://synsetsolutions.com" target="_blank" class="text-primary hover:text-neutral-content transition-colors">
             Synset Solutions
           </a>
