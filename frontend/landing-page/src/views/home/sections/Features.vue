@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import AppSection from '@/components/ui/AppSection.vue'
+import imgGestion from '@/assets/img/hero/col-picture-mobile.webp'
+import imgPedidos from '@/assets/img/hero/col-picture-desktop.webp'
 
 defineOptions({ name: 'FeaturesSection' })
 
 const sections = [
   {
-    image: '/src/assets/img/hero/col-picture-mobile.webp',
+    image: imgGestion,
     imageSide: 'left' as const,
     flagText: 'Control Total',
     flagVariant: 'secondary' as const,
@@ -25,7 +27,7 @@ const sections = [
     ]
   },
   {
-    image: '/src/assets/img/hero/col-picture-desktop.webp',
+    image: imgPedidos,
     imageSide: 'right' as const,
     flagText: 'Más Ventas',
     flagVariant: 'primary' as const,
@@ -33,7 +35,7 @@ const sections = [
     highlight: 'No Paran',
     description: 'Llega a más clientes sin esfuerzo. Tu colmado ahora está disponible 24/7 para que tus vecinos puedan pedir desde la comodidad de su hogar.',
     features: [
-      { title: 'WhatsApp Integration', icon: 'lucide:message-circle' },
+      { title: 'Pedidos en Línea', icon: 'lucide:shopping-cart' },
       { title: 'App para Clientes', icon: 'lucide:app-window' },
       { title: 'Gestión de Delivery', icon: 'lucide:truck' },
       { title: 'Pagos Digitales', icon: 'lucide:credit-card' }
