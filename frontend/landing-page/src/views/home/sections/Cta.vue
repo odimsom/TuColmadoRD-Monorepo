@@ -9,7 +9,7 @@ const { whatsappUrl } = useWebAdmin()
 </script>
 
 <template>
-  <section class="py-32 bg-secondary relative overflow-hidden">
+  <section id="contacto" class="py-32 bg-secondary relative overflow-hidden">
     <div class="absolute inset-0 opacity-10">
       <div class="absolute top-0 left-0 w-96 h-96 bg-secondary-content rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
       <div class="absolute bottom-0 right-0 w-96 h-96 bg-primary rounded-full translate-x-1/2 translate-y-1/2 blur-3xl"></div>

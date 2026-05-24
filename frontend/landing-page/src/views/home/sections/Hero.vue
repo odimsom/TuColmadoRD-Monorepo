@@ -9,7 +9,7 @@ const { whatsappUrl } = useWebAdmin()
 
 const highlights = [
   { label: 'Programa Pionero', value: '20 cupos' },
-  { label: 'Soporte Humano', value: 'WhatsApp' },
+  { label: 'Soporte', value: 'Directo' },
   { label: 'Primer Año', value: 'Gratis' },
   { label: 'Cobertura', value: 'RD' },
 ]
