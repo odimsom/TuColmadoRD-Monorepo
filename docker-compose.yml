@@ -316,8 +316,8 @@ services:
 
   web:
     build:
-      context: ./frontend/web-admin
-      dockerfile: Dockerfile
+      context: ./frontend
+      dockerfile: web-admin/Dockerfile
     restart: on-failure:3
     ports:
       - "${WEB_PORT:-8083}:80"
