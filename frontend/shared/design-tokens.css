@@ -1,0 +1,219 @@
+/* ──────────────────────────────────────────────────────────────────
+ * TuColmadoRD — colors_and_type.css
+ * Design tokens lifted from frontend/landing-page/src/assets/css/style.css
+ * and frontend/web-admin/src/styles.css. Plain CSS, no Tailwind required.
+ * Drop a <link rel="stylesheet" href="…/colors_and_type.css"> on any
+ * page to inherit the brand palette + type ramp.
+ * ────────────────────────────────────────────────────────────────── */
+
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@100..900&display=swap");
+
+:root {
+  /* ── Type families ───────────────────────────────────────────── */
+  --font-serif: "Playfair Display", "Times New Roman", serif;
+  --font-sans:  "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:  ui-monospace, "SF Mono", Menzio, "Roboto Mono", monospace;
+
+  /* ── Brand palette (Dominican flag: azul / rojo / blanco) ────── */
+  --color-primary:           #0047ab;   /* "Azul colmado" */
+  --color-primary-content:   #ffffff;
+  --color-primary-50:        #eef4fc;
+  --color-primary-100:       #d9e6f7;
+  --color-primary-200:       #a8c5ec;
+  --color-primary-300:       #6e9bdb;
+  --color-primary-400:       #3b7dd8;   /* dim-theme primary */
+  --color-primary-500:       #0047ab;   /* base */
+  --color-primary-600:       #003a8e;
+  --color-primary-700:       #002e72;
+  --color-primary-800:       #002358;
+  --color-primary-900:       #001a42;
+
+  --color-secondary:         #e41e26;   /* "Rojo bandera" */
+  --color-secondary-content: #ffffff;
+  --color-secondary-50:      #fdecec;
+  --color-secondary-100:     #fbd0d2;
+  --color-secondary-200:     #f4a4a8;
+  --color-secondary-300:     #ec7077;
+  --color-secondary-400:     #e44851;
+  --color-secondary-500:     #e41e26;   /* base */
+  --color-secondary-600:     #bf1820;
+  --color-secondary-700:     #971318;
+  --color-secondary-800:     #6e0e12;
+  --color-secondary-900:     #4a090c;
+
+  --color-accent:            #facc15;   /* mostaza, used sparingly */
+  --color-accent-content:    #000000;
+
+  /* ── Neutrals (the "dark stage" the brand is photographed on) ── */
+  --color-neutral:           #1a1a1a;
+  --color-neutral-content:   #ffffff;
+  --color-neutral-800:       #1e2533;   /* dim theme neutral */
+  --color-neutral-700:       #2a2f3a;
+  --color-neutral-600:       #3a3f4a;
+
+  /* ── Surfaces (light theme = tucolmadord) ────────────────────── */
+  --color-base-100:          #ffffff;
+  --color-base-200:          #f8fafc;
+  --color-base-300:          #f1f5f9;   /* alt: #e2e8f0 in tucolmadord theme */
+  --color-base-content:      #1e293b;
+
+  /* Foreground tokens (semantic, ramped over base-content) */
+  --color-fg-1:              #1e293b;   /* primary body */
+  --color-fg-2:              rgb(30 41 59 / 0.70);  /* secondary text */
+  --color-fg-3:              rgb(30 41 59 / 0.50);  /* tertiary / meta */
+  --color-fg-4:              rgb(30 41 59 / 0.30);  /* disabled / hint */
+  --color-fg-5:              rgb(30 41 59 / 0.10);  /* dividers / lines */
+
+  /* On-dark foreground tokens (when sitting on neutral) */
+  --color-fg-on-dark-1:      #ffffff;
+  --color-fg-on-dark-2:      rgb(255 255 255 / 0.70);
+  --color-fg-on-dark-3:      rgb(255 255 255 / 0.50);
+  --color-fg-on-dark-4:      rgb(255 255 255 / 0.30);
+  --color-fg-on-dark-5:      rgb(255 255 255 / 0.10);
+
+  /* ── Semantic feedback (daisyUI corporate defaults) ──────────── */
+  --color-info:              #3abff8;
+  --color-success:           #36d399;
+  --color-warning:           #fbbd23;
+  --color-error:             #f87272;
+
+  /* ── Spacing scale (4px base) ────────────────────────────────── */
+  --space-0:  0;
+  --space-1:  0.25rem;  /*  4px */
+  --space-2:  0.5rem;   /*  8px */
+  --space-3:  0.75rem;  /* 12px */
+  --space-4:  1rem;     /* 16px */
+  --space-5:  1.25rem;  /* 20px */
+  --space-6:  1.5rem;   /* 24px */
+  --space-8:  2rem;     /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+  --space-32: 8rem;     /* 128px */
+
+  /* ── Radii ───────────────────────────────────────────────────────
+   * The brand leans hard on SQUARE corners (rounded-none) for
+   * marketing surfaces. Cards/buttons in the admin app use small
+   * rounding only. NEVER soften the marketing CTAs. */
+  --radius-none: 0;
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius-md:   6px;        /* logo rect rx */
+  --radius-lg:   8px;        /* admin cards */
+  --radius-full: 9999px;     /* avatars only */
+
+  /* ── Shadows ─────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow:    0 4px 6px -1px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.10);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.10), 0 4px 6px -4px rgb(0 0 0 / 0.10);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.10);
+  --shadow-2xl:0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+  /* ── Type ramp ───────────────────────────────────────────────────
+   * Display headlines = Playfair Display Black, ITALIC + UPPERCASE
+   * + tracking-tighter + leading-[0.85]. Body = Inter. Eyebrows /
+   * labels = Inter Black, UPPERCASE, tracking-[0.2em–0.3em], 11–12px. */
+
+  /* Display — marketing headlines ("IMPULSA TU NEGOCIO") */
+  --type-display-2xl-size:   7rem;        /* 112px (text-8xl) */
+  --type-display-xl-size:    5rem;        /* 80px  (text-7xl) */
+  --type-display-lg-size:    3.75rem;     /* 60px  (text-6xl) */
+  --type-display-md-size:    3rem;        /* 48px  (text-5xl) */
+  --type-display-weight:     900;
+  --type-display-leading:    0.85;
+  --type-display-tracking:   -0.04em;     /* tracking-tighter */
+  --type-display-transform:  uppercase;
+  --type-display-style:      italic;
+  --type-display-family:     var(--font-serif);
+
+  /* H1–H4 — page titles inside the app */
+  --type-h1-size: 2rem;      --type-h1-weight: 900;  --type-h1-leading: 1.05; --type-h1-tracking: -0.02em;
+  --type-h2-size: 1.5rem;    --type-h2-weight: 900;  --type-h2-leading: 1.10; --type-h2-tracking: -0.01em;
+  --type-h3-size: 1.25rem;   --type-h3-weight: 900;  --type-h3-leading: 1.20; --type-h3-tracking: -0.005em;
+  --type-h4-size: 1rem;      --type-h4-weight: 700;  --type-h4-leading: 1.30; --type-h4-tracking: 0;
+
+  /* Body */
+  --type-body-lg-size: 1.125rem;  /* 18px */
+  --type-body-md-size: 1rem;      /* 16px */
+  --type-body-sm-size: 0.875rem;  /* 14px */
+  --type-body-xs-size: 0.75rem;   /* 12px */
+  --type-body-leading: 1.6;
+  --type-body-weight:  400;
+
+  /* Eyebrow / label — the brand's signature tiny-caps tag */
+  --type-eyebrow-size:     0.75rem;       /* 12px */
+  --type-eyebrow-weight:   900;
+  --type-eyebrow-tracking: 0.2em;
+  --type-eyebrow-transform: uppercase;
+
+  /* Mono — receipts, SKUs, RNC */
+  --type-mono-size: 0.875rem;
+  --type-mono-family: var(--font-mono);
+
+  /* ── Motion ──────────────────────────────────────────────────── */
+  --ease-reveal:   cubic-bezier(0.16, 1, 0.3, 1);   /* primary easing */
+  --ease-out:      cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-in-out:   cubic-bezier(0.4, 0.0, 0.2, 1);
+  --duration-fast: 200ms;
+  --duration-med:  450ms;
+  --duration-slow: 850ms;
+}
+
+/* ── Semantic element styling — apply on plain HTML ──────────── */
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+  line-height: var(--type-body-leading);
+  overflow-x: hidden;
+}
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); }
+
+h1 { font-size: var(--type-h1-size); font-weight: var(--type-h1-weight); line-height: var(--type-h1-leading); letter-spacing: var(--type-h1-tracking); }
+h2 { font-size: var(--type-h2-size); font-weight: var(--type-h2-weight); line-height: var(--type-h2-leading); letter-spacing: var(--type-h2-tracking); }
+h3 { font-size: var(--type-h3-size); font-weight: var(--type-h3-weight); line-height: var(--type-h3-leading); letter-spacing: var(--type-h3-tracking); }
+h4 { font-size: var(--type-h4-size); font-weight: var(--type-h4-weight); line-height: var(--type-h4-leading); }
+
+p  { font-size: var(--type-body-md-size); color: var(--color-fg-2); }
+
+code, pre, kbd, samp { font-family: var(--type-mono-family); font-size: var(--type-mono-size); }
+
+/* ── Display headline helper — the brand's hero treatment ────── */
+.display {
+  font-family: var(--type-display-family);
+  font-weight: var(--type-display-weight);
+  font-style: var(--type-display-style);
+  text-transform: var(--type-display-transform);
+  letter-spacing: var(--type-display-tracking);
+  line-height: var(--type-display-leading);
+}
+
+/* ── Eyebrow / tag-line helper ───────────────────────────────── */
+.eyebrow {
+  font-size: var(--type-eyebrow-size);
+  font-weight: var(--type-eyebrow-weight);
+  letter-spacing: var(--type-eyebrow-tracking);
+  text-transform: var(--type-eyebrow-transform);
+}
+
+/* ── Clip shapes (parallelograms) — used for the diagonal
+ *    "Flag" callouts and the logo tab in the nav bar. ───────── */
+.clip-logo-tab   { clip-path: polygon(0 0, 100% 0, 88% 100%, 0 100%); }
+.clip-flag-left  { clip-path: polygon(0 0, 85% 0, 100% 100%, 0 100%); }
+.clip-flag-right { clip-path: polygon(15% 0, 100% 0, 100% 100%, 0 100%); }
+
+/* ── Auth-page background grid (matches web-admin) ───────────── */
+.auth-grid-bg {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ── Reveal animations (used on scroll into view) ───────────── */
+.reveal       { opacity: 0; transform: translateY(40px); transition: opacity var(--duration-slow) var(--ease-reveal), transform var(--duration-slow) var(--ease-reveal); }
+.reveal-left  { opacity: 0; transform: translateX(-56px); transition: opacity 850ms var(--ease-reveal), transform 850ms var(--ease-reveal); }
+.reveal-right { opacity: 0; transform: translateX(56px);  transition: opacity 850ms var(--ease-reveal), transform 850ms var(--ease-reveal); }
+.reveal.active, .reveal-left.active, .reveal-right.active { opacity: 1; transform: none; }

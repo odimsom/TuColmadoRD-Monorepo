@@ -87,7 +87,7 @@ const plans = [
       <!-- Programa Pionero -->
       <div class="text-center mb-16 reveal">
         <span class="inline-block px-4 py-1.5 bg-primary/10 text-primary text-xs font-black uppercase tracking-[0.2em] mb-6">
-          Programa Pionero — Activo ahora
+          Programa Pionero · Activo ahora
         </span>
         <h2 class="text-6xl md:text-8xl font-black text-base-content mb-4 tracking-tighter uppercase leading-[0.85] italic">
           RD$0
@@ -122,7 +122,7 @@ const plans = [
             wide
             class="rounded-none font-black uppercase tracking-widest text-sm"
           >
-            Escríbenos por WhatsApp — es gratis
+            Escríbenos por WhatsApp, es gratis
           </AppButton>
 
           <p class="text-center text-base-content/30 text-xs mt-6 uppercase tracking-widest">

@@ -2,17 +2,14 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "pnpm",
+    "analytics": "7a5e56de-ed29-4ec6-a43a-63be5b35202e"
   },
   "newProjectRoot": "projects",
   "projects": {
-    "web-admin": {
+    "tucolmadord-webapp": {
       "projectType": "application",
-      "schematics": {
-        "@schematics/angular:component": {
-          "style": "scss"
-        }
-      },
+      "schematics": {},
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -22,7 +19,6 @@
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
@@ -30,8 +26,7 @@
               }
             ],
             "styles": [
-              "src/styles.scss",
-              "node_modules/maplibre-gl/dist/maplibre-gl.css"
+              "src/styles.css"
             ]
           },
           "configurations": {
@@ -56,30 +51,6 @@
               ],
               "outputHashing": "all"
             },
-            "local": {
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.local.ts"
-                }
-              ],
-              "outputHashing": "none",
-              "optimization": true,
-              "sourceMap": false,
-              "extractLicenses": true
-            },
-            "e2e": {
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.e2e.ts"
-                }
-              ],
-              "outputHashing": "none",
-              "optimization": false,
-              "sourceMap": true,
-              "extractLicenses": false
-            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -92,10 +63,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "web-admin:build:production"
+              "buildTarget": "tucolmadord-webapp:build:production"
             },
             "development": {
-              "buildTarget": "web-admin:build:development"
+              "buildTarget": "tucolmadord-webapp:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -76,7 +76,7 @@ const steps = [
           size="lg"
           class="rounded-none font-black uppercase tracking-widest px-12"
         >
-          Empezar ahora — es gratis
+          Empezar ahora
         </AppButton>
       </div>
     </div>

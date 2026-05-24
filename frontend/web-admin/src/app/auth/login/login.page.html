@@ -1,0 +1,151 @@
+<div class="min-h-screen flex">
+
+  <!-- Info panel (left) -->
+  <div class="hidden lg:flex lg:w-1/2 bg-neutral flex-col justify-between p-10 xl:p-14 relative overflow-hidden">
+    <!-- Grid background -->
+    <div class="absolute inset-0 auth-grid-bg opacity-30 pointer-events-none"></div>
+
+    <div class="relative z-10">
+      <div class="mb-16">
+        <app-tc-logo size="md" [onDark]="true" />
+      </div>
+
+      <!-- Headline -->
+      <h2 class="text-5xl xl:text-6xl font-black text-neutral-content leading-[0.85] tracking-tighter mb-6 italic uppercase">
+        Tu colmado,<br />
+        <span class="text-primary">siempre<br />bajo control.</span>
+      </h2>
+      <p class="text-neutral-content/50 text-base leading-relaxed max-w-sm font-medium">
+        Inventario, ventas, fiados y más, todo en un solo lugar,
+        diseñado para el ritmo del colmado dominicano.
+      </p>
+    </div>
+
+    <!-- Features -->
+    <div class="relative z-10 space-y-4">
+      @for (f of features; track f.text) {
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+            <iconify-icon [attr.icon]="f.icon" class="text-primary text-base"></iconify-icon>
+          </div>
+          <span class="text-neutral-content/70 text-sm">{{ f.text }}</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Form panel (right) -->
+  <div class="flex-1 flex flex-col bg-base-200">
+
+    <!-- Top bar -->
+    <div class="flex justify-between items-center px-8 py-5 border-b border-base-300 bg-base-100">
+      <div class="flex items-center gap-2.5">
+        <iconify-icon icon="lucide:map-pin" class="text-sm text-base-content/40"></iconify-icon>
+        <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-base-content/40">
+          Portal de gestión · República Dominicana
+        </span>
+      </div>
+      <div class="flex items-center gap-2 px-2.5 py-1 bg-success/20 rounded">
+        <span class="w-1.5 h-1.5 rounded-full bg-success block"></span>
+        <span class="text-[10px] font-bold uppercase tracking-[0.10em] text-success">Operativo</span>
+      </div>
+    </div>
+
+    <!-- Card area -->
+    <div class="flex-1 flex flex-col justify-center items-center p-6 md:p-10">
+      <div class="w-full max-w-md tc-card !p-10 shadow-2xl">
+
+        <div class="mb-8 lg:hidden">
+          <app-tc-logo size="sm" />
+        </div>
+
+        <h1 class="text-3xl font-black text-base-content tracking-tight mb-1">Bienvenido</h1>
+        <p class="text-base-content/50 text-sm mb-7">Inicia sesión en tu cuenta</p>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-5">
+          <app-input
+            formControlName="email"
+            label="Correo electrónico"
+            type="email"
+            placeholder="tu@correo.com"
+            autocomplete="email"
+            [required]="true"
+            [error]="emailError"
+          />
+
+          <div>
+            <app-input
+              formControlName="password"
+              label="Contraseña"
+              type="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              [required]="true"
+              [error]="passwordError"
+            />
+            <a href="#" class="mt-2 inline-block text-xs font-bold text-primary uppercase tracking-widest hover:underline">
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
+
+          @if (error()) {
+            <div role="alert" class="tc-badge tc-badge-error tc-badge-wide !py-2.5 !rounded-md !flex justify-start gap-2">
+              <iconify-icon icon="lucide:alert-circle"></iconify-icon>
+              <span>{{ error() }}</span>
+            </div>
+          }
+
+          <button
+            appBtn
+            type="submit"
+            variant="primary"
+            [wide]="true"
+            [loading]="loading()"
+            class="mt-2"
+          >
+            Iniciar sesión
+          </button>
+        </form>
+
+        <div class="flex items-center gap-3 my-6">
+          <div class="flex-1 h-px bg-base-300"></div>
+          <span class="text-[10px] font-black uppercase tracking-[0.20em] text-base-content/30">o</span>
+          <div class="flex-1 h-px bg-base-300"></div>
+        </div>
+
+        <a
+          href="https://wa.me/18295550100"
+          class="tc-btn tc-btn-outline tc-btn-wide gap-2"
+        >
+          <iconify-icon icon="lucide:message-circle" style="color: #25D366; font-size: 16px;"></iconify-icon>
+          Pedir acceso por WhatsApp
+        </a>
+
+        <p class="text-center text-sm text-base-content/50 mt-6">
+          ¿No tienes cuenta?
+          <a routerLink="/auth/register" class="text-primary font-black uppercase tracking-widest hover:underline">
+            Regístrate
+          </a>
+        </p>
+      </div>
+
+      <p class="mt-5 text-xs text-base-content/40 text-center">
+        Al iniciar sesión aceptas los
+        <a href="#" class="text-base-content/60 underline">Términos</a>
+        y la
+        <a href="#" class="text-base-content/60 underline">Política de privacidad</a>.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-between items-center px-8 py-3.5 border-t border-base-300 bg-base-100">
+      <span class="text-xs text-base-content/40">© 2026 TuColmadoRD · v2.4.1</span>
+      <div class="flex gap-4">
+        <a href="#" class="text-xs text-base-content/40 hover:text-base-content/70 transition-colors">Soporte</a>
+        <a href="#" class="text-xs text-base-content/40 hover:text-base-content/70 transition-colors">Estado</a>
+        <a href="#" class="text-xs text-base-content/40 hover:text-base-content/70 transition-colors">Docs</a>
+      </div>
+    </div>
+  </div>
+
+</div>

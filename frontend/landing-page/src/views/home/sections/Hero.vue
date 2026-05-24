@@ -38,15 +38,15 @@ const highlights = [
           Software para colmados dominicanos
         </p>
 
-        <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold text-neutral-content mb-8 leading-[0.85] tracking-tighter uppercase">
+        <h1 class="text-5xl md:text-7xl lg:text-8xl font-black text-neutral-content mb-8 leading-[0.85] tracking-tighter uppercase italic">
           IMPULSA <br />
-          <span class="text-primary italic">TU NEGOCIO</span>
+          <span class="text-primary">TU NEGOCIO</span>
         </h1>
 
         <p class="text-lg text-neutral-content/70 mb-10 leading-relaxed max-w-lg border-l-4 border-secondary pl-6">
           ¿Cuadernos llenos de fiados, inventario que no cuadra, cuentas que se pierden?
           TuColmadoRD lo pone todo en orden desde tu celular. Buscamos los primeros 20 colmados
-          para arrancarlo juntos — sin costo el primer año.
+          para arrancarlo juntos, sin costo el primer año.
         </p>
 
         <div class="flex flex-wrap gap-4">
