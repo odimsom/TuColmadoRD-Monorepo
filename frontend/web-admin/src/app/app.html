@@ -1,1 +1,23 @@
-<router-outlet></router-outlet>
+<main class="min-h-screen bg-base-100 flex flex-col items-center justify-center p-4">
+  <div class="max-w-md w-full text-center space-y-8">
+    <div class="flex justify-center">
+      <img src="logo-full.png" alt="Tu Colmado RD" class="h-32 w-auto object-contain" />
+    </div>
+    
+    <div class="space-y-4">
+      <h1 class="text-4xl font-serif text-primary font-bold">Bienvenido a Tu Colmado RD</h1>
+      <p class="text-lg text-neutral/70">La plataforma para gestionar tu colmado de manera eficiente.</p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 mt-8">
+      <button class="bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+        Iniciar Sesión
+      </button>
+      <button class="border-2 border-secondary text-secondary px-6 py-3 rounded-lg font-medium hover:bg-secondary hover:text-white transition-all">
+        Registrar Colmado
+      </button>
+    </div>
+  </div>
+</main>
+
+<router-outlet />

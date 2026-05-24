@@ -1,129 +1,34 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
-import { desktopRegistrationGuard } from './core/guards/desktop-registration.guard';
-import { roleGuard } from './core/guards/role.guard';
-import { businessSetupGuard } from './core/guards/business-setup.guard';
+import { authGuard } from './core/auth.guard';
+import { roleGuard } from './core/role.guard';
+import { ShellComponent } from './shared/layout/shell/shell.component';
 
 export const routes: Routes = [
-  {
-    path: '',
-    canActivate: [desktopRegistrationGuard],
-    loadComponent: () => import('./layouts/public-layout/public-layout').then(m => m.PublicLayout),
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./features/public/home/home').then(m => m.Home)
-      }
-    ]
-  },
+  { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
 
-  // Auth
   {
     path: 'auth',
-    loadComponent: () => import('./layouts/auth-layout/auth-layout').then(m => m.AuthLayout),
-    children: [
-      {
-        path: 'login',
-        loadComponent: () => import('./features/auth/login/login').then(m => m.Login)
-      },
-      {
-        path: 'register',
-        canActivate: [desktopRegistrationGuard],
-        loadComponent: () => import('./features/auth/register/register').then(m => m.Register)
-      },
-      {
-        path: 'verify',
-        loadComponent: () => import('./features/auth/verify/verify').then(m => m.Verify)
-      }
-    ]
+    loadChildren: () => import('./auth/auth.routes').then(m => m.authRoutes),
   },
 
-  // Portal Admin — requiere autenticación + rol Owner o Admin
   {
     path: 'portal',
-    loadComponent: () => import('./layouts/portal-layout/portal-layout').then(m => m.PortalLayout),
+    component: ShellComponent,
     canActivate: [authGuard, roleGuard('Owner', 'Admin')],
-    canActivateChild: [businessSetupGuard],
-    children: [
-      {
-        path: 'welcome',
-        loadComponent: () => import('./features/portal/welcome/welcome').then(m => m.Welcome)
-      },
-      {
-        path: 'dashboard',
-        loadComponent: () => import('./features/portal/dashboard/dashboard').then(m => m.Dashboard)
-      },
-      {
-        path: 'inventory',
-        loadComponent: () => import('./features/portal/inventory/inventory').then(m => m.Inventory)
-      },
-      {
-        path: 'presentations/:id',
-        loadComponent: () => import('./features/portal/presentations/presentations').then(m => m.Presentations)
-      },
-      {
-        path: 'stock-entries',
-        loadComponent: () => import('./features/portal/stock-entries/stock-entries').then(m => m.StockEntries)
-      },
-      {
-        path: 'monetary-fund',
-        loadComponent: () => import('./features/portal/monetary-fund/monetary-fund').then(m => m.MonetaryFund)
-      },
-      {
-        path: 'categories',
-        loadComponent: () => import('./features/portal/categories/categories').then(m => m.Categories)
-      },
-      {
-        path: 'sales',
-        loadComponent: () => import('./features/portal/sales/sales').then(m => m.Sales)
-      },
-      {
-        path: 'customers',
-        loadComponent: () => import('./features/portal/customers/customers').then(m => m.Customers)
-      },
-      {
-        path: 'expenses',
-        loadComponent: () => import('./features/portal/expenses/expenses').then(m => m.Expenses)
-      },
-      {
-        path: 'reports',
-        loadComponent: () => import('./features/portal/reports/reports').then(m => m.Reports)
-      },
-      {
-        path: 'subscription',
-        loadComponent: () => import('./features/portal/subscription/subscription').then(m => m.Subscription)
-      },
-      {
-        path: 'settings',
-        loadComponent: () => import('./features/portal/settings/settings').then(m => m.Settings)
-      },
-      {
-        path: 'employees',
-        loadComponent: () => import('./features/portal/employees/employees').then(m => m.Employees)
-      },
-      {
-        path: 'deliveries',
-        loadComponent: () => import('./features/portal/deliveries/deliveries').then(m => m.Deliveries)
-      },
-      {
-        path: '',
-        redirectTo: 'dashboard',
-        pathMatch: 'full'
-      }
-    ]
+    loadChildren: () => import('./portal/portal.routes').then(m => m.portalRoutes),
   },
 
-  // POS — requiere autenticación (seller, cashier, owner, admin)
   {
     path: 'pos',
-    loadComponent: () => import('./layouts/pos-layout/pos-layout').then(m => m.PosLayout),
-    canActivate: [authGuard, roleGuard('Owner', 'Admin', 'Seller', 'Cashier')]
+    loadChildren: () => import('./pos/pos.routes').then(m => m.posRoutes),
+    canActivate: [authGuard, roleGuard('Owner', 'Admin', 'Seller', 'Cashier')],
   },
 
-  // Delivery — vista del repartidor
   {
     path: 'delivery',
-    loadComponent: () => import('./layouts/delivery-layout/delivery-layout').then(m => m.DeliveryLayout),
-    canActivate: [authGuard, roleGuard('Delivery', 'Owner', 'Admin')]
-  }
+    loadChildren: () => import('./delivery/delivery.routes').then(m => m.deliveryRoutes),
+    canActivate: [authGuard, roleGuard('Delivery')],
+  },
+
+  { path: '**', redirectTo: '/auth/login' },
 ];
