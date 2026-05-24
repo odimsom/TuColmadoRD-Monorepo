@@ -85,6 +85,11 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
@@ -96,7 +101,7 @@ jobs:
 
       - name: Install web-admin dependencies
         working-directory: ./frontend/web-admin
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build desktop + installer
         run: |
