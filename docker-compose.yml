@@ -285,8 +285,8 @@ services:
 
   landing:
     build:
-      context: ./frontend/landing-page
-      dockerfile: Dockerfile
+      context: ./frontend
+      dockerfile: landing-page/Dockerfile
       args:
         VITE_WEB_ADMIN_URL: ${PUBLIC_WEB_URL}
     restart: on-failure:3
