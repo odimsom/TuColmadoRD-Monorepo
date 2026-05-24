@@ -12,7 +12,7 @@ const steps = [
     number: '01',
     icon: 'lucide:user-plus',
     title: 'Solicita tu cupo',
-    description: 'Completa el formulario en menos de 2 minutos. Cuéntanos sobre tu colmado y te contactamos por WhatsApp para coordinar tu acceso.',
+    description: 'Completa el formulario en menos de 2 minutos. Cuéntanos sobre tu colmado y nos comunicamos contigo para coordinar tu acceso.',
   },
   {
     number: '02',
