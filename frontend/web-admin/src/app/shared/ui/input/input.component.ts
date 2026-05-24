@@ -11,14 +11,12 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     multi: true,
   }],
   template: `
-    <label class="form-control w-full">
+    <label class="flex flex-col gap-1.5 w-full">
       @if (label()) {
-        <div class="label pb-1">
-          <span class="label-text font-medium text-base-content">
-            {{ label() }}
-            @if (required()) { <span class="text-error ml-0.5" aria-hidden="true">*</span> }
-          </span>
-        </div>
+        <span class="text-xs font-bold text-base-content uppercase tracking-wider">
+          {{ label() }}
+          @if (required()) { <span class="text-secondary ml-0.5" aria-hidden="true">*</span> }
+        </span>
       }
       <div class="relative">
         <input
@@ -43,13 +41,11 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
           </button>
         }
       </div>
-      <div class="label pt-1 min-h-[1.25rem]">
-        @if (error()) {
-          <span class="label-text-alt text-error" role="alert">{{ error() }}</span>
-        } @else if (hint()) {
-          <span class="label-text-alt text-base-content/40">{{ hint() }}</span>
-        }
-      </div>
+      @if (error()) {
+        <span class="text-[11px] font-medium text-secondary" role="alert">{{ error() }}</span>
+      } @else if (hint()) {
+        <span class="text-[11px] font-medium text-base-content/50">{{ hint() }}</span>
+      }
     </label>
   `,
 })
@@ -70,9 +66,9 @@ export class InputComponent implements ControlValueAccessor {
   _onTouched: () => void = () => {};
 
   _inputClass = computed(() => [
-    'input input-bordered w-full',
+    'tc-input',
     this.type() === 'password' ? 'pr-10' : '',
-    this.error() ? 'input-error' : '',
+    this.error() ? 'border-secondary' : '',
   ].filter(Boolean).join(' '));
 
   writeValue(v: unknown): void { this._value.set(String(v ?? '')); }

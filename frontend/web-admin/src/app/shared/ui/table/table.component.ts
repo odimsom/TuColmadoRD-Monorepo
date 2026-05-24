@@ -5,10 +5,11 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="overflow-x-auto w-full">
-      <table class="table table-zebra w-full">
+      <table class="tc-table">
         <ng-content />
       </table>
     </div>
   `,
+  host: { 'class': 'block w-full overflow-hidden' }
 })
 export class TableComponent {}
