@@ -1,4 +1,4 @@
-@import "../../../shared/design-tokens.css";
+@import "../../../../shared/design-tokens.css";
 @import "tailwindcss";
 
 @source "../../**/*.{vue,ts,js}";
