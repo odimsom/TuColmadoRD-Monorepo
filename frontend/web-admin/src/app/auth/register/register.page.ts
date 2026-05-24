@@ -28,10 +28,10 @@ export class RegisterPage {
   error = signal('');
 
   readonly perks = [
-    { icon: 'lucide:calendar-check', text: 'Primer año completamente gratis' },
-    { icon: 'lucide:headphones',     text: 'Soporte humano por WhatsApp' },
-    { icon: 'lucide:megaphone',      text: 'Tu voz define las funciones' },
-    { icon: 'lucide:shield-check',   text: 'Sin tarjeta de crédito' },
+    { icon: 'lucide:gift', text: 'Primer año completamente gratis' },
+    { icon: 'lucide:message-circle', text: 'Soporte humano por WhatsApp' },
+    { icon: 'lucide:vote', text: 'Tu voz define las funciones' },
+    { icon: 'lucide:lock', text: 'Sin tarjeta de crédito' },
   ];
 
   form = this.fb.nonNullable.group({

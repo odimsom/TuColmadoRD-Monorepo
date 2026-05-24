@@ -5,24 +5,23 @@ import { Component, ChangeDetectionStrategy, input, computed } from '@angular/co
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ng-content select="[cardHeader]" />
-    <div [class]="bodyClass()">
-      <ng-content />
-    </div>
+    <ng-content />
   `,
   host: { '[class]': '_hostClass()' },
 })
 export class CardComponent {
   shadow = input(true);
-  bordered = input(false);
   compact = input(false);
+  tight = input(false);
+  variant = input<'default' | 'primary'>('default');
 
   _hostClass = computed(() => [
-    'card bg-base-100',
+    'tc-card',
     this.shadow() ? 'shadow' : '',
-    this.bordered() ? 'border border-base-300' : '',
+    this.compact() ? 'tc-card-compact' : '',
+    this.tight() ? 'tc-card-tight' : '',
+    this.variant() === 'primary' ? 'tc-card-primary' : '',
   ].filter(Boolean).join(' '));
 
-  bodyClass = computed(() =>
-    this.compact() ? 'card-body p-4' : 'card-body'
-  );
+  bodyClass = computed(() => '');
 }

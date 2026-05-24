@@ -18,45 +18,6 @@ body {
 
 h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); }
 
-/* DaisyUI v5 no genera reglas btn-X para temas custom — forzamos los estilos */
-.btn-primary {
-  background-color: var(--color-primary);
-  color: var(--color-primary-content);
-  border-color: var(--color-primary);
-}
-.btn-primary:hover, .btn-primary:focus-visible {
-  background-color: color-mix(in srgb, var(--color-primary) 85%, #000);
-  border-color: color-mix(in srgb, var(--color-primary) 85%, #000);
-}
-
-.btn-secondary {
-  background-color: var(--color-secondary);
-  color: var(--color-secondary-content);
-  border-color: var(--color-secondary);
-}
-.btn-secondary:hover, .btn-secondary:focus-visible {
-  background-color: color-mix(in srgb, var(--color-secondary) 85%, #000);
-  border-color: color-mix(in srgb, var(--color-secondary) 85%, #000);
-}
-
-.btn-neutral {
-  background-color: var(--color-neutral);
-  color: var(--color-neutral-content);
-  border-color: var(--color-neutral);
-}
-
-.btn-accent {
-  background-color: var(--color-accent);
-  color: var(--color-accent-content);
-  border-color: var(--color-accent);
-}
-
-/* Input focus ring */
-.input:focus, .input:focus-within {
-  outline-color: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
 /* Auth pages — grid de fondo */
 .auth-grid-bg {
   background-image:
@@ -64,3 +25,67 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); }
     linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
   background-size: 32px 32px;
 }
+
+/* ── Web-admin tc-* components ─────────────────────────── */
+
+.tc-card {
+  background: var(--color-base-100);
+  border: 1px solid var(--color-base-300);
+  border-radius: 8px;
+  padding: 24px;
+}
+.tc-card-compact { padding: 16px; }
+.tc-card-tight   { padding: 12px 14px; }
+.tc-card-primary { border: 2px solid var(--color-primary); background: rgb(0 71 171 / 0.04); }
+
+.tc-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 18px; font: 600 13px/1 var(--font-sans);
+  border-radius: 6px; border: 1px solid transparent; cursor: pointer;
+  transition: background 150ms, border 150ms, color 150ms;
+}
+.tc-btn-primary { background: var(--color-primary); color: #fff; }
+.tc-btn-primary:hover { background: #003a8e; }
+.tc-btn-outline { background: transparent; border-color: var(--color-base-300); color: var(--color-base-content); }
+.tc-btn-outline:hover { background: var(--color-base-200); }
+.tc-btn-ghost { background: transparent; color: var(--color-fg-2); }
+.tc-btn-ghost:hover { background: var(--color-base-200); color: var(--color-base-content); }
+.tc-btn-square { padding: 8px; aspect-ratio: 1; }
+.tc-btn-sm { padding: 7px 12px; font-size: 12px; }
+.tc-btn-lg { padding: 14px 24px; font-size: 14px; }
+.tc-btn-wide { width: 100%; }
+
+.tc-input {
+  width: 100%; padding: 10px 14px; font: 400 13px/1.4 var(--font-sans);
+  color: var(--color-fg-1); background: #fff;
+  border: 1px solid var(--color-base-300); border-radius: 6px;
+  outline: none; transition: border-color 150ms, box-shadow 150ms;
+}
+.tc-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgb(0 71 171 / 0.12); }
+.tc-input::placeholder { color: var(--color-fg-4); }
+
+.tc-badge {
+  display: inline-flex; align-items: center; padding: 3px 10px;
+  font: 600 11px/1.3 var(--font-sans); border-radius: 9999px; white-space: nowrap;
+}
+.tc-badge-success { background: rgb(54 211 153 / 0.18); color: #0d8a5b; }
+.tc-badge-ghost   { background: var(--color-base-300); color: var(--color-fg-2); }
+.tc-badge-warning { background: rgb(251 189 35 / 0.20); color: #a87800; }
+.tc-badge-error   { background: rgb(228 30 38 / 0.12); color: var(--color-secondary); }
+.tc-badge-info    { background: rgb(58 191 248 / 0.18); color: #1a7fae; }
+.tc-badge-primary { background: rgb(0 71 171 / 0.12); color: var(--color-primary); }
+
+.tc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tc-table thead th {
+  text-align: left; padding: 12px 16px;
+  font: 700 11px/1.2 var(--font-sans); color: var(--color-fg-3);
+  letter-spacing: 0.04em; text-transform: uppercase;
+  border-bottom: 1px solid var(--color-base-300); background: var(--color-base-200);
+}
+.tc-table tbody td {
+  padding: 14px 16px; border-bottom: 1px solid var(--color-base-300); color: var(--color-fg-1);
+}
+.tc-table tbody tr:last-child td { border-bottom: 0; }
+.tc-table tbody tr.hover { cursor: pointer; }
+.tc-table tbody tr.hover:hover { background: var(--color-base-200); }
+

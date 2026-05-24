@@ -46,15 +46,15 @@ const QUICK_LINKS: QuickLink[] = [
         @for (link of quickLinks; track link.route) {
           <a
             [routerLink]="link.route"
-            class="flex flex-col items-center gap-2 p-4 bg-base-100 border border-base-300
-                   hover:border-primary/40 hover:bg-primary/5 transition-colors group rounded-lg"
+            class="flex flex-col items-center gap-2 p-4 tc-card
+                   hover:border-primary/40 hover:bg-primary/5 transition-colors group"
           >
-            <div class="w-10 h-10 bg-primary/10 flex items-center justify-center">
+            <div class="w-10 h-10 bg-primary/10 flex items-center justify-center rounded-lg">
               <iconify-icon [attr.icon]="link.icon" class="text-primary text-xl"></iconify-icon>
             </div>
             <div class="text-center">
               <p class="text-xs font-bold text-base-content">{{ link.label }}</p>
-              <p class="text-[10px] text-base-content/40">{{ link.description }}</p>
+              <p class="text-[10px] text-base-content/40 uppercase tracking-widest">{{ link.description }}</p>
             </div>
           </a>
         }
@@ -63,13 +63,15 @@ const QUICK_LINKS: QuickLink[] = [
       <!-- Placeholder stats -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         @for (stat of stats; track stat.label) {
-          <app-card [compact]="true" [bordered]="true">
+          <app-card [compact]="true">
             <div class="flex items-start justify-between">
               <div>
-                <p class="text-base-content/50 text-xs uppercase tracking-widest font-bold">{{ stat.label }}</p>
-                <p class="text-2xl font-black text-base-content mt-1">{{ stat.value }}</p>
+                <p class="text-base-content/50 text-[10px] uppercase tracking-widest font-black">{{ stat.label }}</p>
+                <p class="text-2xl font-black text-base-content mt-1 italic tracking-tight">{{ stat.value }}</p>
               </div>
-              <iconify-icon [attr.icon]="stat.icon" class="text-xl text-base-content/20 mt-0.5"></iconify-icon>
+              <div class="w-8 h-8 bg-base-200 rounded flex items-center justify-center shrink-0">
+                <iconify-icon [attr.icon]="stat.icon" class="text-xl text-base-content/30"></iconify-icon>
+              </div>
             </div>
           </app-card>
         }

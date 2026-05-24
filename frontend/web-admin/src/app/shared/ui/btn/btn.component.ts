@@ -8,7 +8,7 @@ type BtnSize = 'xs' | 'sm' | 'md' | 'lg';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (loading()) {
-      <span class="loading loading-spinner loading-xs"></span>
+      <span class="loading loading-spinner loading-xs mr-2"></span>
     }
     <ng-content />
   `,
@@ -24,11 +24,13 @@ export class BtnComponent {
   loading = input(false);
   disabled = input(false);
   wide = input(false);
+  square = input(false);
 
   _classes = computed(() => {
-    const c = ['btn', `btn-${this.variant()}`];
-    if (this.size() !== 'md') c.push(`btn-${this.size()}`);
-    if (this.wide()) c.push('w-full');
+    const c = ['tc-btn', `tc-btn-${this.variant()}`];
+    if (this.size() !== 'md') c.push(`tc-btn-${this.size()}`);
+    if (this.wide()) c.push('tc-btn-wide');
+    if (this.square()) c.push('tc-btn-square');
     return c.join(' ');
   });
 }

@@ -38,82 +38,118 @@
   </div>
 
   <!-- Form panel (right) -->
-  <div class="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-base-100 overflow-y-auto">
-    <div class="w-full max-w-sm">
+  <div class="flex-1 flex flex-col bg-base-200">
 
-      <div class="mb-8 lg:hidden">
-        <app-tc-logo size="sm" />
+    <!-- Top bar -->
+    <div class="flex justify-between items-center px-8 py-5 border-b border-base-300 bg-base-100">
+      <div class="flex items-center gap-2.5">
+        <iconify-icon icon="lucide:map-pin" class="text-sm text-base-content/40"></iconify-icon>
+        <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-base-content/40">
+          Programa Pionero · República Dominicana
+        </span>
+      </div>
+      <div class="flex items-center gap-2 px-2.5 py-1 bg-primary/10 rounded">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary block"></span>
+        <span class="text-[10px] font-bold uppercase tracking-[0.10em] text-primary">20 cupos</span>
+      </div>
+    </div>
+
+    <!-- Card area -->
+    <div class="flex-1 flex flex-col justify-center items-center p-6 md:p-10 overflow-y-auto">
+      <div class="w-full max-w-md bg-base-100 border border-base-300 rounded-[10px] shadow-lg p-10">
+
+        <div class="mb-8 lg:hidden">
+          <app-tc-logo size="sm" />
+        </div>
+
+        <h1 class="text-3xl font-black text-base-content tracking-tight mb-1">Crea tu cuenta</h1>
+        <p class="text-base-content/50 text-sm mb-8">Únete al programa pionero. Gratis por 1 año.</p>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-4">
+          <app-input
+            formControlName="tenantName"
+            label="Nombre de tu negocio"
+            type="text"
+            placeholder="Colmado San José"
+            autocomplete="organization"
+            [required]="true"
+            [error]="tenantError"
+          />
+
+          <app-input
+            formControlName="email"
+            label="Correo electrónico"
+            type="email"
+            placeholder="tu@correo.com"
+            autocomplete="email"
+            [required]="true"
+            [error]="emailError"
+          />
+
+          <app-input
+            formControlName="password"
+            label="Contraseña"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            [required]="true"
+            [error]="passwordError"
+            hint="Mínimo 8 caracteres"
+          />
+
+          <app-input
+            formControlName="confirmPassword"
+            label="Confirmar contraseña"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            [required]="true"
+            [error]="confirmError"
+          />
+
+          @if (error()) {
+            <div role="alert" class="alert alert-error text-sm py-2">
+              <span>{{ error() }}</span>
+            </div>
+          }
+
+          <button
+            appBtn
+            type="submit"
+            variant="primary"
+            [wide]="true"
+            [loading]="loading()"
+            class="mt-2"
+          >
+            Crear cuenta gratis
+          </button>
+        </form>
+
+        <p class="text-center text-sm text-base-content/50 mt-6">
+          ¿Ya tienes cuenta?
+          <a routerLink="/auth/login" class="text-primary font-semibold hover:underline">
+            Inicia sesión
+          </a>
+        </p>
       </div>
 
-      <h1 class="text-3xl font-black text-base-content tracking-tight mb-1">Crea tu cuenta</h1>
-      <p class="text-base-content/50 text-sm mb-8">Únete al programa pionero — gratis por 1 año</p>
-
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-4">
-        <app-input
-          formControlName="tenantName"
-          label="Nombre de tu negocio"
-          type="text"
-          placeholder="Colmado San José"
-          autocomplete="organization"
-          [required]="true"
-          [error]="tenantError"
-        />
-
-        <app-input
-          formControlName="email"
-          label="Correo electrónico"
-          type="email"
-          placeholder="tu@correo.com"
-          autocomplete="email"
-          [required]="true"
-          [error]="emailError"
-        />
-
-        <app-input
-          formControlName="password"
-          label="Contraseña"
-          type="password"
-          placeholder="••••••••"
-          autocomplete="new-password"
-          [required]="true"
-          [error]="passwordError"
-          hint="Mínimo 8 caracteres"
-        />
-
-        <app-input
-          formControlName="confirmPassword"
-          label="Confirmar contraseña"
-          type="password"
-          placeholder="••••••••"
-          autocomplete="new-password"
-          [required]="true"
-          [error]="confirmError"
-        />
-
-        @if (error()) {
-          <div role="alert" class="alert alert-error text-sm py-2">
-            <span>{{ error() }}</span>
-          </div>
-        }
-
-        <button
-          appBtn
-          type="submit"
-          variant="primary"
-          [wide]="true"
-          [loading]="loading()"
-          class="mt-2"
-        >
-          Crear cuenta gratis
-        </button>
-      </form>
-
-      <p class="text-center text-sm text-base-content/50 mt-6">
-        ¿Ya tienes cuenta?
-        <a routerLink="/auth/login" class="text-primary font-semibold hover:underline">
-          Inicia sesión
-        </a>
+      <p class="mt-5 text-xs text-base-content/40 text-center">
+        Al crear tu cuenta aceptas los
+        <a href="#" class="text-base-content/60 underline">Términos</a>
+        y la
+        <a href="#" class="text-base-content/60 underline">Política de privacidad</a>.
       </p>
     </div>
+
+    <!-- Footer -->
+    <div class="flex justify-between items-center px-8 py-3.5 border-t border-base-300 bg-base-100">
+      <span class="text-xs text-base-content/40">© 2026 TuColmadoRD · v2.4.1</span>
+      <div class="flex gap-4">
+        <a href="#" class="text-xs text-base-content/40 hover:text-base-content/70 transition-colors">Soporte</a>
+        <a href="#" class="text-xs text-base-content/40 hover:text-base-content/70 transition-colors">Estado</a>
+        <a href="#" class="text-xs text-base-content/40 hover:text-base-content/70 transition-colors">Docs</a>
+      </div>
+    </div>
   </div>
+
 </div>

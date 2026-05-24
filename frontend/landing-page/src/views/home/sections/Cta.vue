@@ -5,7 +5,7 @@ import { useWebAdmin } from '@/composables/useWebAdmin'
 
 defineOptions({ name: 'CtaSection' })
 
-const { registerUrl } = useWebAdmin()
+const { whatsappUrl } = useWebAdmin()
 </script>
 
 <template>
@@ -19,31 +19,31 @@ const { registerUrl } = useWebAdmin()
       <div class="max-w-4xl mx-auto text-center reveal">
         <h2 class="text-5xl md:text-8xl font-black text-secondary-content mb-8 italic tracking-tighter uppercase leading-[0.85]">
           ¿LISTO PARA <br />
-          <span class="text-neutral">DIGITALIZAR</span> <br />
+          <span class="text-primary">DIGITALIZAR</span> <br />
           TU COLMADO?
         </h2>
 
-        <p class="text-xl text-secondary-content/80 mb-12 max-w-2xl mx-auto font-medium">
+        <p class="text-xl text-secondary-content/80 mb-12 max-w-2xl mx-auto">
           Quedan pocos cupos en el programa pionero.
-          Sé parte de los primeros colmados en digitalizarse con TuColmadoRD.
+          Escríbenos por WhatsApp y te explicamos todo en 5 minutos.
         </p>
 
         <div class="flex flex-col md:flex-row justify-center gap-5">
           <AppButton
-            :href="registerUrl"
+            :href="whatsappUrl"
             size="lg"
             variant="neutral"
-            class="px-14 h-16 text-lg rounded-none font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-transform"
+            class="px-14 rounded-none font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-transform"
           >
-            Solicitar mi cupo gratis
+            Escríbenos por WhatsApp
           </AppButton>
           <AppButton
             href="mailto:hola@tucolmadord.com"
             size="lg"
             variant="outline"
-            class="px-14 h-16 text-lg text-secondary-content border-secondary-content hover:bg-secondary-content hover:text-secondary rounded-none font-black uppercase tracking-widest"
+            class="px-14 text-secondary-content border-secondary-content hover:bg-secondary-content hover:text-secondary rounded-none font-black uppercase tracking-widest"
           >
-            Contactar ventas
+            Enviar correo
           </AppButton>
         </div>
 
