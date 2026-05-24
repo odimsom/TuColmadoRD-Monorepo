@@ -34,7 +34,7 @@ import { Component, ChangeDetectionStrategy, input, computed } from '@angular/co
       @if (showName()) {
         <div class="flex items-baseline font-serif font-black tracking-tighter" [class]="textClass()">
           <span class="text-secondary">Tu</span>
-          <span class="text-base-content mx-0.5">Colmado</span>
+          <span [class]="onDark() ? 'text-white' : 'text-base-content'" class="mx-0.5">Colmado</span>
           <span class="text-secondary">R</span><span class="text-primary -ml-1">D</span>
         </div>
       }
@@ -44,6 +44,7 @@ import { Component, ChangeDetectionStrategy, input, computed } from '@angular/co
 export class TcLogoComponent {
   size      = input<'sm' | 'md' | 'lg'>('md');
   showName  = input(true);
+  onDark    = input(false);
   extraClass = input('');
 
   svgClass = computed(() => {

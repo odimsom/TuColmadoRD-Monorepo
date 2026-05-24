@@ -5,7 +5,7 @@ import { useWebAdmin } from '@/composables/useWebAdmin'
 
 defineOptions({ name: 'HowItWorksSection' })
 
-const { registerUrl } = useWebAdmin()
+const { whatsappUrl } = useWebAdmin()
 
 const steps = [
   {
@@ -71,12 +71,12 @@ const steps = [
 
       <div class="text-center mt-16 reveal">
         <AppButton
-          :href="registerUrl"
+          :href="whatsappUrl"
           variant="primary"
           size="lg"
-          class="rounded-none font-black uppercase tracking-widest px-12 h-14"
+          class="rounded-none font-black uppercase tracking-widest px-12"
         >
-          Empezar ahora — es gratis
+          Empezar ahora
         </AppButton>
       </div>
     </div>

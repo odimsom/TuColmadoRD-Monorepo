@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "web-admin": {
+    "tucolmadord-webapp": {
       "projectType": "application",
       "schematics": {},
       "root": "",

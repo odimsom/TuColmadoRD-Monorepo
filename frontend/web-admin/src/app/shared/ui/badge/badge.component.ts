@@ -13,5 +13,9 @@ export class BadgeComponent {
   variant = input<BadgeVariant>('neutral');
   size = input<BadgeSize>('sm');
 
-  _class = computed(() => `badge badge-${this.variant()} badge-${this.size()}`);
+  _class = computed(() => {
+    const c = ['tc-badge', `tc-badge-${this.variant()}`];
+    // tc-badge style is naturally small, but we can add more if needed
+    return c.join(' ');
+  });
 }

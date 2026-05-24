@@ -26,8 +26,8 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <div :class="['flex flex-col lg:flex-row min-h-screen overflow-hidden mb-24 lg:mb-48 last:mb-0', imageSide === 'right' ? 'lg:flex-row-reverse' : '']">
-    <div class="lg:w-1/2 relative min-h-[500px] lg:min-h-full overflow-hidden reveal">
+  <div :class="['flex flex-col lg:flex-row overflow-hidden mb-0', imageSide === 'right' ? 'lg:flex-row-reverse' : '']">
+    <div class="lg:w-1/2 relative min-h-[400px] lg:min-h-[600px] overflow-hidden reveal">
       <img :src="image" class="absolute inset-0 w-full h-full object-cover scale-125 transition-transform duration-[3s] hover:scale-100" :alt="title" />
       <div :class="['absolute inset-0 mix-blend-multiply opacity-40', flagVariant === 'primary' ? 'bg-primary' : 'bg-secondary']"></div>
       <div :class="['absolute bottom-0 w-32 h-32 bg-base-100 hidden lg:block', imageSide === 'left' ? 'right-0 clip-flag-right' : 'left-0 clip-flag-left']"></div>
