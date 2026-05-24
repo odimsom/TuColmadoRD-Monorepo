@@ -14,8 +14,8 @@ const perks = [
     description: 'Sin límites de usuarios, facturación, inventario ni fiados. Todo incluido hasta que evaluemos juntos el siguiente paso.',
   },
   {
-    icon: 'lucide:message-circle',
-    title: 'Soporte humano por WhatsApp',
+    icon: 'lucide:headphones',
+    title: 'Soporte humano directo',
     description: 'Hablas con nosotros, no con un bot. Lunes a sábado. Entendemos tu negocio porque somos de aquí.',
   },
   {
