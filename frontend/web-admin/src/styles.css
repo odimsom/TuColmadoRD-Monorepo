@@ -1,0 +1,66 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@100..900&display=swap");
+@import "tailwindcss";
+
+@plugin "daisyui" {
+  themes: tucolmadord-light, tucolmadord-dark;
+}
+
+/* Tokens compartidos con tucolmadord-landing */
+@import "../../shared/design-tokens.css";
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+}
+
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); }
+
+/* DaisyUI v5 no genera reglas btn-X para temas custom — forzamos los estilos */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-primary-content);
+  border-color: var(--color-primary);
+}
+.btn-primary:hover, .btn-primary:focus-visible {
+  background-color: color-mix(in srgb, var(--color-primary) 85%, #000);
+  border-color: color-mix(in srgb, var(--color-primary) 85%, #000);
+}
+
+.btn-secondary {
+  background-color: var(--color-secondary);
+  color: var(--color-secondary-content);
+  border-color: var(--color-secondary);
+}
+.btn-secondary:hover, .btn-secondary:focus-visible {
+  background-color: color-mix(in srgb, var(--color-secondary) 85%, #000);
+  border-color: color-mix(in srgb, var(--color-secondary) 85%, #000);
+}
+
+.btn-neutral {
+  background-color: var(--color-neutral);
+  color: var(--color-neutral-content);
+  border-color: var(--color-neutral);
+}
+
+.btn-accent {
+  background-color: var(--color-accent);
+  color: var(--color-accent-content);
+  border-color: var(--color-accent);
+}
+
+/* Input focus ring */
+.input:focus, .input:focus-within {
+  outline-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* Auth pages — grid de fondo */
+.auth-grid-bg {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
