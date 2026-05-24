@@ -8,7 +8,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 ARG BUILD_CONFIG=production
-RUN pnpm run build -- --configuration=$BUILD_CONFIG
+RUN pnpm run build --configuration=$BUILD_CONFIG
 
 FROM nginx:1.27-alpine
 RUN apk add --no-cache curl
