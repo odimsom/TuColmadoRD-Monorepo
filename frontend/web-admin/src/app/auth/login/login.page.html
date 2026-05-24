@@ -1,0 +1,96 @@
+<div class="min-h-screen flex">
+
+  <!-- Info panel (left) -->
+  <div class="hidden lg:flex lg:w-1/2 bg-neutral flex-col justify-between p-10 xl:p-14 relative overflow-hidden">
+    <!-- Grid background -->
+    <div class="absolute inset-0 auth-grid-bg opacity-30 pointer-events-none"></div>
+
+    <div class="relative z-10">
+      <div class="mb-16">
+        <app-tc-logo size="md" />
+      </div>
+
+      <!-- Headline -->
+      <h2 class="text-5xl xl:text-6xl font-black text-neutral-content leading-[1.05] tracking-tighter mb-6">
+        Tu colmado,<br />
+        <span class="text-primary">siempre<br />bajo control.</span>
+      </h2>
+      <p class="text-neutral-content/50 text-base leading-relaxed max-w-sm">
+        Inventario, ventas, fiados y más — todo en un solo lugar,
+        diseñado para el ritmo del colmado dominicano.
+      </p>
+    </div>
+
+    <!-- Features -->
+    <div class="relative z-10 space-y-4">
+      @for (f of features; track f.text) {
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+            <iconify-icon [attr.icon]="f.icon" class="text-primary text-base"></iconify-icon>
+          </div>
+          <span class="text-neutral-content/70 text-sm">{{ f.text }}</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Form panel (right) -->
+  <div class="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-base-100">
+    <div class="w-full max-w-sm">
+
+      <div class="mb-8 lg:hidden">
+        <app-tc-logo size="sm" />
+      </div>
+
+      <h1 class="text-3xl font-black text-base-content tracking-tight mb-1">Bienvenido</h1>
+      <p class="text-base-content/50 text-sm mb-8">Inicia sesión en tu cuenta</p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-5">
+        <app-input
+          formControlName="email"
+          label="Correo electrónico"
+          type="email"
+          placeholder="tu@correo.com"
+          autocomplete="email"
+          [required]="true"
+          [error]="emailError"
+        />
+
+        <app-input
+          formControlName="password"
+          label="Contraseña"
+          type="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          [required]="true"
+          [error]="passwordError"
+        />
+
+        @if (error()) {
+          <div role="alert" class="alert alert-error text-sm py-2">
+            <span>{{ error() }}</span>
+          </div>
+        }
+
+        <button
+          appBtn
+          type="submit"
+          variant="primary"
+          [wide]="true"
+          [loading]="loading()"
+          class="mt-2"
+        >
+          Iniciar sesión
+        </button>
+      </form>
+
+      <p class="text-center text-sm text-base-content/50 mt-6">
+        ¿No tienes cuenta?
+        <a routerLink="/auth/register" class="text-primary font-semibold hover:underline">
+          Regístrate
+        </a>
+      </p>
+    </div>
+  </div>
+</div>
+
