@@ -3,14 +3,20 @@ WORKDIR /app
 
 RUN npm install -g pnpm@latest
 
-COPY package.json pnpm-lock.yaml ./
+# Deps primero (cache layer)
+COPY web-admin/package.json web-admin/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-COPY . .
+# Tokens compartidos: van a /shared/ para que styles.css los resuelva via ../../shared/
+COPY shared/ /shared/
+
+# Código fuente del webapp
+COPY web-admin/ .
+
 ARG BUILD_CONFIG=production
 RUN pnpm run build --configuration=$BUILD_CONFIG
 
 FROM nginx:1.27-alpine
 RUN apk add --no-cache curl
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY web-admin/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist/web-admin/browser /usr/share/nginx/html
