@@ -13,4 +13,21 @@ export class ComprasService {
     const params = new HttpParams().set('page', page).set('pageSize', pageSize);
     return this.http.get<PagedCompras>(`${this.api}/stock-entries`, { params });
   }
+
+  createStockEntry(data: {
+    purchasedAt: string;
+    supplierName: string | null;
+    notes: string | null;
+    fundId: string | null;
+    fundExpenseJustification: string | null;
+    lines: Array<{
+      presentationId: string;
+      containerCount: number;
+      unitsPerContainer: number;
+      nominalSizePerUnit: number;
+      costPerUnit: number;
+    }>;
+  }): Observable<{ entryId: string }> {
+    return this.http.post<{ entryId: string }>(`${this.api}/stock-entries`, data);
+  }
 }

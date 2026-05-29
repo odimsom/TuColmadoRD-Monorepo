@@ -63,7 +63,7 @@ import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
   selector: 'app-lista-reportes',
   changeDetection: ChangeDetectionStrategy.OnPush,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [RouterLink, CardComponent, BadgeComponent],
+  imports: [RouterLink, BadgeComponent],
   template: `
     <div class="space-y-5">
 
