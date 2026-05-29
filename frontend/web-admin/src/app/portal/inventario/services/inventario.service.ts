@@ -63,4 +63,8 @@ export class InventarioService {
   deactivatePresentacion(id: string): Observable<void> {
     return this.http.delete<void>(`${this.api}/presentations/${id}`);
   }
+
+  getCatalogo(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/catalog`);
+  }
 }
