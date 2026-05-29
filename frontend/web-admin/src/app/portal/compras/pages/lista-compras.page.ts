@@ -1,6 +1,7 @@
 import {
   Component, ChangeDetectionStrategy, inject, signal, CUSTOM_ELEMENTS_SCHEMA,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { ComprasService } from '../services/compras.service';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -15,13 +16,17 @@ import { BtnComponent } from '../../../shared/ui/btn/btn.component';
   selector: 'app-lista-compras',
   changeDetection: ChangeDetectionStrategy.OnPush,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [DatePipe, CardComponent, TableComponent, SpinnerComponent, RdCurrencyPipe, BtnComponent],
+  imports: [RouterLink, DatePipe, CardComponent, TableComponent, SpinnerComponent, RdCurrencyPipe, BtnComponent],
   template: `
     <div class="space-y-5">
 
       <!-- Header -->
       <div class="flex items-center justify-between">
         <h2 class="text-2xl font-black text-base-content tracking-tight">Compras</h2>
+        <a appBtn size="sm" routerLink="/portal/compras/nueva">
+          <iconify-icon icon="lucide:plus" class="text-base"></iconify-icon>
+          Nueva entrada de stock
+        </a>
       </div>
 
       <!-- Table -->

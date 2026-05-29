@@ -18,7 +18,7 @@ import { FondoMonetario } from '../models/caja.model';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [RouterLink, ReactiveFormsModule, CardComponent, SpinnerComponent, BadgeComponent, ModalComponent, BtnComponent, RdCurrencyPipe],
+  imports: [RouterLink, ReactiveFormsModule, SpinnerComponent, BadgeComponent, ModalComponent, BtnComponent, RdCurrencyPipe],
   template: `
     <div class="space-y-5">
 
