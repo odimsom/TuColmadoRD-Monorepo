@@ -139,8 +139,8 @@ jobs:
 
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Pull new images
-            docker compose pull
+            # Pull only the images built by this workflow
+            docker compose pull api gateway auth notification-service landing web
 
             # Scale stateless services to 2 (new + old running simultaneously)
             # Traefik routes to both during the transition window
@@ -152,8 +152,8 @@ jobs:
             sleep 25
             docker compose up -d --no-deps --scale api=1 api
 
-            # Remaining services do fast-replace (auth, landing, web, notifications)
-            docker compose up -d --no-deps auth landing web notification-service ecf-generator
+            # Remaining services do fast-replace
+            docker compose up -d --no-deps auth landing web notification-service
 
             # Run EF Core migrations
             docker compose exec -T api dotnet ef database update \
