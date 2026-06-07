@@ -213,22 +213,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Copy Swarm configs to VPS
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "infrastructure/swarm/docker-compose.swarm.yml,infrastructure/monitoring"
-          target: /opt/tucolmadord
-          strip_components: 2
-
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.5
+        uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 2222
           script: |
             cd /opt/tucolmadord
             set -a; source .env; set +a

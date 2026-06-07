@@ -10,63 +10,198 @@ concurrency:
 
 permissions:
   contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_ORG: odimsom
 
 jobs:
-  deploy:
-    name: Deploy to Production
-    runs-on: self-hosted
+  build-images:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
     steps:
-      - uses: actions/checkout@v6
-      
-      - name: Execute deployment script
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve version
+        id: meta
         run: |
-          sudo bash -c '
-            export GIT_TERMINAL_PROMPT=0
-            export DEBIAN_FRONTEND=noninteractive
-            git config --global --add safe.directory /app/tucolmadord
-            cd /app/tucolmadord
-            git fetch origin
-            git reset --hard origin/main
-            bash executions/deploy-production.sh
-          '
+          VERSION=$(grep -m1 '"version"' frontend/package.json | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "version=${VERSION}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Build & push API
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.api
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-api:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-api:${{ steps.meta.outputs.version }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-api:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-api:buildcache,mode=max
+
+      - name: Build & push Gateway
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.gateway
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-gateway:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-gateway:${{ steps.meta.outputs.version }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-gateway:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-gateway:buildcache,mode=max
+
+      - name: Build & push Auth
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth
+          file: ./auth/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-auth:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-auth:${{ steps.meta.outputs.version }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-auth:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-auth:buildcache,mode=max
+
+      - name: Build & push Notification Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./notification-service
+          file: ./notification-service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-notifications:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-notifications:${{ steps.meta.outputs.version }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-notifications:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-notifications:buildcache,mode=max
+
+      - name: Build & push Landing Page
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/landing-page/Dockerfile
+          push: true
+          build-args: |
+            VITE_WEB_ADMIN_URL=https://app.tucolmadord.com
+            VITE_API_URL=https://api.tucolmadord.com
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-landing:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-landing:${{ steps.meta.outputs.version }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-landing:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-landing:buildcache,mode=max
+
+      - name: Build & push Web Admin
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/web-admin/Dockerfile
+          push: true
+          build-args: |
+            API_URL=https://api.tucolmadord.com
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-web:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-web:${{ steps.meta.outputs.version }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-web:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/tucolmadord-web:buildcache,mode=max
+
+  deploy:
+    name: Deploy to Production (Zero-Downtime)
+    needs: build-images
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Zero-downtime deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 2222
+          script: |
+            set -e
+            cd /opt/synset/tucolmadord
+
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull new images
+            docker compose pull
+
+            # Scale stateless services to 2 (new + old running simultaneously)
+            # Traefik routes to both during the transition window
+            docker compose up -d --no-deps --scale gateway=2 gateway
+            sleep 20
+            docker compose up -d --no-deps --scale gateway=1 gateway
+
+            docker compose up -d --no-deps --scale api=2 api
+            sleep 25
+            docker compose up -d --no-deps --scale api=1 api
+
+            # Remaining services do fast-replace (auth, landing, web, notifications)
+            docker compose up -d --no-deps auth landing web notification-service ecf-generator
+
+            # Run EF Core migrations
+            docker compose exec -T api dotnet ef database update \
+              --project src/infrastructure/TuColmadoRD.Infrastructure.Persistence \
+              --startup-project src/Presentations/TuColmadoRD.Presentation.API \
+              --context TuColmadoDbContext 2>/dev/null || true
+
+            docker compose ps
+            echo "Deploy complete: ${{ needs.build-images.outputs.image_tag }}"
 
   release:
     name: Create GitHub Release
-    needs: deploy
+    needs: [build-images, deploy]
     runs-on: ubuntu-latest
     outputs:
       tag_name: ${{ steps.vars.outputs.tag_name }}
     steps:
-      - uses: actions/checkout@v6
-      
+      - uses: actions/checkout@v4
+
       - name: Resolve version
         id: vars
         run: |
           VERSION=$(grep -m1 '"version"' frontend/package.json | sed 's/.*"version": *"\([^"]*\)".*/\1/')
           TAG="v${VERSION}"
           echo "tag_name=${TAG}" >> $GITHUB_OUTPUT
-          
+
       - name: Create Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.vars.outputs.tag_name }}"
           SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          
+
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          
+
           git tag -f "$TAG" -m "Release $TAG"
           git push origin "$TAG" --force
-          
+
           gh release create "$TAG" \
             --title "TuColmadoRD $TAG" \
             --notes "### Deploy — Producción
-            
+
             **Versión:** \`${TAG}\`
             **Commit:** [\`${SHORT_SHA}\`](https://github.com/${{ github.repository }}/commit/${GITHUB_SHA})
             **Rama:** main
-            
+
             > Instalador Windows adjuntado automáticamente por GitHub Actions." \
             || gh release edit "$TAG" --title "TuColmadoRD $TAG"
 
@@ -76,17 +211,22 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout monorepo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
@@ -96,7 +236,7 @@ jobs:
 
       - name: Install web-admin dependencies
         working-directory: ./frontend/web-admin
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build desktop + installer
         run: |
@@ -108,7 +248,7 @@ jobs:
         shell: pwsh
 
       - name: Attach installer to GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release.outputs.tag_name }}
           prerelease: false
