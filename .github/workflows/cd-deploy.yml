@@ -142,18 +142,8 @@ jobs:
             # Pull only the images built by this workflow
             docker compose pull api gateway auth notification-service landing web
 
-            # Scale stateless services to 2 (new + old running simultaneously)
-            # Traefik routes to both during the transition window
-            docker compose up -d --no-deps --scale gateway=2 gateway
-            sleep 20
-            docker compose up -d --no-deps --scale gateway=1 gateway
-
-            docker compose up -d --no-deps --scale api=2 api
-            sleep 25
-            docker compose up -d --no-deps --scale api=1 api
-
-            # Remaining services do fast-replace
-            docker compose up -d --no-deps auth landing web notification-service
+            # Rolling deploy — Traefik re-registers containers automatically
+            docker compose up -d --no-deps api gateway auth landing web notification-service
 
             # Run EF Core migrations
             docker compose exec -T api dotnet ef database update \
