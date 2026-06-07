@@ -12,13 +12,13 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      
+      - uses: actions/checkout@v4
+
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-          
+
       - name: Test .NET Backend
         working-directory: backend
         run: |
@@ -27,10 +27,10 @@ jobs:
           dotnet test TuColmadoRD.slnx -c Release --no-build --verbosity normal
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-          
+
       - name: Test Auth Service
         working-directory: auth
         run: |
@@ -47,7 +47,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Create and Merge PR to QA
