@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "mongoose": "^9.6.2",
-    "pg": "^8.20.0"
+    "mongoose": "^9.7.0",
+    "pg": "^8.21.0"
   }
 }
