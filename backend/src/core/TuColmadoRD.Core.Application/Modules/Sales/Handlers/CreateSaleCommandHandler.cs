@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using TuColmadoRD.Core.Application.Interfaces.Tenancy;
 using TuColmadoRD.Core.Application.Inventory.Abstractions;
 using TuColmadoRD.Core.Application.Sales.Abstractions;
@@ -44,6 +45,7 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
     private readonly IEcfSignerService _ecfSignerService;
     private readonly ITenantProfileRepository _tenantProfileRepository;
     private readonly IDeliveryOrderRepository _deliveryOrderRepository;
+    private readonly ILogger<CreateSaleCommandHandler> _logger;
 
     public CreateSaleCommandHandler(
         ITenantProvider tenantProvider,
@@ -62,7 +64,8 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         IEcfGeneratorClient ecfGeneratorClient,
         IEcfSignerService ecfSignerService,
         ITenantProfileRepository tenantProfileRepository,
-        IDeliveryOrderRepository deliveryOrderRepository)
+        IDeliveryOrderRepository deliveryOrderRepository,
+        ILogger<CreateSaleCommandHandler> logger)
     {
         _tenantProvider = tenantProvider;
         _shiftService = shiftService;
@@ -81,6 +84,7 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
         _ecfSignerService = ecfSignerService;
         _tenantProfileRepository = tenantProfileRepository;
         _deliveryOrderRepository = deliveryOrderRepository;
+        _logger = logger;
     }
 
     public async Task<OperationResult<CreateSaleResult, DomainError>> Handle(
@@ -305,47 +309,67 @@ public sealed class CreateSaleCommandHandler : IRequestHandler<CreateSaleCommand
 
                 string? trackId = null;
 
+                // La generación del e-CF es un paso secundario: si el generador
+                // está caído o rechaza el payload, la venta DEBE completarse
+                // igual (el NCF ya quedó asignado y el e-CF puede reemitirse).
                 if (ncfNumber.StartsWith("E3", StringComparison.OrdinalIgnoreCase))
                 {
-                    var profile = await _tenantProfileRepository.GetByTenantAsync(tenantId, ct);
-                    if (profile is not null)
+                    try
                     {
-                        var payload = new Dictionary<string, object>
+                        var profile = await _tenantProfileRepository.GetByTenantAsync(tenantId, ct);
+                        if (profile is not null)
                         {
-                            ["TipoeCF"] = isCreditFiscal ? 31 : 32,
-                            ["eNCF"] = ncfNumber,
-                            ["RNCEmisor"] = profile.Rnc?.Value ?? "131111111",
-                            ["RazonSocialEmisor"] = profile.BusinessName,
-                            ["FechaEmision"] = DateTime.Now.ToString("dd-MM-yyyy"),
-                            ["MontoTotal"] = sale.TotalAmount,
-                            ["MontoGravadoTotal"] = sale.TotalAmount - sale.TotalItbisAmount,
-                            ["TotalITBIS"] = sale.TotalItbisAmount,
-                            ["IndicadorMontoGravado"] = "1",
-                            ["TipoIngresos"] = "01",
-                            ["TipoPago"] = "1"
-                        };
+                            var montoGravado = (sale.TotalAmount - sale.TotalItbisAmount).ToString("F2");
+                            var montoTotal  = sale.TotalAmount.ToString("F2");
+                            var totalItbis  = sale.TotalItbisAmount.ToString("F2");
 
-                        if (isCreditFiscal)
-                        {
-                            payload["RNCComprador"] = request.BuyerRnc!;
-                            payload["RazonSocialComprador"] = "CLIENTE CREDITO FISCAL";
+                            var payload = new Dictionary<string, object>
+                            {
+                                ["TipoeCF"] = isCreditFiscal ? 31 : 32,
+                                ["eNCF"] = ncfNumber,
+                                ["RNCEmisor"] = profile.Rnc?.Value ?? "131111111",
+                                ["RazonSocialEmisor"] = profile.BusinessName,
+                                ["DireccionEmisor"] = profile.BusinessAddress,
+                                ["FechaEmision"] = DateTime.Now.ToString("dd-MM-yyyy"),
+                                ["MontoGravadoTotal"] = montoGravado,
+                                ["TotalITBIS"] = totalItbis,
+                                ["TotalITBIS1"] = totalItbis,
+                                ["ITBIS1"] = "18",
+                                ["MontoTotal"] = montoTotal,
+                                ["ValorPagar"] = montoTotal,
+                                ["IndicadorMontoGravado"] = "1",
+                                ["TipoIngresos"] = "01",
+                                ["TipoPago"] = "1"
+                            };
+
+                            if (isCreditFiscal)
+                            {
+                                payload["RNCComprador"] = request.BuyerRnc!;
+                                payload["RazonSocialComprador"] = "CLIENTE CREDITO FISCAL";
+                            }
+
+                            for (int i = 0; i < saleItemResults.Count; i++)
+                            {
+                                payload[$"Item_{i+1}_NumeroLinea"] = i + 1;
+                                payload[$"Item_{i+1}_NombreItem"] = saleItemResults[i].ProductName;
+                                payload[$"Item_{i+1}_CantidadItem"] = saleItemResults[i].Quantity;
+                                payload[$"Item_{i+1}_PrecioUnitarioItem"] = saleItemResults[i].UnitPrice.ToString("F2");
+                                payload[$"Item_{i+1}_MontoItem"] = saleItemResults[i].LineTotal.ToString("F2");
+                                payload[$"Item_{i+1}_IndicadorBienoServicio"] = "1";
+                                payload[$"Item_{i+1}_IndicadorFacturacion"] = "1";
+                            }
+
+                            var xmlRaw = await _ecfGeneratorClient.GenerateXmlAsync(payload);
+                            var signedXml = await _ecfSignerService.SignXmlAsync(xmlRaw, tenantId);
+
+                            trackId = $"MOCK_DGII_TRACKID_{Guid.NewGuid().ToString("N")[..8]}";
                         }
-
-                        for (int i = 0; i < saleItemResults.Count; i++)
-                        {
-                            payload[$"Item_{i+1}_NumeroLinea"] = i + 1;
-                            payload[$"Item_{i+1}_NombreItem"] = saleItemResults[i].ProductName;
-                            payload[$"Item_{i+1}_CantidadItem"] = saleItemResults[i].Quantity;
-                            payload[$"Item_{i+1}_PrecioUnitarioItem"] = saleItemResults[i].UnitPrice;
-                            payload[$"Item_{i+1}_MontoItem"] = saleItemResults[i].LineTotal;
-                            payload[$"Item_{i+1}_IndicadorBienoServicio"] = 1;
-                            payload[$"Item_{i+1}_IndicadorFacturacion"] = 1;
-                        }
-
-                        var xmlRaw = await _ecfGeneratorClient.GenerateXmlAsync(payload);
-                        var signedXml = await _ecfSignerService.SignXmlAsync(xmlRaw, tenantId);
-
-                        trackId = $"MOCK_DGII_TRACKID_{Guid.NewGuid().ToString("N")[..8]}";
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        _logger.LogWarning(ex,
+                            "Fallo al generar/firmar e-CF {Ncf} para el tenant {TenantId}; la venta continúa sin TrackId.",
+                            ncfNumber, tenantId);
                     }
                 }
 

@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using TuColmadoRD.Core.Application.Interfaces.Tenancy;
 using TuColmadoRD.Core.Application.Sales.Abstractions;
 using TuColmadoRD.Core.Application.Sales.Commands;
@@ -50,30 +51,46 @@ public static class SalesEndpoints
 
         var command = new CreateSaleCommand(commandItems, commandPayments, request.Notes, request.BuyerRnc, deliveryAddress);
 
-        var result = await mediator.Send(command, ct);
-        if (!result.TryGetResult(out var created) || created is null)
+        // Retry hasta 3 veces si dos ventas compiten por el mismo NCF (concurrency token).
+        // El handler solo falla DbUpdateConcurrencyException por esa razón.
+        const int maxAttempts = 3;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            return result.Error.MapDomainError();
+            try
+            {
+                var result = await mediator.Send(command, ct);
+                if (!result.TryGetResult(out var created) || created is null)
+                    return result.Error.MapDomainError();
+
+                var response = new CreateSaleResponse(
+                    created.SaleId,
+                    created.ReceiptNumber,
+                    created.NcfNumber,
+                    created.Subtotal,
+                    created.TotalItbis,
+                    created.Total,
+                    created.TotalPaid,
+                    created.ChangeDue,
+                    created.Items.Select(i => new CreateSaleLineResponse(
+                        i.ProductId,
+                        i.ProductName,
+                        i.Quantity,
+                        i.UnitPrice,
+                        i.LineItbis,
+                        i.LineTotal)).ToList());
+
+                return TypedResults.Created($"/api/v1/sales/{created.SaleId}", response);
+            }
+            catch (DbUpdateConcurrencyException) when (attempt < maxAttempts)
+            {
+                // Otra venta tomó el mismo NCF; reintentar con la secuencia actualizada.
+                await Task.Delay(TimeSpan.FromMilliseconds(50 * attempt), ct);
+            }
         }
 
-        var response = new CreateSaleResponse(
-            created.SaleId,
-            created.ReceiptNumber,
-            created.NcfNumber,
-            created.Subtotal,
-            created.TotalItbis,
-            created.Total,
-            created.TotalPaid,
-            created.ChangeDue,
-            created.Items.Select(i => new CreateSaleLineResponse(
-                i.ProductId,
-                i.ProductName,
-                i.Quantity,
-                i.UnitPrice,
-                i.LineItbis,
-                i.LineTotal)).ToList());
-
-        return TypedResults.Created($"/api/v1/sales/{created.SaleId}", response);
+        return TypedResults.Problem(
+            detail: "No se pudo asignar un NCF único. Intente nuevamente.",
+            statusCode: StatusCodes.Status409Conflict);
     }
 
     private static async Task<IResult> VoidSale(
