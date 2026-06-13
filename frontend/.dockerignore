@@ -1,0 +1,10 @@
+# Aplica a los builds con context=./frontend (web-admin y landing-page).
+# El web-admin/.dockerignore no aplica con ese context — este sí.
+**/node_modules
+**/dist
+**/dist-desktop
+**/.angular
+**/.env
+**/*.log
+**/e2e/results
+web-admin_backup.tar.gz

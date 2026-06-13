@@ -39,7 +39,7 @@ const sizeClass: Record<Size, string> = {
   <component
     :is="href ? 'a' : 'button'"
     :href="href"
-    :disabled="!href && disabled"
+    :disabled="!href && disabled ? true : undefined"
     :aria-disabled="href && disabled ? true : undefined"
     class="btn"
     :class="[variantClass[variant], sizeClass[size], { 'btn-wide': wide, 'btn-disabled': disabled }]"
