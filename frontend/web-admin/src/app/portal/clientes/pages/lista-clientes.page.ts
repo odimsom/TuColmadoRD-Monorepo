@@ -85,20 +85,9 @@ import { Cliente } from '../models/cliente.model';
             </tbody>
           </app-table>
 
-          @if (totalPages() > 1) {
-            <div class="flex items-center justify-between px-4 py-3 border-t border-base-300">
-              <p class="text-sm text-base-content/50">{{ totalCount() }} cliente{{ totalCount() !== 1 ? 's' : '' }}</p>
-              <div class="join">
-                <button appBtn size="sm" class="join-item" [disabled]="page() === 1" (click)="changePage(page() - 1)">
-                  <iconify-icon icon="lucide:chevron-left"></iconify-icon>
-                </button>
-                <span class="join-item tc-btn tc-btn-sm tc-btn-ghost pointer-events-none">{{ page() }} / {{ totalPages() }}</span>
-                <button appBtn size="sm" class="join-item" [disabled]="page() === totalPages()" (click)="changePage(page() + 1)">
-                  <iconify-icon icon="lucide:chevron-right"></iconify-icon>
-                </button>
-              </div>
-            </div>
-          }
+          <div class="flex items-center px-4 py-3 border-t border-base-300">
+            <p class="text-sm text-base-content/50">{{ totalCount() }} cliente{{ totalCount() !== 1 ? 's' : '' }}</p>
+          </div>
         }
       </app-card>
     </div>
@@ -149,8 +138,6 @@ export class ListaClientesPage {
   saving = signal(false);
   clientes = signal<Cliente[]>([]);
   totalCount = signal(0);
-  totalPages = signal(0);
-  page = signal(1);
 
   clienteForm = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.minLength(2)]],
@@ -163,18 +150,15 @@ export class ListaClientesPage {
 
   loadClientes(): void {
     this.loading.set(true);
-    this.svc.getClientes(this.page(), 20).subscribe({
-      next: (res: any) => {
-        this.clientes.set(res.items);
-        this.totalCount.set(res.totalCount);
-        this.totalPages.set(res.totalPages);
+    this.svc.getClientes().subscribe({
+      next: (res) => {
+        this.clientes.set(res);
+        this.totalCount.set(res.length);
         this.loading.set(false);
       },
       error: () => { this.toast.error('Error cargando clientes'); this.loading.set(false); },
     });
   }
-
-  changePage(p: number): void { this.page.set(p); this.loadClientes(); }
 
   onCreateCliente(modal: ModalComponent): void {
     if (this.clienteForm.invalid) return;

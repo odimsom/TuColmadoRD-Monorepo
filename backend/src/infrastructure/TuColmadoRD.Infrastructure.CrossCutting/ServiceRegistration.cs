@@ -27,10 +27,14 @@ public static class ServiceRegistration
         services.AddSingleton<TuColmadoRD.Core.Application.Interfaces.Security.IClock, SystemClock>();
         services.AddScoped<TuColmadoRD.Core.Application.Interfaces.Services.IEcfSignerService, EcfSignerService>();
 
-        services.AddHttpClient<TuColmadoRD.Core.Application.Interfaces.Services.IEcfGeneratorClient, EcfGeneratorClient>(client => 
+        services.AddHttpClient<TuColmadoRD.Core.Application.Interfaces.Services.IEcfGeneratorClient, EcfGeneratorClient>(client =>
         {
             var baseUrl = configuration["EcfGenerator:BaseUrl"] ?? "http://ecf-generator:5000";
             client.BaseAddress = new Uri(baseUrl);
+            // El generador corre en el camino de cobro del POS: si no responde
+            // rápido se aborta y la venta sigue sin e-CF (no esperar los 100s default).
+            client.Timeout = TimeSpan.FromSeconds(
+                configuration.GetValue<int?>("EcfGenerator:TimeoutSeconds") ?? 10);
         });
 
         var applicationAssembly = typeof(TuColmadoRD.Core.Application.Behaviors.ICommandMarker).Assembly;

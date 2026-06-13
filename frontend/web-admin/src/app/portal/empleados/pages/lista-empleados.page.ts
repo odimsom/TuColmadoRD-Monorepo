@@ -58,6 +58,7 @@ const ROLES_DISPONIBLES = [
                 <th>Correo</th>
                 <th>Rol</th>
                 <th>Estado</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -76,6 +77,16 @@ const ROLES_DISPONIBLES = [
                     <app-badge [variant]="e.isActive ? 'success' : 'ghost'" size="xs">
                       {{ e.isActive ? 'Activo' : 'Inactivo' }}
                     </app-badge>
+                  </td>
+                  <td class="text-right">
+                    <button
+                      class="tc-btn tc-btn-ghost tc-btn-sm"
+                      (click)="onToggle(e)"
+                      [attr.aria-label]="e.isActive ? 'Desactivar' : 'Activar'"
+                    >
+                      <iconify-icon [icon]="e.isActive ? 'lucide:user-x' : 'lucide:user-check'"></iconify-icon>
+                      {{ e.isActive ? 'Desactivar' : 'Activar' }}
+                    </button>
                   </td>
                 </tr>
               }
@@ -180,6 +191,16 @@ export class ListaEmpleadosPage {
         this.saving.set(false);
       },
       error: () => { this.toast.error('Error al crear empleado'); this.saving.set(false); },
+    });
+  }
+
+  onToggle(e: Empleado): void {
+    this.svc.toggleEmpleado(e.id, !e.isActive).subscribe({
+      next: () => {
+        this.toast.success(e.isActive ? 'Empleado desactivado' : 'Empleado activado');
+        this.loadEmpleados();
+      },
+      error: () => this.toast.error('No se pudo cambiar el estado'),
     });
   }
 

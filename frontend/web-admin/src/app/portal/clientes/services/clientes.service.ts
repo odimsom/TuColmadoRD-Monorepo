@@ -1,17 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { Cliente, ClienteEstadoCuenta, PagedClientes } from '../models/cliente.model';
+import { Cliente, ClienteEstadoCuenta } from '../models/cliente.model';
 
 @Injectable({ providedIn: 'root' })
 export class ClientesService {
   private http = inject(HttpClient);
   private api = `${environment.gatewayUrl}/gateway/api/v1/customers`;
 
-  getClientes(page = 1, pageSize = 20): Observable<PagedClientes> {
-    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
-    return this.http.get<PagedClientes>(this.api, { params });
+  // La API devuelve la lista completa con balance (no es paginada)
+  getClientes(): Observable<Cliente[]> {
+    return this.http.get<Cliente[]>(this.api);
   }
 
   getCliente(id: string): Observable<Cliente> {

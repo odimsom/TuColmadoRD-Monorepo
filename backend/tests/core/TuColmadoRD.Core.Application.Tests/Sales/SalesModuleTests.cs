@@ -68,7 +68,8 @@ public sealed class SalesModuleTests
             new Mock<TuColmadoRD.Core.Application.Interfaces.Services.IEcfGeneratorClient>().Object,
             new Mock<TuColmadoRD.Core.Application.Interfaces.Services.IEcfSignerService>().Object,
             new Mock<TuColmadoRD.Core.Domain.Interfaces.Repositories.System.ITenantProfileRepository>().Object,
-            new Mock<IDeliveryOrderRepository>().Object);
+            new Mock<IDeliveryOrderRepository>().Object,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<CreateSaleCommandHandler>.Instance);
 
         _voidSaleHandler = new VoidSaleCommandHandler(
             _tenant.Object,

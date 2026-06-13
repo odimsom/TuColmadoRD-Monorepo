@@ -22,6 +22,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.OwnsOne(p => p.TenantId, b =>
         {
             b.Property(t => t.Value).HasColumnName("TenantId").IsRequired();
+            b.HasIndex(t => t.Value).HasDatabaseName("IX_Products_TenantId");
         });
 
         builder.Property(p => p.ItbisRate)

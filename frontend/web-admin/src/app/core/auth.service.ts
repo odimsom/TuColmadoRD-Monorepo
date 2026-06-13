@@ -39,6 +39,10 @@ export class AuthService {
     );
   }
 
+  resendVerification(email: string): Observable<void> {
+    return this.http.post<void>(`${this.api}/auth/resend-verification`, { email });
+  }
+
   logout(): void {
     [LS_TOKEN, LS_USER, LS_TENANT].forEach(k => localStorage.removeItem(k));
     this.currentUser.set(null);

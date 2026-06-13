@@ -2,7 +2,6 @@ import {
   Component, ChangeDetectionStrategy, inject, signal, CUSTOM_ELEMENTS_SCHEMA,
 } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InventarioService } from '../services/inventario.service';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -24,7 +23,7 @@ import {
   selector: 'app-detalle-producto',
   changeDetection: ChangeDetectionStrategy.OnPush,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  imports: [RouterLink, ReactiveFormsModule, DatePipe, CardComponent, TableComponent, SpinnerComponent, BadgeComponent, ModalComponent, BtnComponent, RdCurrencyPipe, RdItbisPipe],
+  imports: [RouterLink, ReactiveFormsModule, CardComponent, TableComponent, SpinnerComponent, BadgeComponent, ModalComponent, BtnComponent, RdCurrencyPipe, RdItbisPipe],
   template: `
     <div class="space-y-5">
 

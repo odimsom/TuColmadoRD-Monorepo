@@ -1,12 +1,15 @@
+# =============================================================================
+# Stack LOCAL completo — espejo de producción pero autocontenido:
+#   docker compose -f docker-compose.local.yml up --build
+#
+#   Landing:    http://localhost:8082
+#   Web admin:  http://localhost:8083   (frontend NUEVO, build config "local")
+#   Gateway:    http://localhost:8081
+#   MailHog UI: http://localhost:8025   (correos de verificación llegan aquí)
+#
+# Sin Traefik/TLS ni monitoreo: eso es de producción (docker-compose.yml).
+# =============================================================================
 services:
-  mongo:
-    image: mongo:7
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_local_data:/data/db
-    restart: unless-stopped
-
   postgres:
     image: postgres:15
     ports:
@@ -17,8 +20,198 @@ services:
       POSTGRES_DB: TuColmadoDb
     volumes:
       - postgres_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d TuColmadoDb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: tucolmado
+      MONGO_INITDB_ROOT_PASSWORD: local1234
+    volumes:
+      - mongo_local_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_local_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+      SMTP_FROM: TuColmado RD <noreply@tucolmadord.local>
+      SERVICE_SECRET: local-internal-secret
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: on-failure:3
+
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGODB_URI: mongodb://tucolmado:local1234@mongo:27017/tu_colmado_auth?authSource=admin
+      JWT_SECRET: local-dev-secret-tucolmadord
+      JWT_EXPIRES_IN: 7d
+      NET_API_URL: http://api:8080
+      EMAIL_SERVICE_URL: http://notification-service:4000
+      SERVICE_SECRET: local-internal-secret
+    depends_on:
+      mongo:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: on-failure:3
+
+  ecf-generator:
+    build:
+      context: ./generadordexmle-cf
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: on-failure:3
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=TuColmadoDb;Username=postgres;Password=1234
+      ConnectionStrings__PostgresSQLConnectionString: Host=postgres;Database=TuColmadoDb;Username=postgres;Password=1234
+      EcfGenerator__BaseUrl: http://ecf-generator:5000
+      AuthApi__BaseUrl: http://auth:3000
+      Outbox__CloudSyncBaseUrl: http://auth:3000
+      JwtSettings__Secret: local-dev-secret-tucolmadord
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ecf-generator:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    restart: on-failure:3
+
+  gateway:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.gateway
+    environment:
+      GatewayOptions__AuthApiUrl: http://auth:3000
+      GatewayOptions__CoreApiUrl: http://api:8080
+      GatewayOptions__JwtSecret: local-dev-secret-tucolmadord
+      GatewayOptions__AllowedOrigins__0: http://localhost:4200
+      GatewayOptions__AllowedOrigins__1: http://localhost:8082
+      GatewayOptions__AllowedOrigins__2: http://localhost:8083
+    depends_on:
+      auth:
+        condition: service_healthy
+      api:
+        condition: service_started
+    ports:
+      - "8081:8080"
+    restart: on-failure:3
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: web-admin/Dockerfile
+      args:
+        BUILD_CONFIG: local   # usa environment.local.ts -> gateway en localhost:8081
+    depends_on:
+      gateway:
+        condition: service_started
+    ports:
+      - "8083:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: on-failure:3
+
+  landing:
+    build:
+      context: ./frontend
+      dockerfile: landing-page/Dockerfile
+      args:
+        VITE_WEB_ADMIN_URL: http://localhost:8083
+    ports:
+      - "8082:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: on-failure:3
 
 volumes:
   mongo_local_data:
   postgres_local_data:
+  redis_local_data:
