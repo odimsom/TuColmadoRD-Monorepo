@@ -139,7 +139,9 @@ export class ConfiguracionPage implements OnInit {
     email: ['', Validators.email],
   });
 
-  ngOnInit(): void { this.loadProfile(); }
+  constructor() { this.loadProfile(); }
+
+  ngOnInit(): void { /* implemented via constructor */ }
 
   loadProfile(): void {
     this.loading.set(true);

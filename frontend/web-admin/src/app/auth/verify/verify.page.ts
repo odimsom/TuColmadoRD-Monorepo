@@ -59,7 +59,14 @@ import { TcLogoComponent } from '../../shared/ui/logo/tc-logo.component';
 
         <p class="text-center text-xs text-base-content/30 mt-6">
           ¿No recibiste el código?
-          <button class="text-primary hover:underline" type="button">Reenviar</button>
+          <button
+            class="text-primary hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+            type="button"
+            [disabled]="resendCooldown() > 0"
+            (click)="resend()"
+          >
+            @if (resendCooldown() > 0) { Reenviar ({{ resendCooldown() }}s) } @else { Reenviar }
+          </button>
         </p>
       </div>
     </div>
@@ -74,6 +81,8 @@ export class VerifyPage {
   loading = signal(false);
   error = signal('');
   email = signal(this.route.snapshot.queryParamMap.get('email') ?? '');
+  resendCooldown = signal(0);
+  private cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
   form = this.fb.nonNullable.group({
     code: ['', [Validators.required, Validators.minLength(4)]],
@@ -99,5 +108,23 @@ export class VerifyPage {
         this.loading.set(false);
       },
     });
+  }
+
+  resend(): void {
+    if (this.resendCooldown() > 0) return;
+    this.auth.resendVerification(this.email()).subscribe({
+      next: () => this.startCooldown(60),
+      error: () => this.startCooldown(30),
+    });
+  }
+
+  private startCooldown(seconds: number): void {
+    this.resendCooldown.set(seconds);
+    if (this.cooldownTimer) clearInterval(this.cooldownTimer);
+    this.cooldownTimer = setInterval(() => {
+      const v = this.resendCooldown() - 1;
+      this.resendCooldown.set(v);
+      if (v <= 0 && this.cooldownTimer) { clearInterval(this.cooldownTimer); this.cooldownTimer = null; }
+    }, 1000);
   }
 }
