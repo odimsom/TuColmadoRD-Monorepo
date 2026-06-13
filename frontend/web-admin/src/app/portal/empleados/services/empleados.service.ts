@@ -23,7 +23,13 @@ export class EmpleadosService {
     return this.http.post<Empleado>(this.api, data);
   }
 
-  updateEmpleado(id: string, data: Partial<{ role: string; isActive: boolean }>): Observable<Empleado> {
-    return this.http.patch<Empleado>(`${this.api}/${id}`, data);
+  // PUT = edición de datos (rol, nombre); lo maneja updateEmployee en el auth service
+  updateEmpleado(id: string, data: Partial<{ role: string; firstName: string; lastName: string }>): Observable<Empleado> {
+    return this.http.put<Empleado>(`${this.api}/${id}`, data);
+  }
+
+  // PATCH = activar/desactivar; el auth service espera { active }
+  toggleEmpleado(id: string, active: boolean): Observable<Empleado> {
+    return this.http.patch<Empleado>(`${this.api}/${id}`, { active });
   }
 }

@@ -7,7 +7,7 @@ import { CardComponent } from '../../../shared/ui/card/card.component';
 import { TableComponent } from '../../../shared/ui/table/table.component';
 import { SpinnerComponent } from '../../../shared/ui/spinner/spinner.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { DeliveryPendiente } from '../models/delivery.model';
+import { DeliveryPendiente, direccionCompleta } from '../models/delivery.model';
 
 import { BtnComponent } from '../../../shared/ui/btn/btn.component';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
@@ -55,11 +55,11 @@ import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
               </tr>
             </thead>
             <tbody>
-              @for (d of pendientes(); track d.orderId) {
+              @for (d of pendientes(); track d.id) {
                 <tr class="hover">
                   <td class="font-mono text-sm font-medium text-base-content">{{ d.receiptNumber }}</td>
-                  <td class="hidden sm:table-cell text-sm text-base-content/60">{{ d.customerName ?? 'Sin nombre' }}</td>
-                  <td class="text-sm text-base-content/60 max-w-48 truncate">{{ d.address }}</td>
+                  <td class="hidden sm:table-cell text-sm text-base-content/60">{{ d.customerName || 'Sin nombre' }}</td>
+                  <td class="text-sm text-base-content/60 max-w-48 truncate">{{ direccion(d) }}</td>
                   <td class="hidden md:table-cell text-sm text-base-content/60">{{ d.createdAt | date:'d MMM, HH:mm' }}</td>
                   <td>
                     <app-badge variant="warning">{{ d.status }}</app-badge>
@@ -90,4 +90,5 @@ export class ListaDeliveriesPage {
     });
   }
 
+  direccion(d: DeliveryPendiente): string { return direccionCompleta(d); }
 }

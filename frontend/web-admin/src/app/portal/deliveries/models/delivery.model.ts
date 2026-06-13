@@ -1,9 +1,22 @@
+// Coincide con DeliveryOrderDto del Core API
 export interface DeliveryPendiente {
-  orderId: string;
+  id: string;
   saleId: string;
   receiptNumber: string;
-  customerName: string | null;
-  address: string;
-  createdAt: string;
+  totalAmount: number;
+  customerName: string;
+  phone: string;
+  addressProvince: string;
+  addressSector: string;
+  addressStreet: string;
+  addressHouseNumber: string | null;
+  addressReference: string;
   status: string;
+  createdAt: string;
+}
+
+export function direccionCompleta(d: DeliveryPendiente): string {
+  return [d.addressStreet, d.addressHouseNumber, d.addressSector, d.addressProvince]
+    .filter(Boolean)
+    .join(', ');
 }
