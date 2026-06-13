@@ -19,6 +19,7 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.OwnsOne(c => c.TenantId, b => 
         {
             b.Property(t => t.Value).HasColumnName("TenantId").IsRequired();
+            b.HasIndex(t => t.Value).HasDatabaseName("IX_Customers_TenantId");
         });
 
         builder.OwnsOne(c => c.DocumentId, b => 

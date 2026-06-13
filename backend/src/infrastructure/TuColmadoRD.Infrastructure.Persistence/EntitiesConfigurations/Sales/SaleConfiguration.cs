@@ -32,6 +32,7 @@ public class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.OwnsOne(s => s.TenantId, b => 
         {
             b.Property(t => t.Value).HasColumnName("TenantId").IsRequired();
+            b.HasIndex(t => t.Value).HasDatabaseName("IX_Sales_TenantId");
         });
 
         builder.HasMany(s => s.Items)
